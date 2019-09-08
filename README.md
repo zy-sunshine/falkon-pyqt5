@@ -10,10 +10,10 @@ In short, Python development efficiency is faster than C++, saving time and effo
 * Webpage H5 2D 3D technology has partially replaced desktop software
 * Desktop H5 program requires a shell
 * The following features are required for the shell of complex data presentation
-    * Similar to Chrome's interactive features, including removable tabs, detachable tabs
-    * File access feature, file downloader for downloading large files
-    * Plugin extensions, which can be quickly extended based on browser
-    * Low development cost scalability
+   * Similar to Chrome's interactive features, including removable tabs, detachable tabs
+   * File access feature, file downloader for downloading large files
+   * Plugin extensions, which can be quickly extended based on browser
+   * Low development cost scalability
 
 ### Why use Falkon
 * From a cross-platform perspective, Qt is the best choice for desktop cross-platform (program size is not a fatal flaw)
@@ -59,10 +59,10 @@ Falkon 使用 PyQt5 重写
 * 网页H5 2D 3D技术已经部分取代桌面软件
 * 桌面H5程序需要一个外壳
 * 对于复杂数据展示的外壳需要以下几个特性
-    * 类似Chrome的交互特性，包括可移动tab，可分离tab
-    * 文件访问特性，文件下载器，用于下载大文件
-    * 插件扩展，可以基于浏览器快速扩展功能
-    * 低开发成本的扩展性
+   * 类似Chrome的交互特性，包括可移动tab，可分离tab
+   * 文件访问特性，文件下载器，用于下载大文件
+   * 插件扩展，可以基于浏览器快速扩展功能
+   * 低开发成本的扩展性
 
 ### 为什么使用 Falkon
 * 从跨平台的角度看，Qt 是桌面跨平台的最佳选择（程序大小已经不是致命缺点）
