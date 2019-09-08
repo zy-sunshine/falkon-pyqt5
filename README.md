@@ -2,7 +2,7 @@
 falkon rewrite with pyqt5
 
 ## Why use PyQt5 to rewrite Falkon
-In short, Python is faster than C++, saving time and effort.
+In short, Python development efficiency is faster than C++, saving time and effort.
 
 ### Why do I need a basic browser?
 * Mobile software is more popular than desktop software
