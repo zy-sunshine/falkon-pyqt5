@@ -1,6 +1,5 @@
 from .TabStackedWidget import TabStackedWidget
 from .TabBar import TabBar
-from .ComboTabBar import ComboTabBar
 from mc.common import const
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QUrl

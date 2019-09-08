@@ -117,7 +117,11 @@ class AppTools(Singleton):
         pass
 
     def filterCharsFromFilename(self, filename):
-        pass
+        value = filename
+        value = value.replace('/', '-')
+        for delch in ['\\', ':', '*', '?', '"', '<', '>', '|']:
+            value = value.replace(delch, '')
+        return value
 
     def lastPathForFileDialog(self, dialogName, fallbackPath):
         pass

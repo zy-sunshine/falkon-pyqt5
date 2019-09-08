@@ -5,7 +5,6 @@ from PyQt5.Qt import QSize
 from PyQt5.Qt import QWidget
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QPointF
-from PyQt5.Qt import QIcon
 from PyQt5.Qt import QRect
 from PyQt5.Qt import QEvent
 from PyQt5.Qt import QTimer
@@ -13,12 +12,25 @@ from PyQt5.Qt import QPalette
 from PyQt5.Qt import QMouseEvent
 from PyQt5.Qt import QWheelEvent
 from PyQt5.Qt import QKeyEvent
+from PyQt5.Qt import QStyle
+from PyQt5.Qt import Qt
+from PyQt5.QtWidgets import QApplication
+from PyQt5.Qt import QPrinter
+from PyQt5.Qt import QPrintDialog
+from PyQt5.Qt import QAbstractPrintDialog
+from PyQt5.Qt import QDialog
+from PyQt5.Qt import QDesktopServices
+from PyQt5.Qt import qFuzzyCompare
+from PyQt5.Qt import QAction
 
 from .WebPage import WebPage
 from mc.tools.WheelHelper import WheelHelper
 from mc.common.globalvars import gVar
 from .WebInspector import WebInspector
 from .WebScrollBarManager import WebScrollBarManager
+from mc.tools.IconProvider import IconProvider
+from mc.common import const
+from mc.other.SiteInfo import SiteInfo
 
 class WebView(QWebEngineView):
     s_forceContextMenuOnMouseRelease = False
@@ -55,25 +67,27 @@ class WebView(QWebEngineView):
         WebInspector.registerView(self)
 
     def __del__(self):
-        # TODO:
-        # gVar.app.plugins().emitWebPageDeleted(self._page)
+        gVar.app.plugins().emitWebPageDeleted(self._page)
 
-        # TODO: open
-        #WebInspector.unregisterView(self)
-        #WebScrollBarManager.instance().removeWebView(self)
-        pass
+        WebInspector.unregisterView(self)
+        WebScrollBarManager.instance().removeWebView(self)
 
     def icon(self, allowNull=False):
         '''
         @return: QIcon
         '''
-        import ipdb; ipdb.set_trace()
         icon = super().icon()
         if not icon.isNull():
             return icon
 
-        # TODO: multi scheme different icon
-        return QIcon()
+        scheme = self.url().scheme()
+        if scheme == 'ftp':
+            return IconProvider.standardIcon(QStyle.SP_ComputerIcon)
+
+        if scheme == 'file':
+            return IconProvider.standardIcon(QStyle.SP_DriveHDIcon)
+
+        return IconProvider.iconForUrl(self.url(), allowNull)
 
     def title(self, allowEmpty=False):
         '''
@@ -148,10 +162,9 @@ class WebView(QWebEngineView):
         '''
         @param: url QUrl
         '''
-        import ipdb; ipdb.set_trace()
         if self._page and not self._page.acceptNavigationRequest(url,
                 QWebEnginePage.NavigationTypeTyped, True):
-            pass
+            return
 
         super().load(url)
 
@@ -373,59 +386,102 @@ class WebView(QWebEngineView):
 
     # public Q_SLOTS:
     def zoomIn(self):
-        pass
+        if self._currentZoomLevel < len(self.zoomLevels()) - 1:
+            self._currentZoomLevel += 1
+            self._applyZoom()
 
     def zoomOut(self):
-        pass
+        if self._currentZoomLevel > 0:
+            self._currentZoomLevel -= 1
+            self._applyZoom()
 
     def zoomReset(self):
-        pass
+        if self._currentZoomLevel != gVar.appSettings.defaultZoomLevel:
+            self._currentZoomLevel = gVar.appSettings.defaultZoomLevel
+            self._applyZoom()
 
     def editUndo(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.Undo)
 
     def editRedo(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.Redo)
 
     def editCut(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.Cut)
 
     def editCopy(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.Copy)
 
     def editPaste(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.Paste)
 
     def editSelectAll(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.SelectAll)
 
     def editDelete(self):
-        pass
+        ev = QKeyEvent(QEvent.KeyPress, Qt.Key_Delete, Qt.NoModifier)
+        QApplication.sendEvent(self, ev)
 
     def reloadBypassCache(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.ReloadAndBypassCache)
 
     def back(self):
-        pass
+        # QWebEngineHistory
+        history = self.page().history()
+
+        if history.canGoBack():
+            history.back()
+
+            self.urlChanged.emit(self.url())
 
     def forward(self):
-        pass
+        history = self.page().history()
+
+        if history.canGoForward():
+            history.forward()
+
+            self.urlChanged.emit(self.url())
 
     def printPage(self):
-        pass
+        assert(self._page)
+
+        printer = QPrinter()
+        printer.setCreator('APP %s (%s)' % (const.VERSION, const.WWWADDRESS))
+        printer.setDocName(gVar.appTools.filterCharsFromFilename(self.title()))
+        dialog = QPrintDialog(printer, self)
+        dialog.setOptions(QAbstractPrintDialog.PrintToFile | QAbstractPrintDialog.PrintShowPageSize)
+        if not const.OS_WIN:
+            dialog.setOption(QAbstractPrintDialog.PrintPageRange)
+            dialog.setOption(QAbstractPrintDialog.PrintCollateCopies)
+
+        if dialog.exec_() == QDialog.Accepted:
+            if dialog.printer().outputFormat() == QPrinter.PdfFormat:
+                self._page.printToPdf(dialog.printer().outputFileName(),
+                        dialog.printer().pageLayout())
+                del dialog
+            else:
+                self._page.print_(dialog.printer())
 
     def showSource(self):
-        pass
+        # view-source: doesn't work on itself and custom schemes
+        scheme = self.url().scheme()
+        if scheme == 'view-source' or scheme == 'app' or scheme == 'qrc':
+            def htmlFunc(html):
+                print(html)
+            self.page().toHtml(htmlFunc)
 
     def sendPageByEmail(self):
-        pass
+        body = QUrl.toPercentEncoding(self.url().toEncoded())
+        subject = QUrl.toPercentEncoding(self.title())
+        mailUrl = QUrl.fromEncoded('mailto:%20?body=%s&subject=%s' % (body, subject))
+        QDesktopServices.openUrl(mailUrl)
 
     def openUrlInNewTab(self, url, position):
         '''
         @param: url QUrl
         @param: position Qz::NewTabPositionFlags
         '''
-        pass
+        self.loadInNewTab(url, position)
 
     # pure virtual method
     def closeView(self):
@@ -449,62 +505,90 @@ class WebView(QWebEngineView):
 
     # protected Q_SLOTS:
     def _slotLoadStarted(self):
-        pass
+        self._progress = 0
+        if not self.title(True):
+            self.titleChanged.emit(self.title())
 
     def _slotLoadProgress(self, progress):
-        pass
+        if self._progress < 100:
+            self._progress = progress
+
+        # QtWebEngine sometimes forgets applied zoom factor
+        if qFuzzyCompare(self.zoomFactor(), self.zoomLevels()[self._currentZoomLevel] / 100.0):
+            self._applyZoom()
 
     def _slotLoadFinished(self, ok):
         '''
         @param: ok bool
         '''
-        pass
+        self._progress = 100
+
+        if ok:
+            gVar.app.history().addHistoryEntry(self)
 
     def _slotIconChanged(self):
-        pass
+        IconProvider.instance().saveIcon(self)
 
     def _slotUrlChanged(self, url):
         '''
         @param: url QUrl
         '''
-        pass
+        if not url.isEmpty() and not self.title(True):
+            # Don't treat this as background activity change
+            oldActivity = self._backgroundActivity
+            self._backgroundActivity = True
+            self.titleChanged.emit(self.title())
+            self._backgroundActivity = oldActivity
 
     def _slotTitleChanged(self, title):
         '''
         @param: title QString
         '''
-        pass
+        if not self.isVisible() and not self.isLoading() and not self._backgroundActivity:
+            self._backgroundActivity = True
+            self.backgroundActivityChanged.emit(self._backgroundActivity)
 
     # Context menu slots
     def _openUrlInNewWindow(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            gVar.app.createWindow(const.BW_NewWindow, action.data().toUrl())
 
     def _sendTextByMail(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            body = QUrl.toPercentEncoding(action.data().toString())
+            mailUrl = QUrl.fromEncoded('mailto:%20?body=%s' % body)
+            QDesktopServices.openUrl(mailUrl)
 
     def _copyLinkToClipboard(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            QApplication.clipboard().setText(action.data().toUrl().toEncoded())
 
     def _savePageAs(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.SavePage)
 
     def _copyImageToClipboard(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.CopyImageToClipboard)
 
     def _downloadLinkToDisk(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.DownloadLinkToDisk)
 
     def _downloadImageToDisk(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.DownloadImageToDisk)
 
     def _downloadMediaToDisk(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.DownloadMediaToDisk)
 
     def _openActionUrl(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            self.loadByUrl(action.data().toUrl())
 
     def _showSiteInfo(self):
-        pass
+        s = SiteInfo(self)
+        s.show()
 
     def _searchSelectedText(self):
         pass
@@ -516,10 +600,14 @@ class WebView(QWebEngineView):
         pass
 
     def _openUrlInSelectedTab(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            self.openUrlInNewTab(action.data().toUrl(), const.NT_CleanSelectedTab)
 
     def _openUrlInBackgroundTab(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            self.openUrlInNewTab(action.data().toUrl(), const.NT_CleanNotSelectedTab)
 
     # To support user's option whether to open in selected or background tab
     def userDefinedOpenUrlInNewTab(self, url=QUrl(), invert=False):

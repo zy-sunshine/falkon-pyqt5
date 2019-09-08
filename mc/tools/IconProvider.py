@@ -1,10 +1,11 @@
 from PyQt5.Qt import QImage
 from PyQt5.Qt import QIcon
 from threading import Lock
+from mc.common.designutil import Singleton
 
 # Need to be QWidget subclass, otherwise qproperty- setting won't work
 # but in Python could inherate form object directly
-class IconProvider(object):
+class IconProvider(Singleton):
     def __init__(self):
         self._emptyWebImage = QImage()
         self._bookmarkIcon = QIcon()
@@ -118,13 +119,6 @@ class IconProvider(object):
         '''
         @param: url QUrl
         @return: QIcon
-        '''
-        return QIcon()
-
-    @classmethod
-    def instance(cls):
-        '''
-        @return: IconProvider
         '''
         return QIcon()
 

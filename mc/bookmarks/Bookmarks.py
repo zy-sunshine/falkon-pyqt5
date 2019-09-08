@@ -257,7 +257,7 @@ class Bookmarks(QObject):
         error = False
 
         try:
-            res = jloads(gVar.appTools.readAllFileByteContents(bookmarksFile))
+            res = jloads(gVar.appTools.readAllFileContents(bookmarksFile))
             if type(res) != map:
                 error = True
         except ValueError:
@@ -273,7 +273,7 @@ class Bookmarks(QObject):
                 copy(bookmarksFile, backupFile)
 
             # Load default bookmarks
-            content = gVar.appTools.readAllFileByteContents(':data/bookmarks.json')
+            content = gVar.appTools.readAllFileContents(':data/bookmarks.json')
             data = jloads(content)
             assert(type(data) == dict)
 
