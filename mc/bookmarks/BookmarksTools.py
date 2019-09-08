@@ -1,0 +1,2 @@
+class BookmarksTools(object):
+    pass

@@ -1,0 +1,594 @@
+<html id="html"><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<title>%SITE-TITLE%</title>
+
+<style type="text/css" media="screen">
+html {
+    background: url("%IMG_BACKGROUND%") no-repeat center center, url("qrc:html/sd_bg.svg");
+    background-size: %B_SIZE%;
+    background-attachment: fixed;
+}
+
+body {
+    font-family: sans-serif;
+    color: #eaeaea;
+    direction: %DIRECTION%;
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 12px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,175,255, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0,175,255, 0.1);
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(255,255,255, 0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,175,255, 0.6)
+}
+
+body * {
+    -webkit-user-select: none;
+    font-size: 100%;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.add {
+    %RIGHT_STR%: 6px;
+    background: url(qrc:html/plus.svg);
+    height: 32px;
+    outline: none;
+    position: fixed;
+    bottom: 10px;
+    width: 32px;
+}
+
+.sett {
+    %RIGHT_STR%: 6px;
+    background: url(qrc:html/configure.svg);
+    height: 32px;
+    outline: none;
+    position: fixed;
+    top: 10px;
+    width: 32px;
+}
+
+.add:hover {
+    background-color: rgba(0,0,0, 0.5);
+    box-shadow: 0 0 1px 2px rgba(0,175,255, 0.5);
+    cursor: pointer;
+}
+
+.sett:hover {
+    background-color: rgba(0,0,0, 0.5);
+    box-shadow: 0 0 1px 2px rgba(0,175,255, 0.5);
+    cursor: pointer;
+}
+
+#quickdial {
+    outline: none;
+    margin: auto;
+    text-align: center;
+}
+
+#quickdial div.entry {
+    background-color: rgba(0,0,0, 0.4);
+    position: relative;
+    float: %LEFT_STR%;
+    margin: 5px;
+    border-radius: 1px;
+    border: 1px solid rgba(0,0,0, 0.3);
+    background-clip: padding-box;
+}
+
+#quickdial div.entry:hover {
+    box-shadow: 0 0 0 2px rgba(0,175,255, 0.5);
+}
+
+#quickdial img {
+    display: block;
+    margin: auto;
+    border-radius: 0px 0px 0 0;
+}
+
+#quickdial img[src="%LOADING-IMG%"]{
+    margin: 10% auto auto auto;
+    height: 66%;
+    width: 44%;
+}
+
+#quickdial img[src=""] {
+    visibility: hidden;
+}
+
+#quickdial a {
+    position: absolute;
+    %LEFT_STR%: 0;
+    top: 0;
+    width: 100%;
+    height: 87%;
+}
+
+span.boxTitle {
+    width: 80%;
+    position: absolute;
+    %LEFT_STR%: 0;
+    bottom: 0px;
+    margin: 0 10%;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: default;
+}
+
+span.edit, span.close, span.reload {
+    width: 9%;
+    height: 13%;
+    position: absolute;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: none;
+    min-width: 16px;
+    min-height: 16px;
+}
+
+span.edit {
+    %LEFT_STR%: 1px;
+    bottom: 1px;
+    background: url(qrc:html/edit.svg);
+}
+
+span.close {
+    %RIGHT_STR%: 1px;
+    bottom: 1px;
+    background: url(qrc:html/close.svg);
+}
+
+span.reload {
+    %RIGHT_STR%: 1px;
+    top: 1px;
+    background: url(qrc:html/reload.svg);
+}
+
+span.edit:hover {
+    background: url(qrc:html/edit_active.svg);
+}
+
+span.reload:hover {
+    background: url(qrc:html/reload_active.svg);
+}
+
+span.close:hover {
+    background: url(qrc:html/close_active.svg)
+}
+
+div.entry:hover .edit, div.entry:hover .close, div.entry:hover .reload {
+    display: inline;
+}
+
+#overlay-edit {
+    outline: none;
+    width: 500px;
+    height: auto;
+    max-height: 120%;
+    margin-%LEFT_STR%: auto;
+    margin-%RIGHT_STR%: auto;
+    margin-top: 5%;
+    background-color: rgba(0,0,0, 0.6);
+    border-radius: 1px;
+    border: 1px solid rgba(0,0,0, 0.8);
+    box-shadow: 0 0 0 1px rgba(255,255,255, 0.6);
+    padding: 15px;
+    padding-bottom: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#overlay-edit img {
+    display: block;
+    margin-%LEFT_STR%: auto;
+    margin-%RIGHT_STR%: auto;
+    max-width: 100%;
+    max-height: auto;
+}
+
+#overlay-edit img[src="%LOADING-IMG%"] {
+    width: 54px;
+    height: 55px;
+}
+
+#overlay-edit .buttonbox input {
+    margin-%RIGHT_STR%: 0;
+    margin-%LEFT_STR%: 3px;
+}
+
+#overlay-edit table {
+    width: 100%;
+    margin-%LEFT_STR%: auto;
+    margin-%RIGHT_STR%: auto;
+}
+
+#overlay-edit table input[type="text"] {
+    width: 100%;
+    -webkit-user-select: auto;
+    background-color: #eeeeee;
+    border-radius: 1px;
+}
+
+#settingsBox {
+    outline: none;
+    margin-%LEFT_STR%: auto;
+    margin-%RIGHT_STR%: auto;
+    margin-top: 1%;
+    width: 365px;
+    max-width: 377px;
+    height: auto;
+    max-height: 120%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 15px 20px 0;
+    background-color: rgba(0,0,0, 0.6);
+    border-radius: 1px;
+    border: 1px solid rgba(0,0,0, 0.8);
+}
+
+#settingsBox .content {
+    margin-%LEFT_STR%: auto;
+    margin-%RIGHT_STR%: auto;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #888888;
+    text-align: center;
+}
+
+#settingsBox .thumbhold {
+    margin-%LEFT_STR%: auto;
+    margin-%RIGHT_STR%: auto;
+    margin-bottom: 5px;
+    border-radius: 1px;
+    text-align: center;
+    width: 360px;
+    height: 200px;
+    background: #aaaaaa;
+}
+
+#settingsBox .thumbhold p {
+    padding: 0;
+    background: rgba(0,0,0, 0.4);
+    url("%IMG_BACKGROUND%") no-repeat center center;
+    background-size: %B_SIZE%;
+    width: 358px;
+    height: 198px;
+    border-radius: 1px;
+    position: relative;
+    %LEFT_STR%: 1px;
+    top: 1px;
+    line-height: 198px;
+    cursor: default;
+}
+
+#settingsBox p label {
+    margin: 2px;
+    padding: 1px;
+    text-align: center;
+}
+
+#settingsBox p select {
+    margin: 2px;
+    padding: 1px;
+    text-align: center;
+    width: auto;
+}
+
+#settingsBox p select option {
+    text-align: center;
+}
+
+#settingsBox .togop {
+    margin-bottom: 1px;
+    padding-bottom: 2px;
+}
+
+#settingsBox .button {
+    margin: 5px;
+    padding: 1px;
+    text-align:center;
+    width: 98%;
+}
+
+#settingsBox .rowsel {
+    margin: 2px;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(135,135,135, 1.0);
+}
+
+#settingsBox .rowsel input {
+    background-color: rgba(0,0,0, 0.4);
+    text-align: center;
+    width: 80%;
+    height: 12px;
+    margin: 0;
+    padding-bottom: 0;
+}
+
+#settingsBox .rowsel span {
+    font-weight: bold;
+    text-align: center;
+    margin: 2px;
+    margin-%RIGHT_STR%: 7px;
+    display: inline-block;
+    width: 25px;
+}
+
+#ImgSelector {
+    position:relative;
+    z-index: 1;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: 360px;
+    height: 200px;
+    text-shadow: 1px 1px 2px #000000, 0 0 1em #000000;
+}
+
+#ImgSelectorMenu {
+    position:relative;
+    z-index: 2;
+    bottom: 115px;
+    right: -120px;
+    text-shadow: 1px 1px 2px #000000, 0 0 1em #000000;
+}
+
+#ImgSelectorToggle {
+    position:relative;
+    z-index: 2;
+    left: 10px;
+    bottom: 210px;
+    text-shadow: 1px 1px 2px #000000, 0 0 1em #000000;
+}
+
+.buttonbox {
+    margin-bottom: 10px;
+    text-align: %RIGHT_STR%;
+}
+
+.overlay {
+    background: rgba(128,128,128, 0.8);
+    background: -webkit-radial-gradient(rgba(127,127,127, 0.5), rgba(127,127,127, 0.5) 35%, rgba(0,0,0, 0.7));
+    bottom: 0;
+    %LEFT_STR%: 0;
+    padding: 20px;
+    padding-bottom: 130px;
+    position: fixed;
+    %RIGHT_STR%: 0;
+    top: 0;
+}
+
+input[type=button], select {
+    padding: 0px;
+    margin: 5px;
+    outline: none;
+    background: rgba(0,0,0, 0.8);
+    box-shadow: 0 0 1px 2px rgba(255,255,255, 0.5);
+    border: 6px;
+    border-radius: 2px;
+    color: #eaeaea;
+    width: 135px;
+    height: 32px;
+    font-weight: bold;
+}
+
+input[type=button]:hover, input[type=text]:hover, select:hover {
+    box-shadow: 0 0 1px 2px rgba(0,175,255, 0.8);
+    background: rgba(0,175,255, 0.3);
+    transition: 0.1s;
+    cursor: pointer;
+}
+
+input[type=button]:active, select:active {
+    background: rgba(90,165,255, 0.8);
+    box-shadow: 0 0 1px 2px rgba(0,175,255, 0.8);
+}
+
+input[type=text] {
+    padding: 5px;
+    margin: 5px;
+    width: 100%;
+    background-color: rgba(0,0,0, 0.6) !important;
+    outline: none;
+    box-shadow: 0 0 1px 2px rgba(255,255,255, 0.5);
+    border: 6px;
+    border-radius: 2px;
+    color: rgba(234,234,234, 1.0);
+    width: 135px;
+    height: 32px;
+}
+
+input[type=range] {
+    height: 26px;
+    -webkit-appearance: none;
+    margin: 10px 0;
+    width: 115%;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 115%;
+    height: 20px;
+    cursor: pointer;
+    background: rgba(80,85,90, 1.0);
+    border-radius: 14px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  box-shadow: none;
+  border: none;
+  height: 20px;
+  width: 40px;
+  border-radius: 12px;
+  background: rgba(0,175,255, 1.0);
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: rgba(80,85,90, 1.0);
+}
+
+input[type=range]:disabled::-webkit-slider-thumb,
+input[type=range]:disabled:hover::-webkit-slider-thumb {
+    -webkit-box-shadow: inset 0 0 6px rgba(255,255,255, 0.5);
+    background: rgba(0,0,0, 0.0);
+    color: #f00;
+}
+
+input[type=checkbox] {
+    visibility: hidden;
+}
+
+.checkbox {
+    width: 340px;
+    margin: 20px 3px;
+    position: relative;
+}
+
+.checkbox label {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    top: 0;
+    left: 0;
+    box-shadow: 0 0 1px 2px rgba(255,255,255, 0.5);
+    border: 1px;
+    border-radius: 2px;
+    background: #111111;
+}
+
+.checkbox label:hover {
+    box-shadow: 0 0 1px 2px rgba(0,175,255, 0.8);
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.checkbox label:after {
+    opacity: 0.1;
+    content: '';
+    position: absolute;
+    width: 9px;
+    height: 5px;
+    background: transparent;
+    top: 6px;
+    left: 7px;
+    border: 3px solid #dddddd;
+    border-top: none;
+    border-right: none;
+    transform: rotate(-45deg);
+}
+
+.checkbox label:hover::after {
+    opacity: 0.3;
+}
+
+.checkbox input[type=checkbox]:checked + label:after {
+    opacity: 1;
+}
+
+</style>
+</head>
+
+<body>
+
+    <p hidden id="script-data"
+        data-img-background="%IMG_BACKGROUND%"
+        data-url-background="%URL_BACKGROUND%"
+        data-loading-image="%LOADING-IMG%"
+        data-left-str="%LEFT_STR%"
+        data-b-size="%B_SIZE%"
+        data-cancel="%CANCEL%"
+        data-url="%URL%"
+        data-title="%TITLE%"
+        data-edit="%APPLY%";
+        data-new-page="%NEW-PAGE%"
+        data-title-edit="%TITLE-EDIT%"
+        data-title-remove="%TITLE-REMOVE%"
+        data-title-reload="%TITLE-RELOAD%"
+        data-title-fetch-title="%TITLE-FETCHTITLE%"
+        data-title-warn="%TITLE-WARN%"
+        data-title-warn-rel="%TITLE-WARN-REL%"
+        data-max-pages-row="%ROW-PAGES%"
+        data-dial-width="%SD-SIZE%"
+        data-sd-center="%SD-CENTER%"
+        data-initial-script='%INITIAL-SCRIPT%'>
+    </p>
+
+<noscript>%JAVASCRIPT-DISABLED%</noscript>
+
+<div id="quickdial">
+</div>
+
+<a id="button-configure-speed-dial" title="%SETTINGS-TITLE%" class="sett"></a>
+<a id="button-add-speed-dial" title="%ADD-TITLE%" class="add"></a>
+
+<div id="fadeOverlay2" class="overlay" style="display:none;">
+<div id="settingsBox">
+    <div class="checkbox">
+        <input type="checkbox" id="SdCntrToggle" name="sdcntrt"/>
+        <label for="SdCntrToggle"></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%TXT_CNTRDLS%
+    </div>
+    <div class="togop">
+        <p align="center"><label for="PgInRow">%TXT_NRROWS%</label></p>
+    </div>
+    <div class="rowsel">
+        <span id="sliderValuePg"></span>
+        <input id="PgInRow" type="range" min="2" max="10" step="1" />
+    </div>
+    <div class="checkbox">
+        <input type="checkbox" id="SdSizeToggle" name="sdsizet" />
+        <label for="SdSizeToggle"></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%TXT_SDSIZE%
+    </div>
+    <div class="rowsel">
+        <div id="SdSizeStateColor">
+            <span id="sliderValueSd" color="#f00"></span>
+            <input id="SdSize" type="range" min="100" max="500" step="1" />
+        </div>
+    </div>
+    <div id="ImgSelector">
+        <div id="BgImgSel" class="thumbhold" disabled="disabled"><p id="thumb">%TXT_SELECTIMAGE%</p>
+        </div>
+        <p>
+            <input id="BgImgHold" type="hidden" value="%IMG_BACKGROUND%" />
+            <input id="BgImgHoldUrl" type="hidden" value="%URL_BACKGROUND%" />
+        </p>
+        <div class="checkbox" id="ImgSelectorToggle">
+            <input type="checkbox" id="BgImgToggle" name="sdbackimg" />
+            <label for="BgImgToggle"></label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%TXT_NOTE%
+        </div>
+        <div id="ImgSelectorMenu">
+            <label for="BgImgSelSiz">%TXT_PLACEMENT%</label>
+            <select id="BgImgSelSiz" name="imgselsize">
+                <option value="contain">&nbsp;&nbsp;%TXT_FIT%</option>
+                <option value="auto">&nbsp;&nbsp;%TXT_AUTO%</option>
+                <option value="cover">&nbsp;&nbsp;%TXT_COVER%</option>
+                <option value="100% auto">&nbsp;&nbsp;%TXT_FWIDTH%</option>
+                <option value="auto 100%">&nbsp;&nbsp;%TXT_FHEIGHT%</option>
+            </select>
+        </div>
+    </div>
+    <div class="buttonbox">
+        <input id="button-cancel" type="button" value=" %CANCEL% " />
+        <input id="button-apply" type="button" value="   %APPLY%   " >
+    </div>
+  </div>
+</div>
+</body>
+
+</html>

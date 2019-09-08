@@ -1,0 +1,67 @@
+[Icon Theme]
+Name=Breeze
+Name[ar]=نسيم
+Name[ast]=Breeze
+Name[ca]=Brisa
+Name[ca@valencia]=Brisa
+Name[cs]=Breeze
+Name[da]=Breeze
+Name[de]=Breeze
+Name[en_GB]=Breeze
+Name[es]=Brisa
+Name[fi]=Breeze
+Name[fr]=Breeze
+Name[gl]=Breeze
+Name[id]=Breeze
+Name[it]=Brezza
+Name[ko]=Breeze
+Name[nl]=Breeze
+Name[nn]=Breeze
+Name[pl]=Bryza
+Name[pt]=Brisa
+Name[pt_BR]=Breeze
+Name[sk]=Vánok
+Name[sv]=Breeze
+Name[uk]=Breeze
+Name[x-test]=xxBreezexx
+Name[zh_CN]=微风
+Name[zh_TW]=Breeze
+Comment=Breeze Team
+Comment[ar]=فريق نسيم
+Comment[ast]=L'equipu de Breeze
+Comment[ca]=L'equip «Breeze»
+Comment[ca@valencia]=L'equip «Breeze»
+Comment[cs]=Team Breeze
+Comment[da]=Breeze-tema
+Comment[de]=Breeze-Team
+Comment[en_GB]=Breeze Team
+Comment[es]=Equipo de Brisa
+Comment[fi]=Breeze-työryhmä
+Comment[fr]=L'équipe de Breeze
+Comment[gl]=Equipo de Breeze
+Comment[id]=Tim Breeze
+Comment[it]=La squadra di Brezza
+Comment[ko]=Breeze 팀
+Comment[nl]=Breeze-team
+Comment[nn]=Breeze-laget
+Comment[pl]=Zespół Bryzy
+Comment[pt]=Equipa do Brisa
+Comment[pt_BR]=Equipe Breeze
+Comment[sk]=Tým Vánok
+Comment[sv]=Breeze-gruppen
+Comment[uk]=Команда Breeze
+Comment[x-test]=xxBreeze Teamxx
+Comment[zh_CN]=微风团队
+Comment[zh_TW]=Breeze 團隊
+DisplayDepth=32
+Inherits=default
+Directories=16x16,22x22,32x32
+
+[16x16]
+Size=16
+
+[22x22]
+Size=22
+
+[32x32]
+Size=32

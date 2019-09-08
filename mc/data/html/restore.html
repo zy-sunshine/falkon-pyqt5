@@ -1,0 +1,177 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<title>%TITLE%</title>
+<style>
+html {background: #dddddd;font-family: sans-serif;color: #525c66;}
+html * {font-size: 100%;line-height: 1.6;}
+#box {background: #ffffff;max-width:650px;min-width:400px;overflow:auto;margin: 25px auto 10px auto;padding: 10px 40px;text-align: %LEFT_STR%;direction: %DIRECTION%;}
+hr {color: lightgray;width: 100%;}
+img.warning {float: %LEFT_STR%;margin-%LEFT_STR%: -20px;margin-top: 15px;}
+h1 {font-size: 150%;font-weight: bold;border-bottom: 1px solid #f4f4f4;margin-%LEFT_STR%: 48px;margin-%RIGHT_STR%: 50px;}
+h2 {font-size: 100%;font-weight: normal;border-bottom: 1px solid #f4f4f4;margin-%LEFT_STR%: 48px;padding: 5px 0px 10px 2px;margin-%RIGHT_STR%: 50px;}
+ul {font-size: 90%;padding-%LEFT_STR%: 48px;margin: 20px 0;max-width:600px;}
+li {padding: 5px;}
+
+#recovery-widget
+{
+    margin: 20px 50px;
+}
+
+#recovery-widget .button
+{
+    margin-top: 10px;
+    height: 25px;
+}
+
+#restore-session-button
+{
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+#listview
+{
+    width: 500px;
+    border-spacing: 0;
+    border: 1px solid #c0c2c4;
+    cursor: default;
+    -webkit-user-select: none;
+}
+
+#listview tbody,
+#listview thead
+{
+    display: block;
+}
+
+#listview thead
+{
+    height: 30px;
+    background: #eff0f1;
+    padding-left: 5px;
+}
+
+#listview th
+{
+    line-height: 30px;
+    font-weight: normal;
+    vertical-align: middle;
+}
+
+#listview tbody
+{
+    height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#listview tbody
+{
+    border-top: 1px solid #c0c2c4;
+}
+
+#listview tbody td
+{
+    height: 26px;
+    width: 480px;
+    max-width: 480px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#listview tbody tr:hover
+{
+    background-color: #baddff;
+}
+
+#listview tbody tr.selected
+{
+    color: white;
+    background-color: #1e90ff;
+}
+
+#listview img
+{
+    width: 16px;
+    height: 16px;
+    margin-right: 7px;
+}
+
+#listview input
+{
+    margin-top: 6px;
+    margin-left: 8px;
+    margin-right: 10px;
+}
+
+#listview .tab input
+{
+    margin-left: 15px;
+}
+
+#listview .window
+{
+    font-weight: bold;
+}
+
+#listview span
+{
+    vertical-align: top;
+}
+
+#listview td.js-disabled
+{
+    text-align: center;
+    height: 150px;
+}
+
+#listview tbody tr.js-disabled:hover
+{
+    background-color: transparent;
+}
+
+</style>
+
+</head>
+<body>
+
+    <p hidden id="script-data"
+        data-window="%WINDOW%">
+    </p>
+
+  <div id="box">
+    <img class="warning" src="%IMAGE%" width=45>
+    <h1>%OOPS%</h1>
+    <h2>%APOLOGIZE%</h2>
+
+    <ul>
+      <li>%TRY-REMOVING%</li>
+      <li>%START-NEW%</li>
+    </ul>
+
+    <div id="recovery-widget">
+      <table id="listview">
+        <thead>
+          <tr>
+            <th>%WINDOWS-AND-TABS%</th>
+          </tr>
+        </thead>
+        <tbody id="recovery-items">
+          <noscript>
+            <tr class="js-disabled">
+              <td class="js-disabled">%JAVASCRIPT-DISABLED%</td>
+            </tr>
+          </noscript>
+        </tbody>
+      </table>
+
+      <form>
+      <input class="button" type="submit" id="start-new-session-button" name="new-session" value="%BUTTON-START-NEW%">
+      <input class="button" type="submit" id="restore-session-button" name="restore-session" value="   %BUTTON-RESTORE%   ">
+      </form>
+    </div>
+  </div>
+</body>
+
+</html>
