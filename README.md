@@ -29,6 +29,24 @@ In short, Python is faster than C++, saving time and effort.
 * Using Python dynamic language features can simplify development complexity without having to solve C++'s cumbersome syntax and memory leaks, pointers, etc.
 * Debugging with Python is easier than GDB
 
+## How to run
+* Install PyQt5 and PyQtWebEngine
+```
+pip install PyQt5
+pip install PyQtWebEngine
+```
+*Set the environment
+```
+# Running under Windows
+env.bat
+# Running under Linux
+source env.sh
+```
+* Run the program
+```
+python mc\main\main.py
+```
+
 # falkon-pyqt5
 Falkon 使用 PyQt5 重写
 
@@ -59,3 +77,21 @@ Falkon 使用 PyQt5 重写
 * 而Python不需要编译，直接运行，开发上时间上快很多
 * 用Python动态语言的特性可以简化开发复杂度，不必解决C++繁琐的语法以及内存泄露，指针等问题
 * 用Python的调试方式比GDB方便
+
+## 如何运行
+* 安装PyQt5 以及 PyQtWebEngine
+```
+pip install PyQt5
+pip install PyQtWebEngine
+```
+* 设置环境
+```
+# Windows 下运行
+env.bat
+# 或者 Linux 下运行
+source env.sh
+```
+* 运行程序
+```
+python mc\main\main.py
+```
