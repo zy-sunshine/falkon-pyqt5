@@ -124,7 +124,7 @@ class TabBarHelper(QTabBar):
         if iconButton:
             pix = iconButton.grab()
             if not pix.isNull():
-                tab.icon = pix
+                tab.icon = QIcon(pix)
                 tab.iconSize = pix.size() / pix.devicePixelRatioF()
 
         if closeButton:

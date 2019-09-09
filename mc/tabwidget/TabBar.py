@@ -21,6 +21,7 @@ from PyQt5.Qt import QDrag
 from PyQt5.Qt import QMimeData
 from PyQt5.Qt import QUrl
 from mc.webtab.WebTab import WebTab
+from PyQt5.Qt import pyqtProperty
 
 class TabBarTabMetrics(QWidget):
     def __init__(self, parent=None):
@@ -36,35 +37,45 @@ class TabBarTabMetrics(QWidget):
         self._metrics[3] = 100
         self._metrics[4] = -1  # Will be initialized from TabBar
 
-    def normalMaxWidth(self):
+    def _normalMaxWidth(self):
         return self._metrics[0]
 
     def setNormalMaxWidth(self, value):
         self._metrics[0] = value
 
-    def normalMinWidth(self):
+    normalMaxWidth = pyqtProperty(int, _normalMaxWidth, setNormalMaxWidth)
+
+    def _normalMinWidth(self):
         return self._metrics[1]
 
     def setNormalMinWidth(self, value):
         self._metrics[1] = value
 
-    def activeMinWidth(self):
+    normalMinWidth = pyqtProperty(int, _normalMinWidth, setNormalMinWidth)
+
+    def _activeMinWidth(self):
         return self._metrics[2]
 
     def setActiveMinWidth(self, value):
         self._metrics[2] = value
 
-    def overflowedWidth(self):
+    activeMinWidth = pyqtProperty(int, _activeMinWidth, setActiveMinWidth)
+
+    def _overflowedWidth(self):
         return self._metrics[3]
 
     def setOverflowedWidth(self, value):
         self._metrics[3] = value
 
-    def pinnedWidth(self):
+    overflowedWidth = pyqtProperty(int, _overflowedWidth, setOverflowedWidth)
+
+    def _pinnedWidth(self):
         return self._metrics[4]
 
     def setPinnedWidth(self, value):
         self._metrics[4] = value
+
+    pinnedWidth = pyqtProperty(int, _pinnedWidth, setPinnedWidth)
 
 class TabBar(ComboTabBar):
     _s_tabMetrics = None
@@ -210,10 +221,10 @@ class TabBar(ComboTabBar):
     # override
     def tabInserted(self, index):
         # Initialize pinned tab metrics
-        if self.tabMetrics().pinnedWidth() == -1:
+        if self.tabMetrics()._pinnedWidth() == -1:
 
             def tabInsertedFunc():
-                if self.tabMetrics().pinnedWidth() != -1:
+                if self.tabMetrics()._pinnedWidth() != -1:
                     return
                 w = self.tabButton(0, self.iconButtonPosition())
                 if w and w.parentWidget():
@@ -245,7 +256,7 @@ class TabBar(ComboTabBar):
         if not isinstance(button, CloseButton):
             return
 
-        self.setTabButton(index, self.closeButtonPosition(), 0)
+        self.setTabButton(index, self.closeButtonPosition(), None)
         button.deleteLater()
 
     def _showCloseButton(self, index):
@@ -532,17 +543,17 @@ class TabBar(ComboTabBar):
         @param: sizeType ComboTabBar::SizeType
         '''
         if sizeType == self.PinnedTabWidth:
-            result = self.tabMetrics().pinnedWidth()
+            result = self.tabMetrics()._pinnedWidth()
             if result > 0: return result
             else: return 32
         elif sizeType == self.ActiveTabMinimumWidth:
-            return self.tabMetrics().activeMinWidth()
+            return self.tabMetrics()._activeMinWidth()
         elif sizeType == self.NormalTabMinimumWidth:
-            return self.tabMetrics().normalMinWidth()
+            return self.tabMetrics()._normalMinWidth()
         elif sizeType == self.OverflowedTabWidth:
-            return self.tabMetrics().overflowedWidth()
+            return self.tabMetrics()._overflowedWidth()
         elif sizeType == self.NormalTabMaximumWidth:
-            return self.tabMetrics().normalMaxWidth()
+            return self.tabMetrics()._normalMaxWidth()
         elif sizeType == self.ExtraReservedWidth:
             return self._tabWidget.extraReservedWidth()
 
