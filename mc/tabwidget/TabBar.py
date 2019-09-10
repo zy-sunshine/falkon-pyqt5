@@ -22,6 +22,7 @@ from PyQt5.Qt import QMimeData
 from PyQt5.Qt import QUrl
 from mc.webtab.WebTab import WebTab
 from PyQt5.Qt import pyqtProperty
+from PyQt5.Qt import QRect
 
 class TabBarTabMetrics(QWidget):
     def __init__(self, parent=None):
@@ -396,13 +397,43 @@ class TabBar(ComboTabBar):
                 self._tabWidget.requestCloseTab(id_)
                 return
 
+    _NoAction = 0
+    _SelectTab = 1
+    _PrependTab = 2
+    _AppendTab = 3
+
+    @classmethod
+    def tabDropAction(cls, pos, tabRect, allowSelect):
+        if not tabRect.contains(pos):
+            return cls._NoAction
+
+        # QPoint
+        c = tabRect.center()
+        # QSize
+        csize = QSize(tabRect.width() * 0.7, tabRect.height() * 0.7)
+        center = QRect(c.x() - csize.width() / 2, c.y() - csize.height() / 2, csize.width(), csize.height())
+
+        if allowSelect and center.contains(pos):
+            return cls._SelectTab
+        elif pos.x() < c.x():
+            return cls._PrependTab
+        else:
+            return cls._AppendTab
+
     # override
     def dragEnterEvent(self, event):
         '''
         @param: event QDragEnterEvent
         '''
         print('dragEnterEvent')
-        pass
+        # QMimeData
+        mime = event.mimeData()
+
+        if mime.hasText() or mime.hasUrls() or (mime.hasFormat(self.MIMETYPE) and event.source()):
+            event.acceptProposedAction()
+            return
+
+        super().dragEnterEvent(event)
 
     # override
     def dragMoveEvent(self, event):
@@ -410,7 +441,20 @@ class TabBar(ComboTabBar):
         @param: event QDragMoveEvent
         '''
         print('dragMoveEvent')
-        pass
+        index = self.tabAt(event.pos())
+        mime = event.mimeData()
+
+        if index == -1:
+            super().dragMoveEvent(event)
+            return
+
+        dropAction = self.tabDropAction(event.pos(), self.tabRect(index), not mime.hasFormat(self.MIMETYPE))
+        if dropAction == self._PrependTab:
+            self.showDropIndicator(index, self.BeforTab)
+        elif dropAction == self._AppendTab:
+            self.showDropIndicator(index, self.AfterTab)
+        else:
+            self.clearDropIndicator()
 
     # override
     def dragLeaveEvent(self, event):
@@ -418,7 +462,7 @@ class TabBar(ComboTabBar):
         @param: event QDragLeaveEvent
         '''
         print('dragLeaveEvent')
-        pass
+        self.clearDropIndicator()
 
     # override
     def dropEvent(self, event):

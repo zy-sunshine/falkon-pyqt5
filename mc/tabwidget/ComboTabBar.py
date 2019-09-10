@@ -1012,7 +1012,7 @@ class ComboTabBar(QWidget):
         w = QApplication.widgetAt(self.mapToGlobal(pos))
         if not isinstance(w, TabBarHelper) and not isinstance(w, TabIcon) and \
                 not isinstance(w, CloseButton):
-            return
+            return -1
 
         if self._pinnedTabBarWidget.geometry().contains(pos):
             return self._pinnedTabBarWidget.tabAt(self._pinnedTabBarWidget.mapFromParent(pos))
