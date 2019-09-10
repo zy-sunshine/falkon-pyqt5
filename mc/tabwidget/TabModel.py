@@ -49,8 +49,9 @@ class TabModel(QAbstractListModel):
         @param: tab WebTab
         @return: QModelIndex
         '''
-        idx = self._tabs.index(tab)
-        if idx < 0:
+        try:
+            idx = self._tabs.index(tab)
+        except ValueError:
             return QModelIndex()
         else:
             return self.index(idx)

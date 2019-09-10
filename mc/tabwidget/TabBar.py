@@ -368,7 +368,7 @@ class TabBar(ComboTabBar):
                 drag.setMimeData(mime)
                 drag.setPixmap(self.tabPixmap(self.currentIndex()))
                 if drag.exec_() == Qt.IgnoreAction:
-                    self._tabWidget.detachTab(self.currentIndex())
+                    self._tabWidget.detachTabByIndex(self.currentIndex())
                 return
 
     # override

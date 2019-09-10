@@ -284,13 +284,13 @@ class MainApplication(QtSingleApp):
         @return: BrowserWindow
         '''
         if self._lastActiveWindow:
-            return self._lastActiveWindow.data()
+            return self._lastActiveWindow
         if not self._windows:
             return None
         else:
             return self._windows[0]
 
-    def createWindow(self, type_, startUrl):
+    def createWindow(self, type_, startUrl=QUrl()):
         '''
         @param: type_ const.BrowserWindowType
         @param: startUrl QUrl

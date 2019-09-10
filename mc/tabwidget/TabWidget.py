@@ -464,9 +464,9 @@ class TabWidget(TabStackedWidget):
             self._tabBar.ensureVisible(index)
 
         self.changed.emit()
-        self.tabInserted.emit(index)
+        self.tabInserted.emit(newIndex)
 
-        return index
+        return newIndex
 
     def addTabFromClipboard(self):
         # QString
@@ -605,7 +605,7 @@ class TabWidget(TabStackedWidget):
 
     # NOTICE: detachTab renamed to detachTabByIndex
     def detachTabByIndex(self, index):
-        tab = self._weTab(index)
+        tab = self._weTabByIndex(index)
         assert(tab)
 
         if self.count() == 1 and gVar.app.windowCount() == 1:

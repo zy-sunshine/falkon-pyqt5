@@ -1002,7 +1002,7 @@ class ComboTabBar(QWidget):
         '''
         @return: QPixmap
         '''
-        self._localTabBar(index).tabPixmap(self._toLocalIndex(index))
+        return self._localTabBar(index).tabPixmap(self._toLocalIndex(index))
 
     def tabAt(self, pos):
         '''

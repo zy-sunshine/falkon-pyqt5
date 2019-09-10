@@ -675,7 +675,7 @@ class BrowserWindow(QMainWindow):
             addTab = True
         if self._startTab:
             addTab = False
-            self._tabWidget.addViewByReq(self._startTab, const.NT_SelectedTab)
+            self._tabWidget.addViewByTab(self._startTab, const.NT_SelectedTab)
         if self._startPage:
             addTab = False
             self._tabWidget.addViewByReq(QUrl())
