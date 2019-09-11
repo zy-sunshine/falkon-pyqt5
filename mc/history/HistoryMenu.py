@@ -126,7 +126,7 @@ class HistoryMenu(Menu):
         @param: url QUrl
         '''
         if self._window:
-            self._window.tabWidget().addViewByReq(url, gVar.appSettings.newTabPosition)
+            self._window.tabWidget().addViewByUrl(url, gVar.appSettings.newTabPosition)
 
     def _openUrlInNewWindow(self, url):
         '''

@@ -173,7 +173,7 @@ class TabWidget(TabStackedWidget):
         childTabs = []  # QVector<QPair<WebTab*, QVector<int>>>
 
         for tab in tabs:
-            index = self.addViewByReq(QUrl(), const.NT_CleanSelectedTab,
+            index = self.addViewByUrl(QUrl(), const.NT_CleanSelectedTab,
                 False, tab.isPinned)
             webTab = self._weTabByIndex(index)
             webTab.restoreTab(tab)
@@ -342,6 +342,9 @@ class TabWidget(TabStackedWidget):
         if self.count() == 0:
             self._window.close()
 
+    def addViewByUrl(self, url, openFlags, selectLine=False, pinned=False):
+        return self.addViewByReq(LoadRequest(url), openFlags, selectLine, pinned)
+
     # Q_SLOTS:
     def addViewByReq(self, req, openFlags, selectLine=False, pinned=False):
         '''
@@ -350,8 +353,7 @@ class TabWidget(TabStackedWidget):
         @param: selectLine bool
         @param: pinned bool
         '''
-        if isinstance(req, QUrl):
-            req = LoadRequest(req)
+        assert(isinstance(req, LoadRequest))
         return self.addViewByReqTitle(req, '', openFlags, selectLine, -1, pinned)
 
     def addViewByReqTitle(self, req, title="New tab", openFlags=const.NT_SelectedTab,  # noqa C901
@@ -475,7 +477,7 @@ class TabWidget(TabStackedWidget):
         guessedUrl = QUrl.fromUserInput(selectionClipboard)
 
         if not guessedUrl.isEmpty():
-            self.addViewByReq(guessedUrl, const.NT_SelectedNewEmptyTab)
+            self.addViewByUrl(guessedUrl, const.NT_SelectedNewEmptyTab)
 
     def duplicateTab(self, index):
         if not self._validIndex(index):
@@ -651,7 +653,7 @@ class TabWidget(TabStackedWidget):
         if tab.position < 0:
             return
 
-        index = self.addViewByReq(QUrl(), tab.tabState.title, const.NT_CleanSelectedTab, False, tab.position)
+        index = self.addViewByUrl(QUrl(), tab.tabState.title, const.NT_CleanSelectedTab, False, tab.position)
         webTab = self._weTabByIndex(index)
         webTab.setParentTab(tab.parentTab)
         webTab.p_restoreTab(tab.tabState)
@@ -664,7 +666,7 @@ class TabWidget(TabStackedWidget):
 
         closedTabs = self._closedTabsManager.closedTabs()
         for tab in closedTabs:
-            index = self.addViewByReq(QUrl(), tab.tabState.title, const.NT_CleanSelectedTab)
+            index = self.addViewByUrl(QUrl(), tab.tabState.title, const.NT_CleanSelectedTab)
             webTab = self._weTabByIndex(index)
             webTab.setParentTab(tab.parentTab)
             webTab.p_restoreTab(tab.tabState)

@@ -316,7 +316,7 @@ class TabBar(ComboTabBar):
             return
 
         if event.buttons() == Qt.LeftButton and self.emptyArea(event.pos()):
-            self._tabWidget.addViewByReq(QUrl(), const.NT_SelectedTabAtTheEnd, True)
+            self._tabWidget.addViewByUrl(QUrl(), const.NT_SelectedTabAtTheEnd, True)
             return
 
         super().mouseDoubleClickEvent(event)
@@ -389,7 +389,7 @@ class TabBar(ComboTabBar):
 
         if event.button() == Qt.MiddleButton:
             if self.emptyArea(event.pos()):
-                self._tabWidget.addViewByReq(QUrl(), const.NT_SelectedTabAtTheEnd, True)
+                self._tabWidget.addViewByUrl(QUrl(), const.NT_SelectedTabAtTheEnd, True)
                 return
 
             id_ = self.tabAt(event.pos())

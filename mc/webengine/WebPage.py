@@ -294,7 +294,7 @@ class WebPage(QWebEnginePage):
             window = gVar.app.getWindow()
 
         def createTab(pos):
-            index = window.tabWidget().addViewByReq(QUrl(), pos)
+            index = window.tabWidget().addViewByUrl(QUrl(), pos)
             view = window.weViewByIndex(index)
             view.setPage(WebPage())
             if tView:

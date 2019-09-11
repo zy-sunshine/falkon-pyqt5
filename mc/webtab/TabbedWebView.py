@@ -75,7 +75,7 @@ class TabbedWebView(WebView):
         @param: position Qz::NewTabPositionFlags
         '''
         if self._window:
-            index = self._window.tabWidget().addViewByReq(QUrl(), position)
+            index = self._window.tabWidget().addViewByUrl(QUrl(), position)
             view = self._window.weView(index)
             self.webTab().addChildTab(view.webTab())
             view.webTab().locationBar().showUrl(req.url())

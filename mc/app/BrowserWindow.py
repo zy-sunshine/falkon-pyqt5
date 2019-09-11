@@ -86,7 +86,7 @@ class BrowserWindow(QMainWindow):
         self._mainLayout = None  # QVBoxLayout
         self._mainSplitter = None  # QSplitter
         self._tabWidget = None  # TabWidget
-        self._sideBar = None  # SideBar
+        self._sideBar = None  # QPointer<SideBar>
         self._sideBarManager = SideBarManager(self)
         self._statusBar = None
 
@@ -310,12 +310,12 @@ class BrowserWindow(QMainWindow):
         @return SideBar*
         '''
         if self._sideBar:
-            return self._sideBar.data()
+            return self._sideBar
         self._sideBar = SideBar(self._sideBarManager, self)
-        self._mainSplitter.insertWidget(0, self._sideBar.data())
+        self._mainSplitter.insertWidget(0, self._sideBar)
         self._mainSplitter.setCollapsible(0, False)
         self._mainLayout.setSizes([self._sideBarWidth, self._webViewWidth])
-        return self._sideBar.data()
+        return self._sideBar
 
     def saveSideBarSettings(self):
         if self._sideBar:
@@ -421,7 +421,7 @@ class BrowserWindow(QMainWindow):
 
     # public Q_SLOTS:
     def addTab(self):
-        self._tabWidget.addViewByReq(QUrl(), const.NT_SelectedNewEmptyTab, True)
+        self._tabWidget.addViewByUrl(QUrl(), const.NT_SelectedNewEmptyTab, True)
         self._tabWidget.setCurrentTabFresh(True)
 
         if self.isFullScreen():
@@ -431,7 +431,7 @@ class BrowserWindow(QMainWindow):
         self.loadAddress(self._homepage)
 
     def goHomeInNewTab(self):
-        self._tabWidget.addViewByReq(self._homepage, const.NT_SelectedTab)
+        self._tabWidget.addViewByUrl(self._homepage, const.NT_SelectedTab)
 
     def goBack(self):
         self.weView().back()
@@ -551,7 +551,7 @@ class BrowserWindow(QMainWindow):
     def loadAddress(self, url):
         webView = self.weView()
         if webView.webTab().isPinned():
-            index = self._tabWidget.addViewByReq(url, gVar.appSettings.newTabPosition)
+            index = self._tabWidget.addViewByUrl(url, gVar.appSettings.newTabPosition)
             self.weView(index).setFocus()
         else:
             webView.setFocus()
@@ -662,7 +662,7 @@ class BrowserWindow(QMainWindow):
             if gVar.app.isStartingAfterCrash():
                 addTab = False
                 startUrl.clear()
-                self._tabWidget.addViewByReq(QUrl('app:restore'), const.NT_CleanSelectedTabAtTheEnd)
+                self._tabWidget.addViewByUrl(QUrl('app:restore'), const.NT_CleanSelectedTabAtTheEnd)
             elif afterLaunch in (MainApplication.SelectSession, MainApplication.RestoreSession):
                 addTab = self._tabWidget.count() <= 0
         elif self._windowType in (const.BW_NewWindow, const.BW_MacFirstWindow):
@@ -678,15 +678,15 @@ class BrowserWindow(QMainWindow):
             self._tabWidget.addViewByTab(self._startTab, const.NT_SelectedTab)
         if self._startPage:
             addTab = False
-            self._tabWidget.addViewByReq(QUrl())
+            self._tabWidget.addViewByUrl(QUrl())
             self.weView().setPage(self._startPage)
         if addTab:
-            self._tabWidget.addViewByReq(startUrl, const.NT_CleanSelectedTabAtTheEnd)
+            self._tabWidget.addViewByUrl(startUrl, const.NT_CleanSelectedTabAtTheEnd)
             if not startUrl or startUrl == 'app:speeddial':
                 self.locationBar().setFocus()
         # Someting went really wrong .. add one tab
         if self._tabWidget.count() <= 0:
-            self._tabWidget.addViewByReq(self._homepage, const.NT_SelectedTabAtTheEnd)
+            self._tabWidget.addViewByUrl(self._homepage, const.NT_SelectedTabAtTheEnd)
 
         gVar.app.plugins().emitMainWindowCreated(self)
         self.startingCompleted.emit()
@@ -726,7 +726,7 @@ class BrowserWindow(QMainWindow):
         settings.beginGroup('Browser-View-Settings')
         settings.setValue('WindowGeometry', self.saveGeometry())
 
-        state = self.saveUiState()
+        state = self._saveUiState()
         for key, val in state:
             settings.setValue(key, val)
 
@@ -1028,8 +1028,8 @@ class BrowserWindow(QMainWindow):
         '''
         self.saveSideBarSettings()
         state = {}
-        state['LocationBarWidth'] = self._navigationToolbar.splitter().size()[0]
-        state['WebSearchBarWidth'] = self._navigationToolbar.splitter().size()[1]
+        state['LocationBarWidth'] = self._navigationToolbar.splitter().sizes()[0]
+        state['WebSearchBarWidth'] = self._navigationToolbar.splitter().sizes()[1]
         state['SideBarWidth'] = self._sideBarWidth
         state['WebViewWidth'] = self._webViewWidth
         state['SideBar'] = self._sideBarManager.activeSideBar()

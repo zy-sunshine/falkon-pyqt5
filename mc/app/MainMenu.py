@@ -245,15 +245,15 @@ class MainMenu(QMenu):
 
     def _showInfoAboutApp(self):
         if self._window:
-            self._window.tabWidget().addViewByReq(QUrl('app:about'), const.NT_CleanSelectedTab)
+            self._window.tabWidget().addViewByUrl(QUrl('app:about'), const.NT_CleanSelectedTab)
 
     def _showConfigInfo(self):
         if self._window:
-            self._window.tabWidget().addViewByReq(QUrl('app:config'), const.NT_CleanSelectedTab)
+            self._window.tabWidget().addViewByUrl(QUrl('app:config'), const.NT_CleanSelectedTab)
 
     def _reportIssue(self):
         if self._window:
-            self._window.tabWidget().addViewByReq(QUrl('app:reportbug'), const.NT_CleanSelectedTab)
+            self._window.tabWidget().addViewByUrl(QUrl('app:reportbug'), const.NT_CleanSelectedTab)
 
     # Other actions
     def _restoreClosedTab(self):
@@ -319,26 +319,23 @@ class MainMenu(QMenu):
         self._actions['Edit/SelectAll'].setEnabled(view.pageAction(QWebEnginePage.SelectAll).isEnabled())
 
     def _aboutToShowtoolbarsMenu(self):
-        #TODO: QMenu* menu = qobject_cast<QMenu*>(sender());
         menu = self.sender()
-        assert(menu)
+        assert(isinstance(menu, QMenu))
 
         if self._window:
             menu.clear()
             self._window.createToolbarsMenu(menu)
 
     def _aboutToShowSidebarsMenu(self):
-        #TODO: QMenu* menu = qobject_cast<QMenu*>(sender());
         menu = self.sender()
-        assert(menu)
+        assert(isinstance(menu, QMenu))
 
         if self._window:
-            self._window.createSidebarsMenu()
+            self._window.createSidebarsMenu(menu)
 
     def _aboutToShowEncodingMenu(self):
-        #TODO: QMenu* menu = qobject_cast<QMenu*>(sender());
         menu = self.sender()
-        assert(menu)
+        assert(isinstance(menu, QMenu))
 
         if self._window:
             menu.clear()
@@ -436,11 +433,11 @@ class MainMenu(QMenu):
         self._menuView = QMenu('&View')
         self._menuView.aboutToShow.connect(self._aboutToShowViewMenu)
 
-        toolbarsMenu = QMenu('Toolbars')
+        toolbarsMenu = QMenu('Toolbars', self._menuView)
         toolbarsMenu.aboutToShow.connect(self._aboutToShowtoolbarsMenu)
-        sidebarMenu = QMenu('Sidebar')
+        sidebarMenu = QMenu('Sidebar', self._menuView)
         sidebarMenu.aboutToShow.connect(self._aboutToShowSidebarsMenu)
-        encodingMenu = QMenu('Character &Encoding')
+        encodingMenu = QMenu('Character &Encoding', self._menuView)
         encodingMenu.aboutToShow.connect(self._aboutToShowEncodingMenu)
 
         # Create menus to make shortcuts available event before first showing
