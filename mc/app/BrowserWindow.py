@@ -21,9 +21,7 @@ from PyQt5.Qt import QDir
 from PyQt5.QtWidgets import QMenuBar
 from PyQt5.Qt import QAction, QActionGroup
 
-from mc.webengine.WebView import WebView
 from mc.webengine.LoadRequest import LoadRequest
-from mc.webtab.TabbedWebView import TabbedWebView
 from mc.common import const
 from .Settings import Settings
 from mc.common.globalvars import gVar
@@ -77,7 +75,7 @@ class BrowserWindow(QMainWindow):
             self.tabs.clear()
 
     def __init__(self, type_, startUrl=QUrl()):
-        QMainWindow.__init__(self, None)
+        super().__init__(None)
         self._startUrl = startUrl
         self._homepage = QUrl()
         self._windowType = type_
@@ -448,7 +446,7 @@ class BrowserWindow(QMainWindow):
     def setWindowTitle(self, title):
         if gVar.app.isPrivate():
             title = '%s (Private Browsing)' % title
-        QMainWindow.setWindowTitle(self, title)
+        super().setWindowTitle(title)
 
     def showWebInspector(self):
         webView = self.weView()
@@ -727,7 +725,7 @@ class BrowserWindow(QMainWindow):
         settings.setValue('WindowGeometry', self.saveGeometry())
 
         state = self._saveUiState()
-        for key, val in state:
+        for key, val in state.items():
             settings.setValue(key, val)
 
         settings.endGroup()
@@ -772,7 +770,7 @@ class BrowserWindow(QMainWindow):
             if self._hideNavigationTimer:
                 self._hideNavigationTimer.stop()
 
-        return QMainWindow.event(self, event)
+        return super().event(event)
 
     # override
     def resizeEvent(self, event):
@@ -780,7 +778,7 @@ class BrowserWindow(QMainWindow):
         @param: event QResizeEvent
         '''
         self._bookmarksToolbar.setMaximumWidth(self.width())
-        QMainWindow.resizeEvent(self, event)
+        super().resizeEvent(event)
 
     # override
     def keyPressEvent(self, event):
@@ -819,7 +817,7 @@ class BrowserWindow(QMainWindow):
             dialog.setDefaultButton(QMessageBox.No)
             dialog.setText(
                 "There are still %s open tabs and your session won't be stored.\n" % self._tabWidget.count() +
-                "Are you sure you want to close this window?", "")
+                "Are you sure you want to close this window?")
             dialog.setCheckBoxText("Don't ask again")
             dialog.setWindowTitle('There are still open tabs')
             dialog.setIcon(QMessageBox.Warning)
@@ -832,7 +830,7 @@ class BrowserWindow(QMainWindow):
         self.aboutToClose.emit()
 
         self._saveSettings()
-        gVar.app.closedWindowsManager.saveWindow(self)
+        gVar.app.closedWindowsManager().saveWindow(self)
         if gVar.app.windowCount() == 1:
             gVar.app.quitApplication()
 
@@ -845,17 +843,17 @@ class BrowserWindow(QMainWindow):
         windowGeometry = settings.value('WindowGeometry', b'')
 
         keys = [
-            'LocationBarWidth',
-            'WebSearchBarWidth',
-            'SideBarWidth',
-            'WebViewWidth',
-            'SideBar',
+            ('LocationBarWidth', int),
+            ('WebSearchBarWidth', int),
+            ('SideBarWidth', int),
+            ('WebViewWidth', int),
+            ('SideBar', str),
         ]
 
         uiState = {}
-        for key in keys:
+        for key, typ in keys:
             if settings.contains(key):
-                uiState[key] = settings.value(key)
+                uiState[key] = typ(settings.value(key))
 
         settings.endGroup()
 

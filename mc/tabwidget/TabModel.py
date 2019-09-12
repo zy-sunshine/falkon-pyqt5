@@ -194,7 +194,7 @@ class TabModel(QAbstractListModel):
             self.beginResetModel()
             self._window = None
             self._tabs.clear()
-            self.endResteModel()
+            self.endResetModel()
 
         self._window.destroyed.connect(destroyedCb)
 

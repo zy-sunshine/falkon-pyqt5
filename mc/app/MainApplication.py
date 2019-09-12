@@ -1,7 +1,7 @@
 import re
 from sys import stderr
 from os import remove
-from os.path import join as pathjoin
+from os.path import join as pathjoin, exists as pathexists
 from PyQt5.QtWidgets import QApplication
 from PyQt5.Qt import Qt
 from PyQt5.Qt import QIcon
@@ -17,7 +17,7 @@ from PyQt5.Qt import QObject
 from PyQt5.Qt import QByteArray
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineDownloadItem
 from PyQt5.QtWebEngineWidgets import QWebEngineSettings
-from PyQt5.Qt import pyqtSignal, pyqtSlot
+from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QIODevice
 from PyQt5.Qt import QDataStream
 from PyQt5.Qt import QCoreApplication
@@ -296,7 +296,11 @@ class MainApplication(QtSingleApp):
         @param: startUrl QUrl
         '''
         window = BrowserWindow(type_, startUrl)
-        window.destroyed.connect(self.windowDestroyed)
+
+        def windowDestroyFunc():
+            self.windowDestroyed(window)
+        window.destroyed.connect(windowDestroyFunc)
+
         self._windows.insert(0, window)
         return window
 
@@ -453,14 +457,12 @@ class MainApplication(QtSingleApp):
         cls.s_testMode = enabled
 
     # Q_SLOTS
-    @pyqtSlot(QUrl)
     def addNewTab(self, url=QUrl()):
         window = self.getWindow()
         if window:
             window.tabWidget().addView(url, url.isEmpty() and
                 const.NT_SelectedNewEmptyTab or const.NT_SelectedTabAtTheEnd)
 
-    @pyqtSlot(QUrl)
     def startPrivateBrowsing(self, startUrl=QUrl()):
         url = startUrl
         act = self.sender()
@@ -475,21 +477,17 @@ class MainApplication(QtSingleApp):
             print('MainApplication: Cannot start new browser process for private browsing!'
                 ' %s %s' % (self.applicationFilePath(), args), file=stderr)
 
-    @pyqtSlot()
     def reloadUserStyleSheet(self):
         userCssFile = Settings().value('Web-Browser-Settings/userStyleSheet', '')
         self.setUserStyleSheet(userCssFile)
 
-    @pyqtSlot()
     def restoreOverrideCursor(self):
         super().restoreOverrideCursor()
 
-    @pyqtSlot()
     def changeOccurred(self):
         if self._autoSaver:
             self._autoSaver.changeOccurred()
 
-    @pyqtSlot()
     def quitApplication(self):
         if self._downloadManager and not self._downloadManager.canClose():
             self._downloadManager.show()
@@ -514,7 +512,6 @@ class MainApplication(QtSingleApp):
     activeWindowChanged = pyqtSignal(BrowserWindow)
 
     # private Q_SLOTS
-    @pyqtSlot()
     def postLaunch(self):
         if self.OpenDownloadManager in self._postLaunchActions:
             self.downloadManager().show()
@@ -528,7 +525,6 @@ class MainApplication(QtSingleApp):
 
         QTimer.singleShot(5000, self.runDeferredPostLaunchActions)
 
-    @pyqtSlot()
     def saveState(self):
         restoreData = RestoreData()
         for window in self._windows:
@@ -543,7 +539,6 @@ class MainApplication(QtSingleApp):
         stream.read(restoreData)
         return data
 
-    @pyqtSlot()
     def saveSettings(self):
         if self.isPrivate():
             return
@@ -572,15 +567,17 @@ class MainApplication(QtSingleApp):
         if deleteCache:
             gVar.appTools.removeRecursively(self.app.webProfile().cachePath())
 
-        self._searchsEngineManager.saveSettings()
-        self.plugins.shutdown()
+        if self._searchEnginesManager:
+            self._searchEnginesManager.saveSettings()
+        self._plugins.shutdown()
         self._networkManager.shutdown()
 
-        self.qzSettings.saveSettings()
-        remove(pathjoin(DataPaths.currentProfilePath(), 'webpageIcons.db'))
+        gVar.appSettings.saveSettings()
+        webpageIconsPath = pathjoin(DataPaths.currentProfilePath(), 'webpageIcons.db')
+        if pathexists(webpageIconsPath):
+            remove(webpageIconsPath)
         self.sessionManager().saveSettings()
 
-    @pyqtSlot(str)
     def messageReceivedCb(self, message):
         '''
         @param: message string
@@ -628,7 +625,6 @@ class MainApplication(QtSingleApp):
         if win and not actWin.isEmpty:
             win.loadAddress(actUrl)
 
-    @pyqtSlot(QObject)
     def windowDestroyed(self, window):
         '''
         @param: message QObject*
@@ -637,19 +633,16 @@ class MainApplication(QtSingleApp):
         assert(window in self._windows)
         self._windows.remove(window)
 
-    @pyqtSlot()
     def onFocusChanged(self):
         activeBrowserWindow = self.activeWindow()
         if activeBrowserWindow:
             self._lastActiveWindow = activeBrowserWindow
             self.activeWindowChanged.emit(self._lastActiveWindow)
 
-    @pyqtSlot()
     def runDeferredPostLaunchActions(self):
         self.checkDefaultWebBrowser()
         self.checkOptimizeDatabase()
 
-    @pyqtSlot(QWebEngineDownloadItem)
     def downloadRequested(self, download):
         '''
         @param: download QWebEngineDownloadItem

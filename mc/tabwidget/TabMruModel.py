@@ -105,11 +105,26 @@ class TabMruModel(QAbstractProxyModel):
         self._sourceRowsInserted(QModelIndex(), 0, self.sourceModel().rowCount())
         self._currentTabChanged(self._window.tabWidget().currentIndex())
 
-        self._window.tabWidget().currentChanged.connect(self._currentTabChanged, Qt.UniqueConnection)
-        self.sourceModel().dataChanged.connect(self._sourceDataChanged, Qt.UniqueConnection)
-        self.sourceModel().rowsInserted.connect(self._sourceRowsInserted, Qt.UniqueConnection)
-        self.sourceModel().rowsAboutToBeRemoved.connect(self._sourceRowsAboutToBeRemoved, Qt.UniqueConnection)
-        self.sourceModel().modelReset.connect(self._sourceReset, Qt.UniqueConnection)
+        try:
+            self._window.tabWidget().currentChanged.connect(self._currentTabChanged, Qt.UniqueConnection)
+        except TypeError:  # connection is not unique
+            pass
+        try:
+            self.sourceModel().dataChanged.connect(self._sourceDataChanged, Qt.UniqueConnection)
+        except TypeError:  # connection is not unique
+            pass
+        try:
+            self.sourceModel().rowsInserted.connect(self._sourceRowsInserted, Qt.UniqueConnection)
+        except TypeError:  # connection is not unique
+            pass
+        try:
+            self.sourceModel().rowsAboutToBeRemoved.connect(self._sourceRowsAboutToBeRemoved, Qt.UniqueConnection)
+        except TypeError:  # connection is not unique
+            pass
+        try:
+            self.sourceModel().modelReset.connect(self._sourceReset, Qt.UniqueConnection)
+        except TypeError:  # connection is not unique
+            pass
 
     def _index(self, item):
         '''
