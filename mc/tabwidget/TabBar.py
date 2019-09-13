@@ -23,6 +23,7 @@ from PyQt5.Qt import QUrl
 from mc.webtab.WebTab import WebTab
 from PyQt5.Qt import pyqtProperty
 from PyQt5.Qt import QRect
+from mc.webengine.LoadRequest import LoadRequest
 
 class TabBarTabMetrics(QWidget):
     def __init__(self, parent=None):
@@ -464,13 +465,76 @@ class TabBar(ComboTabBar):
         print('dragLeaveEvent')
         self.clearDropIndicator()
 
+        super().dragLeaveEvent(event)
+
     # override
-    def dropEvent(self, event):
+    def dropEvent(self, event):  # noqa C901
         '''
         @param: event QDropEvent
         '''
         print('dropEvent')
-        pass
+        self.clearDropIndicator()
+
+        mime = event.mimeData()
+
+        if not mime.hasText() and not mime.hasUrls() and not mime.hasFormat(self.MIMETYPE):
+            super().dropEvent(event)
+            return
+
+        event.acceptProposedAction()
+
+        sourceTabBar = event.source()
+        if not isinstance(sourceTabBar, TabBar):
+            sourceTabBar = None
+
+        index = self.tabAt(event.pos())
+        if index == -1:
+            if mime.hasUrls():
+                for url in mime.urls():
+                    self._tabWidget.addViewByUrl(url, const.NT_SelectedTabAtTheEnd)
+            elif mime.hasText():
+                self._tabWidget.addViewByReq(gVar.app.searchEnginesManager().searchResult(mime.text()),
+                        const.NT_SelectedNewEmptyTab)
+            elif mime.hasFormat(self.MIMETYPE) and sourceTabBar:
+                tab = sourceTabBar.webTab()
+                if tab:
+                    sourceTabBar._tabWidget.detachTab(tab)
+                    tab.setPinned(False)
+                    self._tabWidget.addViewByTab(tab, const.NT_SelectedTab)
+        else:
+            req = LoadRequest()
+            tab = self._tabWidget.webTab(index)
+            rect = self.tabRect(index)
+            # DropAction
+            action = self.tabDropAction(event.pos(), rect, not mime.hasFormat(self.MIMETYPE))
+            if mime.hasUrls():
+                req = LoadRequest(mime.urls()[0])
+            elif mime.hasText():
+                req = gVar.app.searchEnginesManager().searchResult(mime.text())
+            if action == self._SelectTab:
+                if req.isValid():
+                    tab.load(req)
+            elif action in (self._PrependTab, self._AppendTab):
+                if action == self._PrependTab:
+                    newIndex = index
+                else:
+                    newIndex = index + 1
+                if req.isValid():
+                    self._tabWidget.addViewByReqTitle(req, '', const.NT_SelectedNewEmptyTab,
+                        False, newIndex, index < self.pinnedTabsCount())
+                elif mime.hasFormat(self.MIMETYPE) and sourceTabBar:
+                    tab = sourceTabBar.webTab()
+                    if tab:
+                        if sourceTabBar == self:
+                            if newIndex > tab.tabIndex():
+                                toIndex = newIndex - 1
+                            else:
+                                toIndex = newIndex
+                            tab.moveTab(toIndex)
+                        else:
+                            sourceTabBar._tabWidget.detachTab(tab)
+                            tab.setPinned(index < self.pinnedTabsCount())
+                            self._tabWidget.insertView(newIndex, tab, const.NT_SelectedTab)
 
     # override
     def tabSizeHint(self, index, fast):  # noqa C901

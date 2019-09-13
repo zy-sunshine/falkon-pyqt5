@@ -1008,6 +1008,7 @@ class ComboTabBar(QWidget):
         '''
         @brief: Returns tab index at pos, or -1
         @param: pos QPoint
+        @return: int tab index
         '''
         w = QApplication.widgetAt(self.mapToGlobal(pos))
         if not isinstance(w, TabBarHelper) and not isinstance(w, TabIcon) and \
@@ -1656,7 +1657,7 @@ class ComboTabBar(QWidget):
         if not rect.isValid():
             return rect
 
-        r = QRect()
+        r = QRect(rect)
 
         if tabBar == self._mainTabBar:
             r.moveLeft(r.x() + self.mapFromGlobal(self._mainTabBar.mapToGlobal(QPoint(0, 0))).x())

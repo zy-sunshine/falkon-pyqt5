@@ -44,6 +44,7 @@ sessionVersion = '1.0'
     ON_BrowserWindow,
 ) = ObjectName = range(4)
 
+# NT stand for new tab?
 NT_SelectedTab = 1
 NT_NotSelectedTab = 2
 NT_CleanTab = 4
