@@ -5,6 +5,7 @@ from PyQt5.Qt import pyqtSignal
 from mc.app.Settings import Settings
 from calendar import month_name
 from .HistoryModel import HistoryModel
+from mc.common.models import HistoryDbModel
 
 class History(QObject):
 
@@ -86,11 +87,21 @@ class History(QObject):
         '''
         pass
 
-    def mostVisited(self):
+    def mostVisited(self, count):
         '''
+        @param: count int
         @return: QVector<HistoryEntry>
         '''
-        pass
+        result = []
+        for dbobj in HistoryDbModel.select().order_by(HistoryDbModel.count.desc()).limit(count):
+            entry = self.HistoryEntry()
+            entry.count = dbobj.count
+            entry.date = dbobj.date
+            entry.id = dbobj.id
+            entry.title = dbobj.title
+            entry.url = QUrl(dbobj.url)
+            result.append(entry)
+        return result
 
     def clearHistory(self):
         pass

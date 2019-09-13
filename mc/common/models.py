@@ -32,7 +32,7 @@ class HistoryDbModel(peewee.Model):
     id = peewee.AutoField(primary_key=True)
     url = peewee.TextField(unique=True)
     title = peewee.TextField(index=True)
-    date = peewee.IntegerField(default=0)
+    date = peewee.DateTimeField()
     count = peewee.IntegerField(default=0)
 
 class SearchEnginesDbModel(peewee.Model):

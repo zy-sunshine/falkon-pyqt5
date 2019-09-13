@@ -270,6 +270,7 @@ class BrowserWindow(QMainWindow):
 
         for mib in QTextCodec.availableMibs():
             codecName = QTextCodec.codecForMib(mib).name()
+            codecName = codecName.data().decode('utf8')
             if codecName in allCodecs:
                 continue
             allCodecs.append(codecName)
@@ -709,7 +710,7 @@ class BrowserWindow(QMainWindow):
     def _changeEncoding(self):
         action = self.sender()
         if action:
-            encoding = action.data().toString()
+            encoding = action.data()
             gVar.app.webSettings().setDefaultTextEncoding(encoding)
             Settings().setValue('Web-Browser-Settings/DefaultEncoding', encoding)
             self.weView().reload()
@@ -1014,7 +1015,7 @@ class BrowserWindow(QMainWindow):
         group = QActionGroup(subMenu)
 
         for codecName in codecNames:
-            act = self.createEncodingAction(codecName, activeCodecName, subMenu)
+            act = self._createEncodingAction(codecName, activeCodecName, subMenu)
             group.addAction(act)
             subMenu.addAction(act)
 
