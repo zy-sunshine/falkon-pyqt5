@@ -209,7 +209,8 @@ class TabModel(QAbstractListModel):
 
         def emitDataChanged(tab, role):
             idx = self.tabIndex(tab)
-            self.dataChanged.emit(idx, idx, [role])
+            if idx.isValid():
+                self.dataChanged.emit(idx, idx, [role])
 
         tab.titleChanged.connect(lambda: emitDataChanged(tab, Qt.DisplayRole))
         tab.titleChanged.connect(lambda: emitDataChanged(tab, self.TitleRole))
