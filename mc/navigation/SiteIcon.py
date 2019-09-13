@@ -3,6 +3,8 @@ from PyQt5.Qt import Qt, QPoint, QIcon, QTimer
 from PyQt5.QtWidgets import QApplication
 from PyQt5.Qt import QDrag, QMimeData
 from mc.common.globalvars import gVar
+from mc.other.SiteInfo import SiteInfo
+from mc.other.SiteInfoWidget import SiteInfoWidget
 
 class SiteIcon(ToolButton):
     def __init__(self, parent):
