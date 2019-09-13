@@ -1,4 +1,3 @@
-from PyQt5.QtWidgets import QLineEdit
 from PyQt5.Qt import QColor
 from PyQt5.Qt import QUrl
 from mc.common.globalvars import gVar
@@ -23,9 +22,7 @@ from PyQt5.Qt import Qt
 from mc.webengine.WebPage import WebPage
 from mc.webengine.LoadRequest import LoadRequest
 from mc.opensearch.SearchEnginesManager import SearchEngine
-
-class LineEdit(QLineEdit):
-    pass
+from mc.lib3rd.LineEdit import LineEdit
 
 class LocationBar(LineEdit):
 
