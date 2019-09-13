@@ -1,3 +1,4 @@
+import peewee
 from os import makedirs
 from os.path import join as pathjoin, exists as pathexists, basename
 from PyQt5.Qt import QSettings
@@ -6,6 +7,7 @@ from .DataPaths import DataPaths
 from mc.common import const
 from shutil import copy
 from mc.common.fileutil import fileUtil
+from mc.common.globalvars import gVar
 
 class ProfileManager(object):
     def initConfigDir(self):
@@ -118,4 +120,18 @@ class ProfileManager(object):
             QMessageBox.warning(0, '%s: Incompatible profile version' % const.APPNAME, text)
 
     def _connectDatabase(self):
-        pass
+        db = peewee.SqliteDatabase(DataPaths.currentProfilePath() + '/browsedata.db')
+        if gVar.app.isPrivate():
+            # db.setConnectOptions('QSQLITE_OPEN_READONLY')
+            pass
+
+        db.connect()
+
+        if not db.get_tables():
+            from mc.common.models import tables
+            for table in tables:
+                table._meta.database = db
+            with db.connection_context():
+                db.create_tables(tables)
+
+        gVar.sqlDatabase.setDatabase(db)

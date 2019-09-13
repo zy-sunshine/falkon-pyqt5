@@ -27,4 +27,9 @@ class GlobalVar(object):
         from mc.other.AppSettings import AppSettings
         return AppSettings()
 
+    @cached_property
+    def sqlDatabase(self):
+        from mc.tools.SqlDatabase import SqlDatabase
+        return SqlDatabase.instance()
+
 gVar = GlobalVar()
