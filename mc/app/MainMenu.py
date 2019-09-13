@@ -345,7 +345,7 @@ class MainMenu(QMenu):
     def _init(self):
         # Standard actions - needed on Mac to be placed correctly in
         # "application" menu
-        action = QAction(QIcon.fromTheme('help-about'), '&About Falcon', self)
+        action = QAction(QIcon.fromTheme('help-about'), '&About App', self)
         action.setMenuRole(QAction.AboutRole)
         action.triggered.connect(self._showAboutDialog)
         self._actions['Standard/About'] = action

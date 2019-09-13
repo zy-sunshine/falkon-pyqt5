@@ -237,7 +237,7 @@ class TabStackedWidget(QWidget):
         widget = self._stack.widget(from_)
         self._stack.removeWidget(widget)
         self._stack.insertWidget(to_, widget)
-        self.blockSignals(False)
+        self._stack.blockSignals(False)
 
     def _tabWasRemoved(self, index):
         if self._previousIndex == index:

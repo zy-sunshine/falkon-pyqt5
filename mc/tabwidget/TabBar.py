@@ -221,7 +221,7 @@ class TabBar(ComboTabBar):
         return index > 0 and index < self.count()
 
     # override
-    def tabInserted(self, index):
+    def _tabInserted(self, index):
         # Initialize pinned tab metrics
         if self.tabMetrics()._pinnedWidth() == -1:
 
@@ -238,14 +238,14 @@ class TabBar(ComboTabBar):
             QTimer.singleShot(0, tabInsertedFunc)
 
     # override
-    def tabRemoved(self, index):
+    def _tabRemoved(self, index):
         self._showCloseButton(self.currentIndex())
         self.setVisible(not (self.count() <= 1 and self._hideTabBarWithOneTab))
 
         # Make sure to move add tab button to correct position when where are no
         # normal tabs
         if self.normalTabsCount() == 0:
-            xForAddTabButton = self.cornerWidth(Qt.TopLeftCorner) + self.PinnedTabWidth()
+            xForAddTabButton = self.cornerWidth(Qt.TopLeftCorner) + self._pinTabBarWidth()
             if QApplication.layoutDirection() == Qt.RightToLeft:
                 xForAddTabButton = self.width() - xForAddTabButton
             self.moveAddTabButton.emit(xForAddTabButton)
