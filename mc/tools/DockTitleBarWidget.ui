@@ -54,7 +54,7 @@
   <customwidget>
    <class>MacToolButton</class>
    <extends>QToolButton</extends>
-   <header>mactoolbutton.h</header>
+   <header>mc.tools.MacToolButton</header>
   </customwidget>
  </customwidgets>
  <resources/>

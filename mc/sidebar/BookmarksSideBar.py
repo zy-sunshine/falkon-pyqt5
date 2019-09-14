@@ -10,11 +10,10 @@ from PyQt5.Qt import QIcon
 class BookmarksSideBar(QWidget):
     def __init__(self, window, parent=None):
         super().__init__(parent)
-        self.ui = uic.loadUi('BookmarksSideBar.ui')
+        self.ui = uic.loadUi('mc/sidebar/BookmarksSideBar.ui', self, package='mc.bookmarks')
         self._window = window
         self._bookmarks = gVar.app.bookmarks()  # Bookmarks
 
-        self.ui.setupUi(self)
         self.ui.tree.setViewType(BookmarksTreeView.BookmarksSidebarViewType)
 
         self.ui.tree.bookmarkActivated.connect(self._bookmarkActived)

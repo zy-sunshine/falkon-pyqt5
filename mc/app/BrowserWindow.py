@@ -313,7 +313,7 @@ class BrowserWindow(QMainWindow):
         self._sideBar = SideBar(self._sideBarManager, self)
         self._mainSplitter.insertWidget(0, self._sideBar)
         self._mainSplitter.setCollapsible(0, False)
-        self._mainLayout.setSizes([self._sideBarWidth, self._webViewWidth])
+        self._mainSplitter.setSizes([self._sideBarWidth, self._webViewWidth])
         return self._sideBar
 
     def saveSideBarSettings(self):

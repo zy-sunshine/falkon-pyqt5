@@ -8,8 +8,7 @@ from PyQt5.Qt import QSizePolicy
 class DockTitleBarWidget(QWidget):
     def __init__(self, title, parent=None):
         super().__init__(parent)
-        self.ui = uic.loadUi('mc/tools/DockTitleBarWidget.ui')
-        self.ui.setupUi(self)
+        self.ui = uic.loadUi('mc/tools/DockTitleBarWidget.ui', self)
         self.ui.closeButton.setIcon(QIcon(IconProvider.standardIcon(QStyle.SP_DialogCloseButton).pixmap(16)))
         self.ui.label.setText(title)
         self.ui.closeButton.clicked.connect(parent.close)

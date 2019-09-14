@@ -54,7 +54,7 @@
   <customwidget>
    <class>BookmarksTreeView</class>
    <extends>QTreeView</extends>
-   <header>bookmarkstreeview.h</header>
+   <header>mc.bookmarks.BookmarksTreeView</header>
   </customwidget>
  </customwidgets>
  <resources/>
