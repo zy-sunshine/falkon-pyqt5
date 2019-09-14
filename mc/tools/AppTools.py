@@ -354,7 +354,7 @@ class AppTools(Singleton):
         pass
 
     def containsIndex(self, container, index):
-        return index > 0 and container.count() > index
+        return index >= 0 and len(container) > index
 
     def paintDropIndicator(self, widget, rect):
         '''
