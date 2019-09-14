@@ -1,3 +1,6 @@
+import asyncio
+# https://github.com/harvimt/quamash
+from quamash import QEventLoop, QThreadExecutor
 from mc.app.MainApplication import MainApplication
 
 from PyQt5 import QtCore
@@ -18,11 +21,17 @@ sys.excepthook = excepthook
 
 def main():
     app = MainApplication(sys.argv)
+    loop = QEventLoop(app)
+    asyncio.set_event_loop(loop)
     if app.isClosing():
         return 0
 
     #app.setProxyStyle(ProxyStyle())
-    return app.exec_()
+    #return app.exec_()
+
+    with loop:
+        # context manager calls .close() when loop completes, and releases all resources
+        loop.run_forever()
 
 if __name__ == '__main__':
     sys.exit(main())
