@@ -1,5 +1,6 @@
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from PyQt5.QtWebEngineWidgets import QWebEngineScript
+from PyQt5.QtWebEngineCore import QWebEngineRegisterProtocolHandlerRequest
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QTime
@@ -10,6 +11,9 @@ from PyQt5.Qt import QUrlQuery
 from PyQt5.Qt import QDir
 from mc.common import const
 from PyQt5.Qt import QTimer
+from .javascript.ExternalJsObject import ExternalJsObject
+from mc.tools.Scripts import Scripts
+from PyQt5.Qt import QFileInfo, QFile
 
 class WebPage(QWebEnginePage):
     # JsWorld
@@ -39,9 +43,67 @@ class WebPage(QWebEnginePage):
 
         self._contentsResizedConnection = None # QMetaObject::Connection
 
-        # TODO:
-        #channel = QWebChannel(self)
+        channel = QWebChannel(self)
+        ExternalJsObject.setupWebChannel(channel, self)
+        self.setWebChannel(channel, self.SafeJsWorld)
+
+        self.loadProgress.connect(self._progress)
+        self.loadFinished.connect(self._finished)
+        self.urlChanged.connect(self._urlChanged)
+        self.featurePermissionRequested.connect(self._featurePermissionRequested)
         self.windowCloseRequested.connect(self._windowCloseRequested)
+        self.fullScreenRequested.connect(self._fullScreenRequested)
+        self.renderProcessTerminated.connect(self._renderProcessTerminated)
+
+        def authFunc(url, auth, proxyHost):
+            '''
+            @param: url QUrl
+            @param: auth QAuthenticator
+            @param: proxyHost QString
+            '''
+            gVar.app.networkManager().proxyAuthentication(proxyHost, auth, self.view())
+        self.authenticationRequired.connect(authFunc)
+
+        # Workaround QWebEnginePage not scrolling to anchors when opened in
+        # background tab
+        def contentsResizeFunc():
+            # QString
+            fragment = self.url().fragment()
+            if fragment:
+                self.runJavaScript(Scripts.scrollToAnchor(fragment))
+            self.contentsSizeChanged.disconnect(self._contentsResizedConnection)
+        self._contentsResizedConnection = self.contentsSizeChanged.connect(contentsResizeFunc)
+
+        # Workaround for broken load started/finished signals in QWebEngine 5.10 5.11
+        # NOTE: if open this revise, will cause page and view loadFinished emit
+        # multi time
+        #def loadProgressFunc(progress):
+        #    '''
+        #    @param: progress int
+        #    '''
+        #    if progress == 100:
+        #        self.loadFinished.emit(True)
+        #self.loadProgress.connect(loadProgressFunc)
+
+        # if QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+        def registerProtocolHandlerFunc(request):
+            '''
+            @param: request QWebEngineRegisterProtocolHandlerRequest
+            '''
+            del self._registerProtocolHandlerRequest
+            self._registerProtocolHandlerRequest = QWebEngineRegisterProtocolHandlerRequest(request)
+        self.registerProtocolHandlerRequested.connect(registerProtocolHandlerFunc)
+
+        # QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+        super().printRequested.connect(self.printRequested)
+
+        def selectClientCertFunc(selection):
+            '''
+            @param: selection QWebEngineClientCertificateSelection
+            '''
+            # TODO: It should prompt user, and Falkon does not support yet.
+            selection.select(selection.certificates()[0])
+        self.selectClientCertificate.connect(selectClientCertFunc)
 
     def view(self):
         '''
@@ -181,10 +243,34 @@ class WebPage(QWebEnginePage):
         '''
         @param: prog int
         '''
-        pass
+        self._loadProgress = prog
+
+        secStatus = self.url().scheme() == 'https'
+
+        if secStatus != self._secureStatus:
+            self._secureStatus = secStatus
+            self.privacyChanged.emit(secStatus)
 
     def _finished(self):
-        pass
+        self._progress(100)
+
+        # File scheme watcher
+        if self.url().scheme() == 'file':
+            info = QFileInfo(self.url().toLocalFile())
+            if info.isFile():
+                if not self._fileWatcher:
+                    self._fileWatcher = DelayedFileWatcher(self)
+                    self._fileWatcher.delayedFileChanged.connect(self._watchedFileChanged)
+
+                filePath = self.url().toLocalFile()
+
+                if QFile.exists(filePath) and filePath not in self._fileWatcher.files():
+                    self._fileWatcher.addPath(filePath)
+        elif self._fileWatcher and self._fileWatcher.files():
+            self._fileWatcher.removePathes(self._fileWatcher.files())
+
+        # AutoFill
+        self._autoFillUsernames = gVar.app.autoFill().completePage(self, self.url())
 
     # private Q_SLOTS:
     def _urlChanged(self, url):
@@ -220,7 +306,7 @@ class WebPage(QWebEnginePage):
         '''
         pass
 
-    def _reanderProcessTerminated(self, terminationStatus, exitCode):
+    def _renderProcessTerminated(self, terminationStatus, exitCode):
         '''
         @param: terminationStatus RenderProcessTerminationStatus
         @param: exitCode int

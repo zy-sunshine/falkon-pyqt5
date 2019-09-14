@@ -52,7 +52,7 @@ class WebView(QWebEngineView):
 
         self.loadStarted.connect(self._slotLoadStarted)
         self.loadProgress.connect(self._slotLoadProgress)
-        self.loadFinished.connect(self._slotLoadFinished)
+        self.loadFinished.connect(lambda ok: WebView._slotLoadFinished(self, ok))
         self.iconChanged.connect(self._slotIconChanged)
         self.urlChanged.connect(self._slotUrlChanged)
         self.titleChanged.connect(self._slotTitleChanged)
@@ -524,7 +524,7 @@ class WebView(QWebEngineView):
         self._progress = 100
 
         if ok:
-            gVar.app.history().addHistoryEntry(self)
+            gVar.app.history().addHistoryEntryByView(self)
 
     def _slotIconChanged(self):
         IconProvider.instance().saveIcon(self)
