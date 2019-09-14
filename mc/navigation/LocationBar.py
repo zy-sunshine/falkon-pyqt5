@@ -23,6 +23,8 @@ from mc.webengine.WebPage import WebPage
 from mc.webengine.LoadRequest import LoadRequest
 from mc.opensearch.SearchEnginesManager import SearchEngine
 from mc.lib3rd.LineEdit import LineEdit
+from PyQt5.Qt import QIcon
+from mc.tools.IconProvider import IconProvider
 
 class LocationBar(LineEdit):
 
@@ -44,7 +46,7 @@ class LocationBar(LineEdit):
             self.loadRequest = LoadRequest()
 
     def __init__(self, parent=None):
-        super(LocationBar, self).__init__(parent)
+        super().__init__(parent)
         self._completer = None  # LocationCompleter
         self._domainCompleterModel = None  # QStringListModel
 
@@ -76,12 +78,11 @@ class LocationBar(LineEdit):
         self._autofillIcon = AutoFillIcon(self)
         down = DownIcon(self)
 
-        # TODO:
-        #self.addWidget(self._siteIcon, LineEdit.LeftSide)
-        #self.addWidget(self._autofillIcon, LineEdit.RightSide)
-        #self.addWidget(self._bookmarkIcon, LineEdit.RightSide)
-        #self.addWidget(self._goIcon, LineEdit.RightSide)
-        #self.addWidget(down, LineEdit.RightSide)
+        self.addWidget(self._siteIcon, LineEdit.LeftSide)
+        self.addWidget(self._autofillIcon, LineEdit.RightSide)
+        self.addWidget(self._bookmarkIcon, LineEdit.RightSide)
+        self.addWidget(self._goIcon, LineEdit.RightSide)
+        self.addWidget(down, LineEdit.RightSide)
 
         self._completer = LocationCompleter(self)
         self._completer.setLocationBar(self)
@@ -102,10 +103,9 @@ class LocationBar(LineEdit):
         self._progressTimer.setSingleShot(True)
         self._progressTimer.timeout.connect(self._hideProgress)
 
-        # TODO:
-        #self.editAction(self.PasteAndGo).setText(_('Paste And &Go'))
-        #self.editAction(self.PasteAndGo).setIcon(QIcon.fromTheme('edit-paste'))
-        #self.editAction(self.PasteAndGo).tirggered.connect(self._pasteAndGo)
+        self.editAction(self.PasteAndGo).setText(_('Paste And &Go'))
+        self.editAction(self.PasteAndGo).setIcon(QIcon.fromTheme('edit-paste'))
+        self.editAction(self.PasteAndGo).triggered.connect(self._pasteAndGo)
 
         self.textEdited.connect(self._textEdited)
         self._goIcon.clicked.connect(self._requestLoadUrl)
@@ -313,10 +313,19 @@ class LocationBar(LineEdit):
         self._updateSiteIcon()
 
     def _pasteAndGo(self):
-        pass
+        self.clear()
+        self.paste()
+        self._requestLoadUrl()
 
     def _updateSiteIcon(self):
-        pass
+        if self._completer.isVisible():
+            self._siteIcon.setIcon(QIcon.fromTheme('edit-find'), QIcon(':icons/menu/search-icon.svg'))
+        else:
+            icon = IconProvider.emptyWebIcon()
+            secured = self.property('secured')
+            if secured:
+                icon = QIcon.fromTheme('document-encrypted', icon)
+            self._siteIcon.setIcon(icon.pixmap(16))
 
     def _updatePlaceHolderText(self):
         pass
@@ -372,7 +381,13 @@ class LocationBar(LineEdit):
         '''
         @param: event QContextMenuEvent
         '''
-        pass
+        menu = self._createContextMenu()
+        menu.setAttribute(Qt.WA_DeleteOnClose)
+
+        # Prevent choosing first option with double rightclick
+        pos = event.globalPos()
+        pos.setY(pos.y() + 1)
+        menu.popup(pos)
 
     # override
     def showEvent(self, event):

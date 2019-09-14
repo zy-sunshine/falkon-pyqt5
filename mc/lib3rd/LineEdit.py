@@ -14,6 +14,8 @@ from PyQt5.Qt import QApplication
 from PyQt5.Qt import QInputMethodEvent
 from PyQt5.Qt import QMouseEvent
 from PyQt5.QtWidgets import QMenu
+from PyQt5.Qt import QSize
+from PyQt5.Qt import pyqtProperty
 from mc.common.globalvars import gVar
 
 class SideWidget(QWidget):
@@ -76,8 +78,8 @@ class LineEdit(QLineEdit):
         self._mainLayout = None  # QHBoxLayout
         self._editActions = [None] * 9  # QAction[9]
 
-        self._minHeight = 0
-        self._leftMargin = -1
+        self.__minHeight = 0
+        self.__leftMargin = -1
         self._ignoreMousePress = False
 
         self._init()
@@ -181,6 +183,30 @@ class LineEdit(QLineEdit):
 
         self._updateActions()
 
+    def size(self):
+        return super().size()
+
+    def setFixedSize(self, size):
+        return super().setFixedSize(size)
+
+    fixedsize = pyqtProperty(QSize, size, setFixedSize)
+
+    def width(self):
+        return super().width()
+
+    def setFixedWidth(self, width):
+        super().setFixedWidth(width)
+
+    fixedwidth = pyqtProperty(int, width, setFixedWidth)
+
+    def heigth(self):
+        return super().height()
+
+    def setFixedHeight(self, height):
+        super().setFixedHeight(height)
+
+    fixedheight = pyqtProperty(int, width, setFixedHeight)
+
     def addWidget(self, widget, position):
         '''
         @param: widget QWidget
@@ -215,11 +241,11 @@ class LineEdit(QLineEdit):
         '''
         return self._leftLayout.spacing()
 
-    def leftMargin(self):
+    def _leftMargin(self):
         '''
         @return: int
         '''
-        return self._leftMargin
+        return self.__leftMargin
 
     def setTextFormat(self, format_):
         '''
@@ -241,11 +267,13 @@ class LineEdit(QLineEdit):
     def clearTextFormat(self):
         self.setTextFormat([])
 
-    def minHeight(self):
-        return self._minHeight
+    def _minHeight(self):
+        return self.__minHeight
 
     def setMinHeight(self, height):
-        self._minHeight = height
+        self.__minHeight = height
+
+    minHeight = pyqtProperty(int, _minHeight, setMinHeight)
 
     # override
     def sizeHint(self):
@@ -254,8 +282,8 @@ class LineEdit(QLineEdit):
         '''
         s = super().sizeHint()
 
-        if s.height() < self._minHeight:
-            s.setHeight(self._minHeight)
+        if s.height() < self.__minHeight:
+            s.setHeight(self.__minHeight)
 
         return s
 
@@ -271,7 +299,9 @@ class LineEdit(QLineEdit):
         '''
         @param: margin int
         '''
-        self._leftMargin = margin
+        self.__leftMargin = margin
+
+    leftMargin = pyqtProperty(int, _leftMargin, setLeftMargin)
 
     def updateTextMargins(self):
         left = self._leftWidget.sizeHint().width()
@@ -279,8 +309,8 @@ class LineEdit(QLineEdit):
         top = 0
         bottom = 0
 
-        if self._leftMargin >= 0:
-            left = self._leftMargin
+        if self.__leftMargin >= 0:
+            left = self.__leftMargin
 
         self.setTextMargins(left, top, right, bottom)
 
@@ -402,8 +432,8 @@ class LineEdit(QLineEdit):
         tmp = self.createStandardContextMenu()
         tmp.setParent(popup)
         tmp.hide()
-        if not tmp.actions().isEmpty():
-            lastAction = tmp.actions().constLast()
+        if tmp.actions():
+            lastAction = tmp.actions()[-1]
         else:
             lastAction = 0
 
@@ -428,7 +458,7 @@ class LineEdit(QLineEdit):
         '''
         @note: Paste actions are updated in separate slot because accessing clipboard is expensive
         '''
-        pasteEnabled = not self.isReadOnly() and QApplication.clipboard().text()
+        pasteEnabled = bool(not self.isReadOnly() and QApplication.clipboard().text())
 
         self._editActions[self.Paste].setEnabled(pasteEnabled)
         self._editActions[self.PasteAndGo].setEnabled(pasteEnabled)
