@@ -6,6 +6,8 @@ from mc.app.Settings import Settings
 from calendar import month_name
 from .HistoryModel import HistoryModel
 from mc.common.models import HistoryDbModel
+from PyQt5.Qt import QTimer
+from mc.common.globalvars import gVar
 
 class History(QObject):
 
@@ -45,14 +47,34 @@ class History(QObject):
         '''
         @param: view WebView
         '''
-        pass
+        if not self._isSaving:
+            return
+
+        url = view.url()
+        title = view.title()
+
+        self.addHistoryEntryByUrlAndTitle(url, title)
 
     def addHistoryEntryByUrlAndTitle(self, url, title):
         '''
         @param: url QUrl
         @param: title QString
         '''
-        pass
+        if not self._isSaving:
+            return
+
+        schemes = ['http', 'https', 'ftp', 'file']
+
+        if url.scheme() not in schemes:
+            return
+
+        if not title:
+            title = _('Empty Page')
+
+        def addEntryFunc():
+            print('addEntryFunc called %s %s' % (url, title))
+
+        gVar.executor.run(addEntryFunc)
 
     def deleteHistoryEntryByIndex(self, index):
         '''
@@ -141,7 +163,6 @@ class History(QObject):
     historyEntryDeleted = pyqtSignal(HistoryEntry)  # entry
     historyEntryEdited = pyqtSignal(HistoryEntry)  # entry
 
-    def resetHistory(self):
-        pass
+    resetHistory = pyqtSignal()
 
 HistoryEntry = History.HistoryEntry

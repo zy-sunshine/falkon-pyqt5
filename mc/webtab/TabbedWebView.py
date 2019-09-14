@@ -111,7 +111,7 @@ class TabbedWebView(WebView):
     def _slotLoadStarted(self):
         self._currentIp = ''
 
-    def _slotLoadFinished(self):
+    def _slotLoadFinished(self, ok):
         pass
 
     def _slotLoadProgress(self, prog):

@@ -347,7 +347,7 @@ class HistoryFilterModel(QSortFilterProxyModel):
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
         self._filterTimer = QTimer(self)
-        self._filterTimer.setSingleSlot(True)
+        self._filterTimer.setSingleShot(True)
         self._filterTimer.setInterval(300)
 
         self._filterTimer.timeout.connect(self._startFiltering)
