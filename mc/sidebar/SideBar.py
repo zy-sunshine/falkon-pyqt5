@@ -44,7 +44,7 @@ class SideBar(QWidget):
 
     def setWidget(self, widget):
         if self._layout.count() == 2:
-            self._layout.removeItem(1)
+            self._layout.removeItem(self._layout.itemAt(1))
 
         if widget:
             self._layout.addWidget(widget)
@@ -125,7 +125,10 @@ class SideBarManager(QObject):
 
             def destroyedFunc():
                 self._activeBar = ''
+                self._window.setSideBarNone()
+                # TODO: needed?
                 self._window.saveSideBarSettings()
+                self._sideBar = None
             self._sideBar.destroyed.connect(destroyedFunc)
 
         if id_ == self._activeBar:

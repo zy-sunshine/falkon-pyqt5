@@ -11,10 +11,9 @@ from mc.history.HistoryTreeView import HistoryTreeView
 class HistorySideBar(QWidget):
     def __init__(self, window, parent=None):
         super().__init__(parent)
-        self.ui = uic.loadUi('HistorySideBar.ui')
+        self.ui = uic.loadUi('mc/sidebar/HistorySideBar.ui', self)
         self._window = window
 
-        self.ui.setupUi(self)
         self.ui.historyTree.setViewType(HistoryTreeView.HistorySidebarViewType)
 
         self.ui.historyTree.urlActivated.connect(self._urlActivated)

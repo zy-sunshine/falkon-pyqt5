@@ -316,6 +316,13 @@ class BrowserWindow(QMainWindow):
         self._mainSplitter.setSizes([self._sideBarWidth, self._webViewWidth])
         return self._sideBar
 
+    def setSideBarNone(self):
+        '''
+        @note: when sideBar is notified destroyed, we should clean python ref in
+        window
+        '''
+        self._sideBar = None
+
     def saveSideBarSettings(self):
         if self._sideBar:
             # That +1 is important here, without it, the sidebar width would
