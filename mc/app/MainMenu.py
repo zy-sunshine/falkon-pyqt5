@@ -14,6 +14,7 @@ from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from mc.history.HistoryMenu import HistoryMenu
 from mc.bookmarks.BookmarksMenu import BookmarksMenu
 from mc.other.SiteInfo import SiteInfo
+from mc.other.AboutDialog import AboutDialog
 
 class MainMenu(QMenu):
     def __init__(self, window, parent=None):
