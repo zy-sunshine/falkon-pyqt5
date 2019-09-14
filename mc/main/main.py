@@ -23,6 +23,7 @@ def main():
     app = MainApplication(sys.argv)
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
+    app.threadExecutor = QThreadExecutor(10)
     if app.isClosing():
         return 0
 

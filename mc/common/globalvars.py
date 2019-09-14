@@ -8,6 +8,12 @@ class GlobalVar(object):
         return MainApplication.instance()
 
     @cached_property
+    def executor(self):
+        from mc.app.ThreadExecutor import ThreadExecutor
+        return ThreadExecutor.instance()
+
+    # TODO: delete
+    @cached_property
     def qzSettings(self):
         from mc.other.QzSettings import QzSettings
         return QzSettings.instance()
