@@ -88,12 +88,13 @@ class HistoryMenu(Menu):
 
         mostVisited = gVar.app.history().mostVisited(10)
         for entry in mostVisited:
-            act = Action(gVar.appTools.truncatedText(entry.title, 40))
+            act = Action(gVar.appTools.truncatedText(entry.title, 40),
+                    self._menuMostVisited)
             act.setData(entry.url)
             act.setIcon(IconProvider.iconForUrl(entry.url))
-            act.triggered(self._historyEntryActivated)
-            act.ctrlTriggered(self._historyEntryCtrlActivated)
-            act.shiftTriggered(self._historyEntryShiftActivated)
+            act.triggered.connect(self._historyEntryActivated)
+            act.ctrlTriggered.connect(self._historyEntryCtrlActivated)
+            act.shiftTriggered.connect(self._historyEntryShiftActivated)
             self._menuMostVisited.addAction(act)
 
         if self._menuMostVisited.isEmpty():

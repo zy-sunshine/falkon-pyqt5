@@ -6,6 +6,7 @@ from mc.app.Settings import Settings
 from calendar import month_name
 from .HistoryModel import HistoryModel
 from mc.common.models import HistoryDbModel
+from mc.common.models import IconsDbModel
 from mc.common.globalvars import gVar
 from datetime import datetime
 
@@ -87,7 +88,7 @@ class History(QObject):
             title = _('Empty Page')
 
         def addEntryFunc():
-            dbobj = HistoryDbModel.select().where(HistoryDbModel.url.contains(url.toString())).first()
+            dbobj = HistoryDbModel.select().where(HistoryDbModel.url==url.toString()).first()
             if dbobj:
                 # update
                 before = self.HistoryEntry()
@@ -125,26 +126,44 @@ class History(QObject):
         '''
         @param: index int
         '''
-        pass
+        list_ = []
+        list_.append(index)
+
+        self.deleteHistoryEntryByIndexList(list_)
 
     def deleteHistoryEntryByIndexList(self, list_):
         '''
         @param: list_ QList<int>
         '''
-        pass
+
+        def delFunc():
+            dbobjs = HistoryDbModel.select().where(HistoryDbModel.url.in_(list_))
+            for dbobj in dbobjs:
+                entry = self.HistoryEntry.CreateFromDbobj(dbobj)
+                self.historyEntryDeleted.emit(entry)
+            HistoryDbModel.delete().where(HistoryDbModel.id.in_([obj.id for obj in list_]))
+            IconsDbModel.delete().where(IconsDbModel.url.in_(list_))
+        gVar.executor.run(delFunc)
 
     def deleteHistoryEntryByUrl(self, url):
         '''
         @param: url QUrl
         '''
-        pass
+        items = HistoryDbModel.select(columns=['id']).where(HistoryDbModel.url==url).dicts()
+        import ipdb; ipdb.set_trace()
+        ids = [ item['id'] for item in dicts ]
+        self.deleteHistoryEntryByIndexList(ids)
 
     def deleteHistoryEntryByUrlAndTitle(self, url, title):
         '''
         @param: url QUrl
         @param: title QString
         '''
-        pass
+        items = HistoryDbModel.select(columns=['id']).where(HistoryDbModel.url==url,
+                HistoryDbModel.title==title).dicts()
+        import ipdb; ipdb.set_trace()
+        ids = [ item['id'] for item in dicts ]
+        self.deleteHistoryEntryByIndexList(ids)
 
     def indexesFromTimeRange(self, start, end):
         '''
