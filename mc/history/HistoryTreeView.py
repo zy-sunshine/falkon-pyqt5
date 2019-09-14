@@ -25,6 +25,7 @@ class HistoryTreeView(QTreeView):
         self._type = self.HistoryManagerViewType  # ViewType
 
         self.setModel(self._filter)
+
         self.setUniformRowHeights(True)
         self.setAllColumnsShowFocus(True)
 
@@ -243,12 +244,13 @@ class HistoryTreeView(QTreeView):
         @param: index QModelIndex
         '''
         itemTopLevel = index.data(HistoryModel.IsTopLevelRole)  # toBool()
-        iconLoaded = not index.data(HistoryModel.IconRole).isNull() # .value<QIcon>()
+        icon = index.data(HistoryModel.IconRole)
+        iconLoaded = icon and not icon.isNull()
 
         if index.isValid() and not itemTopLevel and not iconLoaded:
             # QPersistentModelIndex
-            idx = QPersistentModelIndex(index)
+            _ = QPersistentModelIndex(index)
             url = index.data(HistoryModel.UrlRole)  # toUrl()
-            self.model().setData(idx, IconProvider.iconForUrl(url), HistoryModel.IconRole)
+            self.model().setData(index, IconProvider.iconForUrl(url), HistoryModel.IconRole)
 
         super().drawRow(painter, options, index)

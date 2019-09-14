@@ -1,3 +1,4 @@
+import peewee
 from PyQt5.Qt import QAbstractItemModel
 from PyQt5.Qt import Qt
 from .HistoryItem import HistoryItem
@@ -7,8 +8,11 @@ from PyQt5.Qt import QApplication
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import QIcon
 from datetime import datetime
+from datetime import timedelta
+from datetime import time as dttime
 from PyQt5.Qt import QModelIndex
 from mc.tools.IconProvider import IconProvider
+from mc.common.models import HistoryDbModel
 
 class HistoryModel(QAbstractItemModel):
     # enum Roles
@@ -40,6 +44,7 @@ class HistoryModel(QAbstractItemModel):
         self._history = history  # History
 
         self._init()
+
         self._history.resetHistory.connect(self.resetHistory)
         self._history.historyEntryAdded.connect(self.historyEntryAdded)
         self._history.historyEntryDeleted.connect(self.historyEntryDeleted)
@@ -70,12 +75,14 @@ class HistoryModel(QAbstractItemModel):
         @param: index QModelIndex
         @param: role int
         @return: Qvariant
+        @critical: donot return '' empty string for null case, that will cause
+            QTreeView row not draw, return None instead (Qt return QVariant())
         '''
         # HistoryItem
         item = self.itemFromIndex(index)
 
         if index.row() < 0 or not item:
-            return ''
+            return None
 
         if item.isTopLevel():
             if role == self.IsTopLevelRole:
@@ -88,14 +95,14 @@ class HistoryModel(QAbstractItemModel):
                 if index.column() == 0:
                     return item.title
                 else:
-                    return ''
+                    return None
             elif role == Qt.DecorationRole:
                 if index.column() == 0:
                     return QIcon.fromTheme('view-calendar', QIcon(':/icons/menu/history_entry.svg'))
                 else:
-                    return ''
+                    return None
 
-            return ''
+            return None
 
         entry = item.historyEntry
 
@@ -136,7 +143,7 @@ class HistoryModel(QAbstractItemModel):
                 else:
                     return item.icon()
 
-        return ''
+        return None
 
     # override
     def setData(self, index, value, role):
@@ -152,7 +159,8 @@ class HistoryModel(QAbstractItemModel):
             return False
 
         if role == self.IconRole:
-            item.setIcon(value.value(type=QIcon))
+            assert(isinstance(value, QIcon))
+            item.setIcon(value)
             self.dataChanged.emit(index, index)
             return True
 
@@ -198,7 +206,7 @@ class HistoryModel(QAbstractItemModel):
         @param: index QModelIndex
         @return: Qt.ItemFlags
         '''
-        if not index.valid():
+        if not index.isValid():
             return 0
 
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
@@ -233,7 +241,36 @@ class HistoryModel(QAbstractItemModel):
         '''
         @param: parent QModelIndex
         '''
-        pass
+        from .History import HistoryEntry
+        parentItem = self.itemFromIndex(parent)
+
+        if not parent.isValid() or not parentItem:
+            return
+
+        parentItem.canFetchMore = False
+        idList = []  # QList<int>
+        for idx in range(parentItem.childCount()):
+            idList.append(parentItem.child(idx).historyEntry.id)
+
+        list_ = []  # QVector<HistoryEntry>
+        dbobjs = HistoryDbModel.select().where(HistoryDbModel.date.between(
+            parentItem.endTimestamp(), parentItem.startTimestamp()))
+        for dbobj in dbobjs:
+            entry = HistoryEntry.CreateFromDbobj(dbobj)
+            if entry.id not in idList:
+                list_.append(entry)
+
+        if not list_:
+            return
+
+        # TODO: prepend or append for new row positions?
+        self.beginInsertRows(parent, 0, len(list_) - 1)
+
+        for entry in list_:
+            newItem = HistoryItem(parentItem)
+            newItem.historyEntry = entry
+
+        self.endInsertRows()
 
     # override
     def hasChildren(self, parent):
@@ -256,7 +293,7 @@ class HistoryModel(QAbstractItemModel):
         @return: HistoryItem
         '''
         if index.isValid():
-            # TODO: HistoryItem* item = static_cast<HistoryItem*>(index.internalPointer());
+            # HistoryItem* item = static_cast<HistoryItem*>(index.internalPointer());
             item = index.internalPointer()
             if isinstance(item, HistoryItem):
                 return item
@@ -332,7 +369,57 @@ class HistoryModel(QAbstractItemModel):
         pass
 
     def _init(self):
-        pass
+        from .History import History
+        minTs = HistoryDbModel.select(peewee.fn.Min(HistoryDbModel.date)).scalar()
+        if minTs <= 0:
+            return
+
+        today = datetime.now()
+        currentTs = int(today.timestamp())
+        todayDate = today.date()
+        today = datetime.combine(todayDate, dttime(0, 0, 0))
+        week = today - timedelta(days=today.weekday())
+        month = datetime(today.year, today.month, 1)
+        monthDate = month.date()
+
+        weekDate = week.date()
+
+        ts = currentTs
+        while ts > minTs:
+            tsDate = datetime.fromtimestamp(ts).date()
+            endTs = 0
+            itemName = ''
+
+            if tsDate == todayDate:
+                endTs = int(today.timestamp())
+                itemName = _('Today')
+            elif tsDate >= weekDate:
+                endTs = int(week.timestamp())
+                itemName = _('This Week')
+            elif tsDate.month == monthDate.month and tsDate.year == monthDate.year:
+                endTs = int(month.timestamp())
+                itemName = _('This Month')
+            else:
+                startDate = datetime.date(tsDate.year, tsDate.month, tsDate.day)
+                endDate = datetime.date(startDate.year, startDate.month, 1)
+
+                ts = datetime.combine(startDate, dttime(23, 59, 59)).timestamp()
+                ts = int(ts)
+                endTs = datetime.combine(endDate, dttime(0, 0, 0)).timestamp()
+                endTs = int(endTs)
+                itemName = '%s %s' % (tsDate.year, History.titleCaseLocalizedMonth(tsDate.month))
+            dbobj = HistoryDbModel.select().where(HistoryDbModel.date.between(endTs, ts)).first()
+            if dbobj:
+                item = HistoryItem(self._rootItem)
+                item.setStartTimestamp(ts == currentTs and -1 or ts)
+                item.setEndTimestamp(endTs)
+                item.title = itemName
+                item.canFetchMore = True
+
+                if ts == currentTs:
+                    self._todayItem = item
+
+            ts = endTs - 1
 
 class HistoryFilterModel(QSortFilterProxyModel):
     def __init__(self, parent):
@@ -370,11 +457,12 @@ class HistoryFilterModel(QSortFilterProxyModel):
     def filterAcceptsRow(self, sourceRow, sourceParent):
         index = self.sourceModel().index(sourceRow, 0, sourceParent)
 
-        if index.data(HistoryModel.IsTopLevelRole, type=bool):
+        isTopLevel = index.data(HistoryModel.IsTopLevelRole)
+        if isTopLevel:
             return True
 
-        urlString = index.data(HistoryModel.UrlStringRole, type=str).lower()
-        title = index.data(HistoryModel.TitleRole, type=str).lower()
+        urlString = index.data(HistoryModel.UrlStringRole).lower()
+        title = index.data(HistoryModel.TitleRole).lower()
         return self._pattern.lower() in urlString or self._pattern.lower() in title
 
     # private Q_SLOTS:

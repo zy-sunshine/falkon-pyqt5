@@ -21,26 +21,26 @@ class History(QObject):
             self.urlString = ''
             self.title = ''
 
+        def fillDbobj(self, dbobj):
+            for field in ('id', 'count', 'date', 'url', 'urlString', 'title'):
+                setattr(dbobj, getattr(self, field))
+
+        @classmethod
+        def CreateFromDbobj(cls, dbobj):
+            entry = cls()
+            entry.id = dbobj.id
+            entry.count = dbobj.id
+            entry.date = datetime.fromtimestamp(dbobj.date)
+            entry.url = QUrl(dbobj.url)
+            entry.urlString = entry.url.toEncoded().data().decode()
+            entry.title = dbobj.title
+            return entry
+
     def __init__(self, parent):
         super().__init__(parent)
         self._isSaving = False
         self._model = None  # HistoryModel
         self.loadSettings()
-
-    def fillDbobj(self, dbobj):
-        for field in ('id', 'count', 'date', 'url', 'urlString', 'title'):
-            setattr(dbobj, getattr(self, field))
-
-    @classmethod
-    def CreateFromDbobj(cls, dbobj):
-        entry = cls()
-        entry.id = dbobj.id
-        entry.count = dbobj.id
-        entry.date = datetime.fromtimestamp(dbobj.date)
-        entry.url = QUrl(dbobj.url)
-        entry.urlString = entry.url.toEncoded()
-        entry.title = dbobj.title
-        return entry
 
     @classmethod
     def titleCaseLocalizedMonth(cls, month):
@@ -88,7 +88,7 @@ class History(QObject):
             title = _('Empty Page')
 
         def addEntryFunc():
-            dbobj = HistoryDbModel.select().where(HistoryDbModel.url==url.toString()).first()
+            dbobj = HistoryDbModel.select().where(HistoryDbModel.url == url.toString()).first()
             if dbobj:
                 # update
                 before = self.HistoryEntry()
@@ -96,7 +96,7 @@ class History(QObject):
                 before.count = dbobj.count
                 before.date = datetime.fromtimestamp(dbobj.date)
                 before.url = url
-                before.urlString = before.url.toEncoded()
+                before.urlString = before.url.toEncoded().data().decode()
                 before.title = dbobj.title
 
                 after = self.HistoryEntry()
@@ -104,7 +104,7 @@ class History(QObject):
                 after.date = int(datetime.now().timestamp())
                 after.title = title
                 after.url = url
-                after.urlString = after.url.toEncoded()
+                after.urlString = after.url.toEncoded().data().decode()
                 after.fillDbobj(dbobj)
                 dbobj.save()
 
@@ -149,7 +149,7 @@ class History(QObject):
         '''
         @param: url QUrl
         '''
-        items = HistoryDbModel.select(columns=['id']).where(HistoryDbModel.url==url).dicts()
+        items = HistoryDbModel.select(columns=['id']).where(HistoryDbModel.url == url).dicts()
         import ipdb; ipdb.set_trace()
         ids = [ item['id'] for item in dicts ]
         self.deleteHistoryEntryByIndexList(ids)
@@ -159,8 +159,8 @@ class History(QObject):
         @param: url QUrl
         @param: title QString
         '''
-        items = HistoryDbModel.select(columns=['id']).where(HistoryDbModel.url==url,
-                HistoryDbModel.title==title).dicts()
+        items = HistoryDbModel.select(columns=['id']).where(HistoryDbModel.url == url,
+                HistoryDbModel.title == title).dicts()
         import ipdb; ipdb.set_trace()
         ids = [ item['id'] for item in dicts ]
         self.deleteHistoryEntryByIndexList(ids)

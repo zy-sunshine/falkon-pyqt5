@@ -1,5 +1,6 @@
 from PyQt5.Qt import QIcon
 from mc.common.globalvars import gVar
+from datetime import datetime
 
 class HistoryItem(object):
     def __init__(self, parent=None):
@@ -57,7 +58,7 @@ class HistoryItem(object):
         if gVar.appTools.containsIndex(self._children, row):
             return self._children[row]
 
-        return 0
+        return None
 
     def childCount(self):
         '''
@@ -153,6 +154,8 @@ class HistoryItem(object):
         '''
         @param: qint64
         '''
+        if self._startTimestamp == -1:
+            return int(datetime.now().timestamp())
         return self._startTimestamp
 
     def setEndTimestamp(self, end):
