@@ -6,8 +6,8 @@ from mc.app.Settings import Settings
 from calendar import month_name
 from .HistoryModel import HistoryModel
 from mc.common.models import HistoryDbModel
-from PyQt5.Qt import QTimer
 from mc.common.globalvars import gVar
+from datetime import datetime
 
 class History(QObject):
 
@@ -25,6 +25,21 @@ class History(QObject):
         self._isSaving = False
         self._model = None  # HistoryModel
         self.loadSettings()
+
+    def fillDbobj(self, dbobj):
+        for field in ('id', 'count', 'date', 'url', 'urlString', 'title'):
+            setattr(dbobj, getattr(self, field))
+
+    @classmethod
+    def CreateFromDbobj(cls, dbobj):
+        entry = cls()
+        entry.id = dbobj.id
+        entry.count = dbobj.id
+        entry.date = datetime.fromtimestamp(dbobj.date)
+        entry.url = QUrl(dbobj.url)
+        entry.urlString = entry.url.toEncoded()
+        entry.title = dbobj.title
+        return entry
 
     @classmethod
     def titleCaseLocalizedMonth(cls, month):
@@ -72,7 +87,37 @@ class History(QObject):
             title = _('Empty Page')
 
         def addEntryFunc():
-            print('addEntryFunc called %s %s' % (url, title))
+            dbobj = HistoryDbModel.select().where(HistoryDbModel.url.contains(url.toString())).first()
+            if dbobj:
+                # update
+                before = self.HistoryEntry()
+                before.id = dbobj.id
+                before.count = dbobj.count
+                before.date = datetime.fromtimestamp(dbobj.date)
+                before.url = url
+                before.urlString = before.url.toEncoded()
+                before.title = dbobj.title
+
+                after = self.HistoryEntry()
+                after.count = dbobj.count + 1
+                after.date = int(datetime.now().timestamp())
+                after.title = title
+                after.url = url
+                after.urlString = after.url.toEncoded()
+                after.fillDbobj(dbobj)
+                dbobj.save()
+
+                self.historyEntryEdited.emit(before, after)
+            else:
+                # insert
+                dbobj = HistoryDbModel.create(**{
+                    'count': 1,
+                    'date': int(datetime.now().timestamp()),
+                    'url': url.toString(),
+                    'title': title,
+                })
+                entry = self.HistoryEntry.CreateFromDbobj(dbobj)
+                self.historyEntryAdded.emit(entry)
 
         gVar.executor.run(addEntryFunc)
 
