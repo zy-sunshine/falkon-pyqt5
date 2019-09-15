@@ -32,7 +32,6 @@ from mc.common.globalvars import gVar
 from mc.app.Settings import Settings
 from mc.common import const
 from mc.app.ProfileManager import ProfileManager
-from mc.tools.WebScrollBarManager import WebScrollBarManager
 from mc.notifications.DesktopNotificationsFactory import DesktopNotificationsFactory
 from .ThemeManager import ThemeManager
 from .PluginsManager import PluginsManager
@@ -493,7 +492,7 @@ class Preferences(QDialog):
             self._ui.proxyType.setCurrentIndex(1)
 
         self._ui.proxyServer.setText(settings.value('HostName', ''))
-        self._ui.proxyPort.setText(settings.value('Port', '8080'))
+        self._ui.proxyPort.setText(str(settings.value('Port', 8080)))
         self._ui.proxyUsername.setText(settings.value('Username', ''))
         self._ui.proxyPassword.setText(settings.value('Password', ''))
         settings.endGroup()
@@ -580,7 +579,7 @@ class Preferences(QDialog):
 
         # DOWNLOADS
         settings.beginGroup("DownloadManager")
-        if self._ui.askEverytime.isCheck:
+        if self._ui.askEverytime.isChecked():
             settings.setValue("defaultDownloadPath", "")
         else:
             settings.setValue("defaultDownloadPath", self._ui.downLoc.text())
@@ -691,7 +690,8 @@ class Preferences(QDialog):
         settings.setValue("ShowLoadingProgress", self._ui.showLoadingInAddressBar.isChecked())
         settings.setValue("ProgressStyle", self._ui.progressStyleSelector.currentIndex())
         settings.setValue("UseCustomProgressColor", self._ui.checkBoxCustomProgressColor.isChecked())
-        settings.setValue("CustomProgressColor", self._ui.customColorToolButton.property("ProgressColor", type=QColor))
+        color = self._ui.customColorToolButton.property("ProgressColor")
+        settings.setValue("CustomProgressColor", color)
         settings.endGroup()
 
         settings.beginGroup("SearchEngines")
@@ -714,7 +714,7 @@ class Preferences(QDialog):
         settings.beginGroup("Web-Proxy")
         settings.setValue("ProxyType", proxyType)
         settings.setValue("HostName", self._ui.proxyServer.text())
-        settings.setValue("Port", self._ui.proxyPort.text().toInt())
+        settings.setValue("Port", int(self._ui.proxyPort.text()))
         settings.setValue("Username", self._ui.proxyUsername.text())
         settings.setValue("Password", self._ui.proxyPassword.text())
         settings.endGroup()
@@ -730,7 +730,7 @@ class Preferences(QDialog):
         gVar.app.autoFill().loadSettings()
         gVar.app.networkManager().loadSettings()
 
-        WebScrollBarManager.instance().loadSettings()
+        gVar.webScrollBarManager.loadSettings()
 
     def _buttonClicked(self, button):
         '''
@@ -742,7 +742,7 @@ class Preferences(QDialog):
         elif role == QDialogButtonBox.RejectRole:
             self.close()
         elif role == QDialogButtonBox.AcceptRole:
-            self._saveHistoryChanged()
+            self._saveSettings()
             self.close()
 
     def _showStackedPage(self, item):
@@ -978,12 +978,5 @@ class Preferences(QDialog):
         settings.setValue('settingsDialogPage', self._ui.stackedWidget.currentIndex())
         settings.endGroup()
 
+        settings.setValue('Preferences/Geometry', self.saveGeometry())
         event.accept()
-
-    def __del__(self):
-        Settings().value('Preferences/Geometry', self.saveGeometry())
-
-        del self._ui
-        del self._autoFillManager
-        del self._pluginList
-        del self._notification

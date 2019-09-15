@@ -114,6 +114,10 @@ class MainMenu(QMenu):
         if not self._preferences:
             self._preferences = Preferences(self._window)
 
+            def destroyFunc():
+                self._preferences = None
+            self._preferences.destroyed.connect(destroyFunc)
+
         self._preferences.show()
         self._preferences.raise_()
         self._preferences.activateWindow()

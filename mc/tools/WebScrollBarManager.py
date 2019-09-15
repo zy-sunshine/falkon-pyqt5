@@ -10,7 +10,7 @@ class ScrollBarData:
 
 class WebScrollBarManager(QObject):
     def __init__(self, parent=None):
-        super(WebScrollBarManager, self).__init__(parent)
+        super().__init__(parent)
         self._enable = False
         self._scrollbarJs = ''
         self._scrollbars = {}  # QHash<WebView*, struct ScrollBarData*>

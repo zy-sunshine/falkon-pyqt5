@@ -302,11 +302,20 @@ class AppTools(Singleton):
 
     def matchDomain(self, pattern, domain):
         '''
-        @param: pattern QString
-        @param: domain QString
+        @note: Matches domain (assumes both pattern and domain not starting with dot)
+        @param: pattern QString, domain to be matched
+        @param: domain QString, site domain
         @return: bool
         '''
-        pass
+        if pattern == domain:
+            return True
+
+        if not domain.endswith(pattern):
+            return False
+
+        index = domain.index(pattern)
+
+        return index > 0 and domain[index-1] == '.'
 
     def actionShortcut(self, shortcut, fallBack, shortcutRtl=QKeySequence(),
             fallbackRtl=QKeySequence()):
