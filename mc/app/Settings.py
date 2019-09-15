@@ -59,11 +59,20 @@ class Settings(object):
     def setValue(self, key, defaultValue=QVariant()):
         self.s_settings.setValue(key, defaultValue)
 
-    def value(self, key, defaultValue=QVariant(), type=None):
-        if type is None:
-            return self.s_settings.value(key, defaultValue)
+    def value(self, key, defaultValue=QVariant(), **kwargs):
+        type_ = kwargs.get('type', None)
+        if type_ is None:
+            if type(defaultValue) != QVariant:
+                # guess defaultValue type as type
+                type_ = type(defaultValue)
+                if type_ == bytes:
+                    from PyQt5.Qt import QByteArray
+                    type_ = QByteArray
+                return self.s_settings.value(key, defaultValue, type_)
+            else:
+                return self.s_settings.value(key, defaultValue)
         else:
-            return self.s_settings.value(key, defaultValue, type=type)
+            return self.s_settings.value(key, defaultValue, type=type_)
         self.s_settings.value()
 
     def beginGroup(self, prefix):

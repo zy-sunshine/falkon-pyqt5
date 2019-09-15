@@ -3,6 +3,7 @@ from os import makedirs
 from os.path import join as pathjoin, exists as pathexists, basename
 from PyQt5.Qt import QSettings
 from PyQt5.Qt import QMessageBox
+from PyQt5.Qt import QDir
 from .DataPaths import DataPaths
 from mc.common import const
 from shutil import copy
@@ -71,7 +72,8 @@ class ProfileManager(object):
         '''
         @brief: Name of available profiles
         '''
-        pass
+        dir_ = QDir(DataPaths.path(DataPaths.Profiles))
+        return dir_.entryList(QDir.Dirs | QDir.NoDotAndDotDot)
 
     # private:
     def _updateCurrentProfile(self):

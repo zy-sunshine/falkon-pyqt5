@@ -305,8 +305,7 @@ class MainApplication(QtSingleApp):
         return window
 
     def afterLaunch(self):
-        # TODO:
-        return None
+        return Settings().value('Web-URL-Settings/afterLaunch', self.RestoreSession, type=int)
 
     def openSession(self, window, restoreData):
         '''

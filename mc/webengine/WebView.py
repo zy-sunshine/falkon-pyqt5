@@ -358,7 +358,8 @@ class WebView(QWebEngineView):
         else:
             return False
 
-    def zoomLevels(self):
+    @classmethod
+    def zoomLevels(cls):
         '''
         @param: QList<int>
         '''
