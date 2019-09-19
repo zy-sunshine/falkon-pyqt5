@@ -238,9 +238,11 @@ class NetworkManager(QNetworkAccessManager):
     def loadSettings(self):
         settings = Settings()
         settings.beginGroup('Language')
-        langs = settings.value('acceptLanguage', AcceptLanguage.defaultLanguage(), type=[])
+        # TODO:
+        #langs = settings.value('acceptLanguage', AcceptLanguage.defaultLanguage(), type=[])
         settings.endGroup()
-        gVar.app.webProfile().setHttpAcceptLanguage(AcceptLanguage.generateHeader(langs))
+        # TODO:
+        #gVar.app.webProfile().setHttpAcceptLanguage(AcceptLanguage.generateHeader(langs))
 
         proxy = QNetworkProxy()
         settings.beginGroup('Web-Proxy')

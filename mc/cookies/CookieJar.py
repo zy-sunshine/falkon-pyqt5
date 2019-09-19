@@ -102,7 +102,7 @@ class CookieJar(QObject):
             self._client.deleteCookie(cookie)
             return
 
-        self._cookies.append(cookie)
+        self._cookies.append(QNetworkCookie(cookie))
         self.cookieAdded.emit(cookie)
 
     def _slotCookieRemoved(self, cookie):
