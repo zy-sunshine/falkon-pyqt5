@@ -493,8 +493,8 @@ class TabBar(ComboTabBar):
                 for url in mime.urls():
                     self._tabWidget.addViewByUrl(url, const.NT_SelectedTabAtTheEnd)
             elif mime.hasText():
-                self._tabWidget.addViewByReq(gVar.app.searchEnginesManager().searchResult(mime.text()),
-                        const.NT_SelectedNewEmptyTab)
+                self._tabWidget.addViewByReq(gVar.app.searchEnginesManager()
+                    .searchResultWithDefaultEngine(mime.text()), const.NT_SelectedNewEmptyTab)
             elif mime.hasFormat(self.MIMETYPE) and sourceTabBar:
                 tab = sourceTabBar.webTab()
                 if tab:

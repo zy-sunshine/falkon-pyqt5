@@ -242,7 +242,7 @@ class Preferences(QDialog):
         self._ui.alwaysShowGoIcon.setChecked(settings.value("alwaysShowGoIcon", False, type=bool))
         self._ui.selectAllOnFocus.setChecked(settings.value("SelectAllTextOnDoubleClick", True, type=bool))
         self._ui.selectAllOnClick.setChecked(settings.value("SelectAllTextOnClick", False, type=bool))
-        showPBinAB = settings.value("ShowLoadingProgress", False, type=bool)
+        showPBinAB = settings.value("ShowLoadingProgress", True, type=bool)
         self._ui.showLoadingInAddressBar.setChecked(showPBinAB)
         self._ui.adressProgressSettings.setEnabled(showPBinAB)
         self._ui.progressStyleSelector.setCurrentIndex(settings.value("ProgressStyle", 0, type=int))

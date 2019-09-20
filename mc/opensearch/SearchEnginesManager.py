@@ -41,7 +41,7 @@ class SearchEnginesManager(QObject):
         '''
         pass
 
-    def searchResultWithoutEngine(self, string):
+    def searchResultWithDefaultEngine(self, string):
         pass
 
     def addEngineWithUrl(self, url):

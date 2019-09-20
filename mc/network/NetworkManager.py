@@ -13,6 +13,7 @@ from PyQt5.Qt import QNetworkProxyFactory
 from PyQt5.Qt import QNetworkRequest
 from mc.app.Settings import Settings
 from .NetworkUrlInterceptor import NetworkUrlInterceptor
+from .SslErrorDialog import SslErrorDialog
 
 # NOTE: process later
 # https://github.com/qutebrowser/qutebrowser/blob/master/qutebrowser/browser/webengine/webenginequtescheme.py
@@ -192,7 +193,7 @@ class NetworkManager(QNetworkAccessManager):
         box.addButton(QDialogButtonBox.Ok)
         box.addButton(QDialogButtonBox.Cancel)
         box.rejected.connect(dialog.reject)
-        box.accepted.connect(dlalog.accept)
+        box.accepted.connect(dialog.accept)
 
         label.setText(_('A username and password are being requested by proxy %s. ') % proxyHost)
         formLa.addRow(label)
@@ -300,4 +301,3 @@ class NetworkManager(QNetworkAccessManager):
         req.setAttribute(QNetworkRequest.FollowRedirectsAttribute, True)
 
         return QNetworkAccessManager.createRequest(op, req, outgoingData)
-
