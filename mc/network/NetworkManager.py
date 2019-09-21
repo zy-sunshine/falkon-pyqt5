@@ -34,8 +34,8 @@ class NetworkManager(QNetworkAccessManager):
         self._ignoredSslErrors = {}  # QHash<QString, QWebEngineCertificateError::Error>
         self._rejectedSslErrors = {}  # QHash<QString, QWebEngineCertificateError::Error>
 
-        gVar.app.webProfile().installUrlSchemeHandler(b'app',
-                AppSchemeHandler())
+        self._appSchemeHandler = AppSchemeHandler()
+        gVar.app.webProfile().installUrlSchemeHandler(b'app', self._appSchemeHandler)
         self._extensionScheme = ExtensionSchemeManager()
         gVar.app.webProfile().installUrlSchemeHandler(b'extension',
                 self._extensionScheme)

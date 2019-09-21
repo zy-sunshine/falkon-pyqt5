@@ -12,6 +12,7 @@ class AppSchemeHandler(QWebEngineUrlSchemeHandler):
         super().__init__(parent)
 
     # reload
+    # override
     def requestStarted(self, job):
         '''
         @param: job QWebEngineUrlRequestJob
