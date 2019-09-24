@@ -487,7 +487,7 @@ class TabWidget(TabStackedWidget):
 
         index = self.addViewByReqTitle(QUrl(), webTab.title(), const.NT_CleanSelectedTab)
         newWebTab = self._weTabByIndex(index)
-        newWebTab.p_restoreTab(webTab.url(), webTab.historyData(), webTab.zoomLevel())
+        newWebTab.p_restoreTabByUrl(webTab.url(), webTab.historyData(), webTab.zoomLevel())
 
         return index
 

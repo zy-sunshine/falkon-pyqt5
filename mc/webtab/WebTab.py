@@ -321,7 +321,8 @@ class WebTab(QWidget):
         if self.isRestored():
             historyArray = QByteArray()
             stream = QDataStream(historyArray, QIODevice.WriteOnly)
-            stream.readQVariant(self._webView.history())
+            history = self._webView.history()
+            stream << history
             return historyArray
 
     def stop(self):
@@ -467,9 +468,9 @@ class WebTab(QWidget):
         '''
         @param: tab SavedTab
         '''
-        self._p_restoreTab(tab.url, tab.history, tab.zoomLevel)
+        self._p_restoreTabByUrl(tab.url, tab.history, tab.zoomLevel)
 
-    def _p_restoreTab(self, url, history, zoomLevel):
+    def p_restoreTabByUrl(self, url, history, zoomLevel):
         self._webView.load(url)
 
         # Restoring history of internal pages crashes QtWebEngine 5.8
@@ -477,7 +478,7 @@ class WebTab(QWidget):
 
         if (url.scheme() not in blacklistedSchemes):
             stream = QDataStream(history)
-            stream.writeQVariant(self._webView.history())
+            stream >> self._webView.history()
 
         self._webView.setZoomLevel(zoomLevel)
         self._webView.setFocus()
