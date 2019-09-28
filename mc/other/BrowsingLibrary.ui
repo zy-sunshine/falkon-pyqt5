@@ -94,7 +94,7 @@
   <customwidget>
    <class>FancyTabWidget</class>
    <extends>QWidget</extends>
-   <header>fancytabwidget.h</header>
+   <header>mc.lib3rd.FancyTabWidget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
