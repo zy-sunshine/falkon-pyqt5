@@ -2,7 +2,6 @@ import re
 from sys import stderr
 from os import remove
 from os.path import join as pathjoin, exists as pathexists
-from PyQt5.QtWidgets import QApplication
 from PyQt5.Qt import Qt
 from PyQt5.Qt import QIcon
 from PyQt5.Qt import QSqlDatabase
@@ -13,7 +12,6 @@ from PyQt5.Qt import QUrl
 from PyQt5.Qt import QSettings
 from PyQt5.Qt import QDesktopServices
 from PyQt5.Qt import QTimer
-from PyQt5.Qt import QObject
 from PyQt5.Qt import QByteArray
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineDownloadItem
 from PyQt5.QtWebEngineWidgets import QWebEngineSettings
@@ -50,6 +48,7 @@ from mc.tools.ClosedWindowsManager import ClosedWindowsManager
 from mc.tools.html5permissions.HTML5PermissionsManager import HTML5PermissionsManager
 from mc.notifications.DesktopNotificationsFactory import DesktopNotificationsFactory
 from mc.common.globalvars import gVar
+from mc.other.BrowsingLibrary import BrowsingLibrary
 
 class MainApplication(QtSingleApp):
     s_testMode = False
