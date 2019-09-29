@@ -10,6 +10,26 @@ from PyQt5.Qt import Qt
 from PyQt5.Qt import QFontMetrics
 from PyQt5.Qt import QSizePolicy
 from PyQt5.Qt import QPainter
+from PyQt5.QtWidgets import QHBoxLayout
+from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QSpacerItem
+from PyQt5.Qt import QRect
+from PyQt5.Qt import QPixmap
+from PyQt5.Qt import QStyleOptionTab
+from PyQt5.Qt import QLinearGradient
+from PyQt5.Qt import QPoint
+from PyQt5.Qt import QColor
+from PyQt5.Qt import QTransform
+from PyQt5.Qt import QFont
+from PyQt5.Qt import QAbstractAnimation
+from PyQt5.Qt import QPen
+from PyQt5.Qt import QPalette
+from PyQt5.Qt import QApplication
+from PyQt5.Qt import QEvent
+from PyQt5.Qt import QColorDialog
+from PyQt5.Qt import QStackedLayout
+from .StyleHelper import StyleHelper
+from mc.common import const
 
 class FancyTabProxyStyle(QProxyStyle):
     # override
@@ -20,7 +40,117 @@ class FancyTabProxyStyle(QProxyStyle):
         @param: painter QPainter
         @param: widget QWidget
         '''
-        pass
+        v_opt = option
+
+        if element != self.CE_TabBarTab or not isinstance(v_opt, QStyleOptionTab):
+            QProxyStyle.drawControl(element, option, painter, widget)
+            return
+
+        rect = v_opt.rect
+        selected = v_opt.state & self.State_Selected
+        vertical_tabs = v_opt.shape == QTabBar.RoundedWest
+        text = v_opt.text
+
+        if selected:
+            # background
+            painter.save()
+            grad = QLinearGradient(rect.topLeft(), rect.topRight())
+            grad.setColorAt(0, QColor(255, 255, 255, 140))
+            grad.setColorAt(0, QColor(255, 255, 255, 210))
+            painter.fillRect(rect.adjusted(0, 0, 0, -1), grad)
+            painter.restore()
+
+            # shadows
+            painter.setPen(QColor(0, 0, 0, 110))
+            painter.drawLine(rect.topLeft() + QPoint(1, -1), rect.topRight() - QPoint(0, 1))
+            painter.drawLine(rect.bottomLeft(), rect.bottomRight())
+            painter.setPen(QColor(0, 0, 0, 40))
+            painter.drawLine(rect.topLeft(), rect.bottomLeft())
+
+            # highlights
+            painter.setPen(QColor(255, 255, 255, 50))
+            painter.drawLine(rect.topLeft() + QPoint(0, -2), rect.topRight() - QPoint(0, 2))
+            painter.drawLine(rect.bottomLeft() + QPoint(0, 1), rect.bottomRight() + QPoint(0, 1))
+            painter.setPen(QColor(255, 255, 255, 40))
+            painter.drawLine(rect.topLeft() + QPoint(0, 0), rect.topRight())
+            painter.drawLine(rect.topRight() + QPoint(0, 1), rect.bottomRight() - QPoint(0, 1))
+            painter.drawLine(rect.bottomLeft() + QPoint(0, -1), rect.bottomRight() - QPoint(0, 1))
+
+        m = QTransform()
+        if vertical_tabs:
+            m = QTransform.fromTranslate(rect.left(), rect.bottom())
+            m.rotate(-90)
+        else:
+            m = QTransform.fromTranslate(rect.left(), rect.top())
+
+        draw_rect = QRect(QPoint(0, 0), m.mapRect(rect).size())
+
+        painter.save()
+        painter.setTransform(m)
+
+        icon_rect = QRect(QPoint(8, 0), v_opt.iconSize)
+        text_rect = QRect(icon_rect.topRight() + QPoint(4, 0), draw_rect.size())
+        text_rect.setRight(draw_rect.width())
+        icon_rect.translate(0, (draw_rect.height() - icon_rect.height()) / 2)
+
+        boldFont = QFont(painter.font())
+        boldFont.setPointSizeF(StyleHelper.sidebarFontSize())
+        boldFont.setBold(True)
+        painter.setFont(boldFont)
+        painter.setPen(selected and QColor(255, 255, 255, 160) or QColor(0, 0, 0, 110))
+        textFlags = Qt.AlignHCenter | Qt.AlignVCenter
+        painter.drawText(text_rect, textFlags, text)
+        painter.setPen(selected and QColor(60, 60, 60) or StyleHelper.panelTextColor())
+        if widget:
+            fader_key = 'tab_' + text + '_fader'
+            animation_key = 'tab_' + text + '_animation'
+
+            tab_hover = widget.property('tab_hover')
+            # int
+            fader = widget.property(fader_key)
+            # QPropertyAnimation
+            animation = widget.property(animation_key)
+
+            if not animation:
+                mut_widget = widget
+                fader = 0
+                mut_widget.setProperty(fader_key, fader)
+                animation = QPropertyAnimation(mut_widget, fader_key, mut_widget)
+                animation.valueChanged.connect(mut_widget.update)
+                mut_widget.setProperty(animation_key, animation)
+
+            if text == tab_hover:
+                if animation.state() != QAbstractAnimation.Running and fader != 40:
+                    animation.stop()
+                    animation.setDuration(80)
+                    animation.setEndValue(40)
+                    animation.start()
+            else:
+                if animation.state() != QAbstractAnimation.Running and fader != 0:
+                    animation.stop()
+                    animation.setDuration(160)
+                    animation.setEndValue(0)
+                    animation.start()
+
+            if not selected:
+                painter.save()
+                painter.fillRect(draw_rect, QColor(255, 255, 255, fader))
+                painter.setPen(QPen(QColor(255, 255, 255, fader), 1.0))
+                painter.drawLine(draw_rect.topLeft(),
+                    vertical_tabs and draw_rect.bottomLeft() or draw_rect.topRight())
+                painter.drawLine(draw_rect.bottomRight(),
+                    vertical_tabs and draw_rect.topRight() or draw_rect.bottomLeft())
+                painter.restore()
+
+        if selected:
+            iconMode = QIcon.Selected
+        else:
+            iconMode = QIcon.Normal
+        StyleHelper.drawIconWithShadow(v_opt.icon, icon_rect, painter, iconMode)
+
+        painter.drawText(text_rect.translated(0, -1), textFlags, text)
+
+        painter.restore()
 
     # override
     def polish(self, obj):
@@ -29,7 +159,15 @@ class FancyTabProxyStyle(QProxyStyle):
         @param: obj QApplication
         @param: obj QPalette
         '''
-        pass
+        if isinstance(obj, QWidget):
+            if obj.metaObject().className() == QTabBar:
+                obj.setMouseTracking(True)
+                obj.installEventFilter(self)
+            super().polish(obj)
+        elif isinstance(obj, QApplication):
+            super().polish(obj)
+        elif isinstance(obj, QPalette):
+            super().polish(obj)
 
     # protected:
     # override
@@ -38,7 +176,20 @@ class FancyTabProxyStyle(QProxyStyle):
         @param: obj QObject
         @param: event QEvent
         '''
-        pass
+        bar = obj
+        evtType = event.type()
+        if isinstance(bar, QTabBar) and evtType == QEvent.MouseMove or evtType == QEvent.Leave:
+            old_hovered_tab = bar.property('tab_hover')
+            if evtType == QEvent.Leave:
+                hovered_tab = ''
+            else:
+                hovered_tab = bar.tabText(bar.tabAt(event.pos()))
+                bar.setProperty('tab_hover', hovered_tab)
+
+                if old_hovered_tab != hovered_tab:
+                    bar.update()
+
+        return False
 
 class FancyTab(QWidget):
     def __init__(self, tabbar):
@@ -52,6 +203,10 @@ class FancyTab(QWidget):
         self._tabbar = None  # QWidget
         self._fader = 0.0
 
+        self._animator.setPropertyName('fader')
+        self._animator.setTargetObject(self)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+
     def fader(self):
         '''
         @return: float
@@ -62,29 +217,44 @@ class FancyTab(QWidget):
         '''
         @param: value float
         '''
-        pass
+        self._fader = value
+        self._tabbar.update()
 
     # override
     def sizeHint(self):
         '''
         @return: QSize
         '''
-        pass
+        boldFont = QFont(self.font())
+        boldFont.setPointSizeF(StyleHelper.sidebarFontSize())
+        boldFont.setBold(True)
+        fm = QFontMetrics(boldFont)
+        spacing = 8
+        width = 60 + spacing + 2
+        iconHeight = 32
+        ret = QRect(width, iconHeight + spacing + fm.height())
+        return ret
 
     def fadeIn(self):
-        pass
+        self._animator.stop()
+        self._animator.setDuration(80)
+        self._animator.setEndValue(40)
+        self._animator.start()
 
     def fadeOut(self):
-        pass
+        self._animator.stop()
+        self._animator.setDuration(160)
+        self._animator.setEndValue(0)
+        self._animator.start()
 
     # protected:
     # override
     def enterEvent(self, event):
-        pass
+        self.fadeIn()
 
     # override
     def leaveEvent(self, event):
-        pass
+        self.fadeOut()
 
 class FancyTabBar(QWidget):
     def __init__(self, parent=None):
@@ -95,12 +265,37 @@ class FancyTabBar(QWidget):
         self._tabs = []  # QList<FancyTab>
         self._triggerTimer = QTimer()
 
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        # setStyle(new QWindowsStyle)
+        self.setMinimumWidth(max(2 * self._rounding, 40))
+        self.setAttribute(Qt.WA_Hover, True)
+        self.setFocusPolicy(Qt.NoFocus)
+        self.setMouseTracking(True)  # Needed for hover events
+        self._triggerTimer.setSingleShot(True)
+
+        layout = QVBoxLayout()
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Fixed, QSizePolicy.Expanding))
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        # We use a zerotimer to keep the sidebar responsing
+        self._triggerTimer.timeout.connect(self.emitCurrentIndex)
+
     # override
     def paintEvent(self, event):
         '''
         @param: event QPaintEvent
         '''
-        pass
+        p = QPainter(self)
+
+        for idx in range(self.count()):
+            if idx != self.currentIndex():
+                self.paintTab(p, idx)
+
+        # paint active tab last, since it overlaps the neighbors
+        if self.currentIndex() != -1:
+            self.paintTab(p, self.currentChanged())
 
     #override
     def paintTab(self, painter, tabIndex):
@@ -108,14 +303,94 @@ class FancyTabBar(QWidget):
         @param: painter QPainter
         @param: tabIndex int
         '''
-        pass
+        if not self.validIndex(tabIndex):
+            print('Warning: invalid index %s' % tabIndex)
+            return
+
+        painter.save()
+
+        rect = self.tabRect(tabIndex)
+        selected = tabIndex == self._currentIndex
+
+        if selected:
+            # background
+            painter.save()
+            grad = QLinearGradient(rect.topLeft(), rect.topRight())
+            grad.setColorAt(0, QColor(255, 255, 255, 140))
+            grad.setColorAt(1, QColor(255, 255, 255, 210))
+            painter.fillRect(rect.adjusted(0, 0, 0, -1), grad)
+            painter.restore()
+
+            # shadows
+            painter.setPen(QColor(0, 0, 0, 110))
+            painter.drawLine(rect.topLeft() + QPoint(1, -1), rect.topRight() - QPoint(0, 1))
+            painter.drawLine(rect.bottomLeft(), rect.bottomRight())
+            painter.setPen(QColor(0, 0, 0, 40))
+            painter.drawLine(rect.topLeft(), rect.bottomLeft())
+
+            # highlights
+            painter.setPen(QColor(255, 255, 255, 50))
+            painter.drawLine(rect.topLeft() + QPoint(0, -2), rect.topRight() - QPoint(0, 2))
+            painter.drawLine(rect.bottomLeft() + QPoint(0, 1), rect.bottomRight() + QPoint(0, 1))
+            painter.setPen(QColor(255, 255, 255, 40))
+            painter.drawLine(rect.topLeft() + QPoint(0, 0), rect.topRight())
+            painter.drawLine(rect.topRight() + QPoint(0, 1), rect.bottomRight() - QPoint(0, 1))
+            painter.drawLine(rect.bottomLeft() + QPoint(0, -1), rect.bottomRight() - QPoint(0, 1))
+
+        # QString tabText(painter->fontMetrics().elidedText(this->tabText(tabIndex), Qt::ElideMiddle, width()));
+        tabTextRect = self.tabRect(tabIndex)
+        tabIconRect = QRect(tabTextRect)
+        tabIconRect.adjust(+4, +4, -4, -4)
+        tabTextRect.translate(0, -2)
+        boldFont = QFont(painter.font())
+        boldFont.setPointSizeF(StyleHelper.sidebarFontSize())
+        boldFont.setBold(True)
+        painter.setFont(boldFont)
+        painter.setPen(selected and QColor(255, 255, 255, 160) or QColor(0, 0, 0, 110))
+        # int textFlags = Qt::AlignCenter | Qt::AlignBottom
+        # painter->drawText(tabTextRect, textFlags, tabText)
+        painter.setPen(selected and QColor(60, 60, 60) or StyleHelper.panelTextColor())
+
+        if not const.OS_MACOS:
+            if not selected:
+                painter.save()
+                fader = int(self._tabs[tabIndex].fader())
+                grad = QLinearGradient(rect.topLeft(), rect.topRight())
+                grad.setColorAt(0, Qt.transparent)
+                grad.setColorAt(0.5, QColor(255, 255, 255, fader))
+                grad.setColorAt(1, Qt.transparent)
+                # painter.fillRect(rect, grad)
+                # painter.setPen(QPen(grad, 1.0))
+                painter.fillRect(rect, QColor(255, 255, 255, fader))
+                painter.setPen(QPen(QColor(255, 255, 255, fader), 1.0))
+                painter.drawLine(rect.topLeft(), rect.topRight())
+                painter.drawLine(rect.bottomLeft(), rect.bottomRight())
+                painter.restore()
+
+        # const int textHeight = painter->fontMetrics().height();
+        tabIconRect.adjust(0, 6, 0, -6)
+        if selected:
+            iconMode = QIcon.Selected
+        else:
+            iconMode = QIcon.Normal
+        StyleHelper.drawIconWithShadow(self.tabIcon(tabIndex), tabIconRect, painter, iconMode)
+
+        painter.translate(0, -1)
+        # painter->drawText(tabTextRect, textFlags, tabText)
+        painter.restore()
 
     # override
     def mousePressEvent(self, event):
         '''
         @param: event QMouseEvent
         '''
-        pass
+        event.accept()
+        for index in range(len(self._tabs)):
+            if self.tabRect(index).contains(event.pos()):
+                self._currentIndex = index
+                self.update()
+                self._triggerTimer.start(0)
+                break
 
     def validIndex(self, index):
         return index >= 0 and index < len(self._tabs)
@@ -125,27 +400,36 @@ class FancyTabBar(QWidget):
         '''
         @return: QSize
         '''
-        pass
+        sh = self._tabSizeHint()
+        return QSize(sh.width(), sh.height() * len(self._tabs))
 
     # override
     def minimumSizeHint(self):
         '''
         @param: QSize
         '''
-        pass
+        sh = self._tabSizeHint(True)
+        return QSize(sh.width(), sh.height() * len(self._tabs))
 
     def addTab(self, icon, label):
         '''
         @param: icon QIcon
         @param: label QString
         '''
-        pass
+        tab = FancyTab(self)
+        tab.icon = icon
+        tab.text = label
+        self._tabs.append(tab)
+        # layout QVBoxLayout
+        self.layout().insertWidget(self.layout().count() - 1, tab)
 
     def addSpacer(self, size):
         '''
         @param: size int
         '''
-        pass
+        # layout QVBoxLayout
+        self.layout().insertSpacerItem(self.layout.count() - 1,
+            QSpacerItem(0, size, QSizePolicy.Fixed, QSizePolicy.Maximum))
 
     def removeTab(self, index):
         '''
@@ -157,7 +441,9 @@ class FancyTabBar(QWidget):
         '''
         @param: index int
         '''
-        pass
+        self._currentIndex = index
+        self.update()
+        self.currentChanged.emit(self._currentIndex)
 
     def currentIndex(self):
         '''
@@ -170,13 +456,13 @@ class FancyTabBar(QWidget):
         @param: index int
         @param: toolTip QString
         '''
-        pass
+        self._tabs[index].setToolTip(toolTip)
 
-    def tabToolTip(self):
+    def tabToolTip(self, index):
         '''
         @return: QString
         '''
-        pass
+        return self._tabs[index].toolTip()
 
     def tabIcon(self, index):
         '''
@@ -194,21 +480,52 @@ class FancyTabBar(QWidget):
         return len(self._tabs)
 
     def tabRect(self, index):
-        pass
+        self._tabs[index].geometry()
 
     # Q_SIGNALS:
     currentChanged = pyqtSignal(int)
 
     # public Q_SLOTS:
     def emitCurrentIndex(self):
-        pass
+        '''
+        @note: This keeps the sidebar responsive since we get a repaint before
+            loading the mode itself
+        '''
+        self.currentChanged.emit(self._currentIndex)
 
     # private:
     def _tabSizeHint(self, minimum=False):
         '''
         @return: QSize
         '''
-        pass
+        boldFont = QFont(self.font())
+        boldFont.setPointSizeF(StyleHelper.sidebarFontSize())
+        boldFont.setBold(True)
+        fm = QFontMetrics(boldFont)
+        spacing = 8
+        width = 60 + spacing + 2
+        if minimum:
+            iconHeight = 0
+        else:
+            iconHeight = 32
+        return QSize(width, iconHeight + spacing + fm.height())
+
+class FancyColorButton(QWidget):
+    '''
+    @note: not finished yet
+    '''
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.m_parent = parent
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+
+    # override
+    def mousePressEvent(self, event):
+        '''
+        @param: event MouseEvent
+        '''
+        if event.modifiers() & Qt.ShiftModifier:
+            StyleHelper.setBaseColor(QColorDialog.getColor(StyleHelper.requestedBaseColor(), self._parent))
 
 class FancyTabWidget(QWidget):
     # Values are persisted = only add to the end
@@ -226,24 +543,24 @@ class FancyTabWidget(QWidget):
         self._items = []  # QList<Item>
 
         self._tab_bar = None  # QWidget
-        self._stack = None  # QStackedLayout
+        self._stack = QStackedLayout()  # QStackedLayout
         self._background_pixmap = QPixmap()
-        self._side_widget = None  # QWidget
-        self._side_layout = None  # QVBoxLayout
-        self._top_layout = None  # QVBoxLayout
+        self._side_widget = QWidget()  # QWidget
+        self._side_layout = QVBoxLayout()  # QVBoxLayout
+        self._top_layout = QVBoxLayout()  # QVBoxLayout
 
         self._use_background = False  # bool
 
         self._menu = None  # QMenu
 
-        self._proxy_style = None  # FancyTabProxyStyle
+        self._proxy_style = FancyTabProxyStyle()  # FancyTabProxyStyle
 
         self._side_layout.setSpacing(0)
         self._side_layout.setContentsMargins(0, 0, 0, 0)
         self._side_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Fixed, QSizePolicy.Expanding))
 
         self._side_widget.setLayout(self._side_layout)
-        self._side_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.ExpandFlag)
+        self._side_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
 
         self._top_layout.setSpacing(0)
         self._top_layout.setContentsMargins(0, 0, 0, 0)
@@ -277,7 +594,7 @@ class FancyTabWidget(QWidget):
         @param: label QString
         '''
         self._stack.addWidget(tab)
-        self._items.append(self._Item(icon, label))
+        self._items.append(self.Item(icon, label))
 
     def AddSpacer(self, size=40):
         self._items.append(self.Item(size))
@@ -346,7 +663,7 @@ class FancyTabWidget(QWidget):
             bar.setCurrentIndex(self._stack.currentIndex())
             bar.currentChanged.connect(self._ShowWidget)
             self._use_background = True
-        elif mode = self.Mode_Tabs:
+        elif mode == self.Mode_Tabs:
             self._MakeTabBar(QTabBar.RoundedNorth, True, False, False)
         elif mode == self.Mode_IconOnlyTabs:
             self._MakeTabBar(QTabBar.RoundedNorth, False, True, False)
@@ -381,7 +698,7 @@ class FancyTabWidget(QWidget):
 
         rect = self._side_widget.rect().adjusted(0, 0, 1, 0)
         rect = self.style().visualRect(self.layoutDirection(), self.geometry(), rect)
-        Utils.StyleHelper.verticalGradient(painter, rect, rect)
+        StyleHelper.verticalGradient(painter, rect, rect)
 
         if not self._background_pixmap.isNull():
             pixmap_rect = QRect(self._background_pixmap.rect())
@@ -393,11 +710,11 @@ class FancyTabWidget(QWidget):
                 painter.drawPixmap(pixmap_rect.topLeft(), self._background_pixmap, source_rect)
                 pixmap_rect.moveTop(pixmap_rect.bottom() - 10)
 
-        painter.setPen(Utils.StyleHelper.borderColor())
+        painter.setPen(StyleHelper.borderColor())
         painter.drawLine(rect.topRight(), rect.bottomRight())
 
         # QColor
-        light = Utils.StyleHelper.sidebarHighlight()
+        light = StyleHelper.sidebarHighlight()
         painter.setPen(light)
         painter.drawLine(rect.bottomLeft(), rect.bottomRight())
 

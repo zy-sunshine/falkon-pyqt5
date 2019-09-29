@@ -12,7 +12,7 @@ from mc.common.globalvars import gVar
 from PyQt5.Qt import Qt
 
 class BookmarksManager(QWidget):
-    def __init__(self, window, parent):
+    def __init__(self, window, parent=None):
         '''
         @param: window BrowserWindow
         @param: parent QWidget

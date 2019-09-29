@@ -9,6 +9,8 @@ from mc.common.globalvars import gVar
 from PyQt5.Qt import Qt
 from mc.bookmarks.bookmarksimport.BookmarksImportDialog import BookmarksImportDialog
 from mc.bookmarks.bookmarksexport.BookmarksExportDialog import BookmarksExportDialog
+from mc.history.HistoryManager import HistoryManager
+from mc.bookmarks.BookmarksManager import BookmarksManager
 
 class BrowsingLibrary(QWidget):
     def __init__(self, window, parent=None):
