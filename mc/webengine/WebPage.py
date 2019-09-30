@@ -14,6 +14,7 @@ from PyQt5.Qt import QTimer
 from .javascript.ExternalJsObject import ExternalJsObject
 from mc.tools.Scripts import Scripts
 from PyQt5.Qt import QFileInfo, QFile
+from mc.tools.DelayedFileWatcher import DelayedFileWatcher
 
 class WebPage(QWebEnginePage):
     # JsWorld
