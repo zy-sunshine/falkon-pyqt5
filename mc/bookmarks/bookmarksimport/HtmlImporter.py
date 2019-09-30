@@ -42,7 +42,8 @@ class HtmlImporter(BookmarksImporter):
         @return: QString
         '''
         filter_ = _('HTML Bookmarks') + '(*.htm *.html)'
-        self._path = QFileDialog.getOpenFileName(parent, _('Choose file...'), QDir.homePath(), filter_)
+        self._path, selectedFilter = QFileDialog.getOpenFileName(parent,
+            _('Choose file...'), QDir.homePath(), filter_)
         return self._path
 
     # override

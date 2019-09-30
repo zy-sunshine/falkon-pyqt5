@@ -52,8 +52,8 @@ class OperaImporter(BookmarksImporter):
         @param: parent QWidget
         @return: QString
         '''
-        self._path = QFileDialog.getOpenFileName(parent, _('Choose file...'),
-                self.standardPath(), 'Bookmarks (*.adr)')
+        self._path, selectedFilter = QFileDialog.getOpenFileName(parent,
+            _('Choose file...'), self.standardPath(), 'Bookmarks (*.adr)')
         return self._path
 
     # override

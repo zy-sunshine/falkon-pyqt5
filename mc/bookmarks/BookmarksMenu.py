@@ -1,6 +1,7 @@
 from mc.tools.EnhancedMenu import Menu
 from PyQt5.Qt import QKeySequence
 from PyQt5.Qt import QIcon
+from mc.common.globalvars import gVar
 
 class BookmarksMenu(Menu):
     def __init__(self, parent=None):
@@ -23,7 +24,8 @@ class BookmarksMenu(Menu):
         pass
 
     def _showBookmarksManager(self):
-        pass
+        if self._window:
+            gVar.app.browsingLibrary().showBookmarks(self._window)
 
     def _bookmarksChanged(self):
         pass

@@ -2,6 +2,7 @@ from .BookmarksExporter import BookmarksExporter
 from PyQt5.Qt import QDir
 from mc.common.globalvars import gVar
 from ..BookmarkItem import BookmarkItem
+from traceback import print_exc
 
 class HtmlExporter(BookmarksExporter):
     def __init__(self, parent=None):
@@ -32,7 +33,7 @@ class HtmlExporter(BookmarksExporter):
         @return: bool
         '''
         try:
-            with open(self._path) as fp:
+            with open(self._path, 'wt') as fp:
                 fp.writelines(
                     [
                         "<!DOCTYPE NETSCAPE-Bookmark-file-1>",
@@ -70,12 +71,12 @@ class HtmlExporter(BookmarksExporter):
             fp.write('%s<HR>\n' % indent)
         elif itemType == BookmarkItem.Folder:
             fp.write('%s<DT><H3>%s</H3>\n' % (indent, item.title()))
-            fp.write('%s<DL><p>\n')
+            fp.write('%s<DL><p>\n' % indent)
             for child in item.children():
                 self._writeBookmark(child, fp, level + 1)
-            fp.write('%s</p></DL>\n')
+            fp.write('%s</p></DL>\n' % indent)
         elif itemType == BookmarkItem.Root:
-            fp.write('%s<DL><p>\n')
+            fp.write('%s<DL><p>\n' % indent)
             for child in item.children():
                 self._writeBookmark(child, fp, level + 1)
-            fp.write('%s</p></DL>\n')
+            fp.write('%s</p></DL>\n' % indent)

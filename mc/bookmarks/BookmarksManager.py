@@ -17,6 +17,7 @@ class BookmarksManager(QWidget):
         @param: window BrowserWindow
         @param: parent QWidget
         '''
+        super().__init__(parent)
         self._ui = uic.loadUi('mc/bookmarks/BookmarksManager.ui')
         self._window = window  # QPointer<BrowserWindow>
 

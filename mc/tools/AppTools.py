@@ -9,6 +9,7 @@ from PyQt5.Qt import QStylePainter
 from PyQt5.QtWidgets import QApplication
 from PyQt5.Qt import QFile
 from PyQt5.Qt import QUrl
+from PyQt5.Qt import QFileInfo
 
 class AppTools(Singleton):
 
@@ -248,14 +249,14 @@ class AppTools(Singleton):
         return ''
 
     def getOpenFileName(self, name, parent=None, caption='', dir_='', filter_='',
-            selectedFilter='', options=0):
+            selectedFilter='', options=QFileDialog.Options()):
         '''
         @param: name QString
         @param: parent QWidget
         @param: caption QString
         @param: dir_ QString
         @param: filter_ QString
-        @param: selectedFilter QString
+        @param: selectedFilter QString TODO: this is an output parameter
         @param: options QFileDialog::Options
         '''
         settings = Settings()
@@ -266,39 +267,76 @@ class AppTools(Singleton):
             lastDir = dir_
         else:
             lastDir = pathjoin(lastDir, fileName)
-        path = QFileDialog.getOpenFileName(parent, caption, lastDir, filter_, selectedFilter, options)
+        path, selectedFilter = QFileDialog.getOpenFileName(parent, caption,
+                lastDir, filter_, selectedFilter, options)
         if path:
             settings.setValue(name, abspath(path))
         settings.endGroup()
         return path
 
     def getOpenFileNames(self, name, parent=None, caption='', dir_='',
-            filter_='', selectedFilter='', options=0):
+            filter_='', selectedFilter='', options=QFileDialog.Options()):
         '''
         @param: name QString
         @param: parent QWidget
         @param: caption QString
         @param: dir_ QString
         @param: filter_ QString
-        @param: selectedFilter QString
+        @param: selectedFilter QString TODO: this is an output parameter
         @param: options QFileDialog::Options
         @return: QStringList
         '''
-        pass
+        settings = Settings()
+        settings.beginGroup('FileDialogPaths')
+
+        lastDir = settings.value(name, '')
+        fileName = self.getFileName(dir_)
+
+        if not lastDir:
+            lastDir = dir_
+        else:
+            lastDir = pathjoin(lastDir, fileName)
+
+        paths, selectedFilter = QFileDialog.getOpenFileNames(parent, caption,
+            lastDir, filter_, selectedFilter, options)
+
+        if paths:
+            settings.setValue(name, QFileInfo(paths[0]).absolutePath())
+
+        settings.endGroup()
+        return paths
 
     def getSaveFileName(self, name, parent=None, caption='', dir_='',
-            filter_='', selectedFilter='', options=0):
+            filter_='', selectedFilter='', options=QFileDialog.Options()):
         '''
         @param: name QString
         @param: parent QWidget
         @param: caption QString
         @param: dir_ QString
         @param: filter_ QString
-        @param: selectedFilter QString
+        @param: selectedFilter QString TODO: this is an output parameter
         @param: options QFileDialog::Options
         @return: QString
         '''
-        pass
+        settings = Settings()
+        settings.beginGroup('FileDialogPaths')
+
+        lastDir = settings.value(name, '')
+        fileName = self.getFileName(dir_)
+
+        if not lastDir:
+            lastDir = dir_
+        else:
+            lastDir = pathjoin(lastDir, fileName)
+
+        path, selectedFilter = QFileDialog.getSaveFileName(parent, caption,
+            lastDir, filter_, selectedFilter, options)
+
+        if path:
+            settings.setValue(name, QFileInfo(path).absolutePath())
+
+        settings.endGroup()
+        return path
 
     def matchDomain(self, pattern, domain):
         '''

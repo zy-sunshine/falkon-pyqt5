@@ -40,8 +40,8 @@ class ChromeImporter(BookmarksImporter):
         @param: parent QWidget
         @return: QString
         '''
-        self._path = QFileDialog.getOpenFileName(parent, _('Choose file...'),
-                self.standardPath(), 'Bookmarks (Bookmarks)')
+        self._path, selectedFilter = QFileDialog.getOpenFileName(parent,
+            _('Choose file...'), self.standardPath(), 'Bookmarks (Bookmarks)')
 
     # override
     def prepareImport(self):

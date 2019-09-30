@@ -67,8 +67,8 @@ class FirefoxImporter(BookmarksImporter):
         @param: parent QWidget
         @return: QString
         '''
-        self._path = QFileDialog.getOpenFileName(parent, _('Choose file...'),
-                self.standardPath(), 'Places (places.sqlite)')
+        self._path, selectedFilter = QFileDialog.getOpenFileName(parent,
+            _('Choose file...'), self.standardPath(), 'Places (places.sqlite)')
         return self._path
 
     # override
@@ -136,7 +136,7 @@ class FirefoxImporter(BookmarksImporter):
             if item.type == BookmarkItem.Invalid:
                 continue
 
-            urlDbobj = MozPlaces.select().where(MozPlaces.id==fk).first()
+            urlDbobj = MozPlaces.select().where(MozPlaces.id == fk).first()
             if urlDbobj:
                 item.url = QUrl(urlDbobj.url)
 

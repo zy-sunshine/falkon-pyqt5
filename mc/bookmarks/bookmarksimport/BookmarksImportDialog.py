@@ -24,7 +24,7 @@ class BookmarksImportDialog(QDialog):
         self._ui = uic.loadUi('mc/bookmarks/bookmarksimport/BookmarksImportDialog.ui', self)
 
         self._ui.browserList.setCurrentRow(0)
-        self._ui.treeView.setItemDelegate(BookmarksItemDelegate(self._ui.view))
+        self._ui.treeView.setItemDelegate(BookmarksItemDelegate(self._ui.treeView))
 
         self._ui.nextButton.clicked.connect(self._nextPage)
         self._ui.backButton.clicked.connect(self._previousPage)
@@ -57,7 +57,7 @@ class BookmarksImportDialog(QDialog):
             self._ui.nextButton.setEnabled(False)
             self._ui.backButton.setEnabled(True)
             self._currentPage += 1
-            self._stackedWidget.setCurrentIndex(self._currentPage)
+            self._ui.stackedWidget.setCurrentIndex(self._currentPage)
         elif self._currentPage == 1:
             if not self._ui.fileLine.text():
                 return
@@ -114,7 +114,8 @@ class BookmarksImportDialog(QDialog):
     def _setFile(self):
         assert(self._importer)
 
-        self._ui.fileLine.setText(self._importer.getPath(self))
+        fpath = self._importer.getPath(self)
+        self._ui.fileLine.setText(fpath)
         self._ui.nextButton.setEnabled(bool(self._ui.fileLine.text()))
 
     # private:
@@ -128,7 +129,7 @@ class BookmarksImportDialog(QDialog):
     def _showImporterPage(self):
         self._ui.iconLabel.setPixmap(self._ui.browserList.currentItem().icon().pixmap(48))
         self._ui.importingFromLabel.setText(_('<b>Importing from %s</b>') %
-                self._ui.browerList.currentItem().text())
+                self._ui.browserList.currentItem().text())
         self._ui.fileText1.setText(self._importer.description())
         self._ui.standardDirLabel.setText('<i>%s</i>' % self._importer.standardPath())
 
