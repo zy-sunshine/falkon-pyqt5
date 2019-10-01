@@ -31,11 +31,12 @@ sessionVersion = '1.0'
     CL_NewWindow,
     CL_ShowDownloadManager,
     CL_ToggleFullScreen,
+    CL_StartPrivateBrowsing,
     CL_StartNewInstance,
     CL_StartPortable,
     CL_ExitAction,
     CL_WMClass,
-) = CommandLineAction = range(14)
+) = CommandLineAction = range(15)
 
 (
     ON_WebView,
@@ -96,3 +97,5 @@ if OS_WIN:
     DEFAULT_DOWNLOAD_USE_NATIVE_DIALOG = False
 else:
     DEFAULT_DOWNLOAD_USE_NATIVE_DIALOG = True
+
+MAIN_PATH = pathjoin(BASE_DIR, 'mc', 'main', 'main.py')

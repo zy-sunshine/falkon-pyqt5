@@ -22,6 +22,8 @@ from PyQt5.Qt import QCoreApplication
 from PyQt5.Qt import QThreadPool
 from PyQt5.Qt import QProcess
 from PyQt5.Qt import QDir
+from PyQt5.Qt import QAction
+from PyQt5.Qt import QDateTime
 from .BrowserWindow import BrowserWindow
 from .ProfileManager import ProfileManager
 from .Settings import Settings
@@ -49,6 +51,7 @@ from mc.tools.html5permissions.HTML5PermissionsManager import HTML5PermissionsMa
 from mc.notifications.DesktopNotificationsFactory import DesktopNotificationsFactory
 from mc.common.globalvars import gVar
 from mc.other.BrowsingLibrary import BrowsingLibrary
+from .CommandLineOptions import CommandLineOptions
 
 class MainApplication(QtSingleApp):
     s_testMode = False
@@ -126,8 +129,59 @@ class MainApplication(QtSingleApp):
         messages = []
 
         noAddons = False
-        # TODO:
-        # newInstance = False
+        newInstance = False
+
+        if len(argv) > 1:
+            cmd = CommandLineOptions()
+            for pair in cmd.getActions():
+                action = pair.action
+                text = pair.text
+                if action == const.CL_StartWithoutAddons:
+                    noAddons = True
+                elif action == const.CL_StartWithProfile:
+                    startProfile = text
+                elif action == const.CL_StartPortable:
+                    self._isPortable = True
+                    break
+                elif action == const.CL_NewTab:
+                    messages.append("ACTION:NewTab")
+                    self._postLaunchActions.append(self.OpenNewTab)
+                    break
+                elif action == const.CL_NewWindow:
+                    messages.append("ACTION:NewWindow")
+                    break
+                elif action == const.CL_ToggleFullScreen:
+                    messages.append("ACTION:ToggleFullScreen")
+                    self._postLaunchActions.append(self.ToggleFullScreen)
+                    break
+                elif action == const.CL_ShowDownloadManager:
+                    messages.append("ACTION:ShowDownloadManager")
+                    self._postLaunchActions.append(self.OpenDownloadManager)
+                    break
+                elif action == const.CL_StartPrivateBrowsing:
+                    self._isPrivate = True
+                    break
+                elif action == const.CL_StartNewInstance:
+                    newInstance = True
+                    break
+                elif action == const.CL_OpenUrlInCurrentTab:
+                    startUrl = QUrl.fromUserInput(text)
+                    messages.append("ACTION:OpenUrlInCurrentTab" + text)
+                    break
+                elif action == const.CL_OpenUrlInNewWindow:
+                    startUrl = QUrl.fromUserInput(text)
+                    messages.append("ACTION:OpenUrlInNewWindow" + text)
+                    break
+                elif action == const.CL_OpenUrl:
+                    startUrl = QUrl.fromUserInput(text)
+                    messages.append("URL:" + text)
+                    break
+                elif action == const.CL_ExitAction:
+                    self._isClosing = True
+                    return
+                elif action == const.CL_WMClass:
+                    self._wmClass = text
+                    break
 
         if not self.isPortable():
             appConf = QSettings(pathjoin(self.applicationDirPath(), '%s.conf' % const.APPNAME), QSettings.IniFormat)
@@ -137,10 +191,30 @@ class MainApplication(QtSingleApp):
             print('%s: Running in Portable Mode.' % const.APPNAME)
             DataPaths.setPortableVersion()
 
-        self.setAppId('org.autowin.demo')
+        # Don't start single application in private browsing
+        if not self.isPrivate():
+            appId = 'org.autowin.mc'
+
+            if self.isPortable():
+                appId += '.Portable'
+
+            if self.isTestModeEnabled():
+                appId += '.TestMode'
+
+            if newInstance:
+                if not startProfile or startProfile == 'default':
+                    print('New instance cannot be started with default profile!')
+                else:
+                    # Generate unique appId so it is possible to start more
+                    # separate instances of the same profile. It is dangerous to
+                    # run more instance of the same profile, but if the user
+                    # wants it, we should allow it.
+                    appId += '.' + str(QDateTime.currentMSecsSinceEpoch())
+
+            self.setAppId(appId)
 
         # If there is nothing to tell other instance, we need to at least weak it
-        if messages:
+        if not messages:
             messages.append(' ')
 
         if self.isRunning():
@@ -464,9 +538,9 @@ class MainApplication(QtSingleApp):
     def startPrivateBrowsing(self, startUrl=QUrl()):
         url = startUrl
         act = self.sender()
-        if act:
-            url = act.data().toUrl()
-        args = []
+        if isinstance(act, QAction):
+            url = QUrl(act.data())
+        args = [const.MAIN_PATH]
         args.append('--private-browsing')
         args.append('--profile=%s' % ProfileManager.currentProfile())
         if not url.isEmpty():
