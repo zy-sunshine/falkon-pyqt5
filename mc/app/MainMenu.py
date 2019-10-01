@@ -139,10 +139,10 @@ class MainMenu(QMenu):
         self._callSlot('_openLocation')
 
     def _openFile(self):
-        self._callSlot('openFile')
+        self._callSlot('_openFile')
 
     def _closeWindow(self):
-        self._callSlot('closeWindow')
+        self._callSlot('_closeWindow')
 
     def _savePageAs(self):
         if self._window:

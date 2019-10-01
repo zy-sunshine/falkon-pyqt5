@@ -561,7 +561,6 @@ class BrowserWindow(QMainWindow):
             self.weView(index).setFocus()
         else:
             webView.setFocus()
-            url = 'http://www.baidu.com'
             webView.loadByReq(LoadRequest(url))
 
     def showSource(self, view=None):
@@ -581,7 +580,7 @@ class BrowserWindow(QMainWindow):
             "%s(*.png *.jpg *.jpeg *.bmp *.gif *.svg *.tiff);;"
             "%s(*.txt);;"
             "%s(*.*)")
-        fileTypes % ("HTML files", "Image files", "Text files", "All files")
+        fileTypes %= ("HTML files", "Image files", "Text files", "All files")
         filePath = gVar.appTools.getOpenFileName("MainWindow-openFile",
             self, "Open file...", QDir.homePath(), fileTypes)
 
