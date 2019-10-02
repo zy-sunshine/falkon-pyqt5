@@ -13,6 +13,18 @@ WIKIADDRESS = 'wiki.autowin.org'
 
 sessionVersion = '1.0'
 
+from PyQt5 import QtCore
+QT_VERSION = QtCore.QT_VERSION
+QT_VERSION_STR = QtCore.QT_VERSION_STR
+QT_VERSION_MAJOR = QtCore.QT_VERSION >> 16
+QT_VERSION_MINOR = (QtCore.QT_VERSION >> 8) & 0x000000FF
+QT_VERSION_PATCH = QtCore.QT_VERSION & 0x0000000F
+# can be used like:
+#   if (QT_VERSION >= QT_VERSION_CHECK(4, 4, 0))
+def QT_VERSION_CHECK(major, minor, patch):
+    return ((major << 16) | (minor << 8) | (patch))
+QTWEBENGINEWIDGETS_VERSION = QT_VERSION
+
 (
     BW_FirstAppWindow,
     BW_OtherRestoredWindow,

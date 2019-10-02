@@ -148,7 +148,22 @@ class AppTools(Singleton):
         @param: size qint64
         @return: QString
         '''
-        pass
+        if size < 0:
+            return _('Unknown size')
+
+        _size = size / 1024.0  # KB
+        if _size < 1000:
+            if _size > 1:
+                return '%s KB' % int(_size)
+            else:
+                return '1 KB'
+
+        _size /= 1024  # MB
+        if _size < 1000:
+            return '%.1f MB' % _size
+
+        _size /= 1024  # GB
+        return '%.2f GB' % _size
 
     def createPixmapForSite(self, icon, title, url):
         '''

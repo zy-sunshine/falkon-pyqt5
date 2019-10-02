@@ -146,7 +146,7 @@ class MainMenu(QMenu):
 
     def _savePageAs(self):
         if self._window:
-            func = getattr(self._window.weView(), 'savePageAs')
+            func = getattr(self._window.weView(), '_savePageAs')
             func()
 
     def _sendLink(self):
