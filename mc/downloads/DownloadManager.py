@@ -10,13 +10,14 @@ from PyQt5.Qt import QIcon
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QShortcut
 from PyQt5.Qt import QKeySequence
+from PyQt5.Qt import QFileInfo
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QListWidgetItem
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWinExtras import QWinTaskbarButton
 from PyQt5.QtWebEngineWidgets import QWebEngineDownloadItem
 from PyQt5.QtWinExtras import QtWin
-from os.path import join as pathjoin, exists as pathexists, basename, abspath
+from os.path import join as pathjoin, basename
 from mc.common.globalvars import gVar
 from mc.common import const
 from mc.app.DataPaths import DataPaths
@@ -148,7 +149,7 @@ class DownloadManager(QWidget):
                     pathjoin(self._lastDownloadPath, fileName))
 
                 if downloadPath:
-                    self._lastDownloadPath = abspath(downloadPath)
+                    self._lastDownloadPath = QFileInfo(downloadPath).absolutePath()
                     Settings().setValue('DownloadManager/lastDownloadPath', self._lastDownloadPath)
                     self._lastDownloadOption = self.SaveFile
 
@@ -165,7 +166,7 @@ class DownloadManager(QWidget):
                     selectedFilter)
 
                 if downloadPath:
-                    self._lastDownloadPath = abspath(downloadPath)
+                    self._lastDownloadPath = QFileInfo(downloadPath).absolutePath()
                     Settings().setValue('DownloadManager/lastDownloadPath', self._lastDownloadPath)
                     self._lastDownloadOption = self.SaveFile
 
@@ -199,7 +200,7 @@ class DownloadManager(QWidget):
 
         # Create download item
         listItem = QListWidgetItem(self._ui.list)
-        downItem = DownloadItem(listItem, downloadItem, abspath(downloadPath),
+        downItem = DownloadItem(listItem, downloadItem, QFileInfo(downloadPath).absolutePath(),
                 basename(downloadPath), openFile, self)
         downItem.setDownTimer(downloadTimer)
         downItem.startDownloading()
@@ -335,7 +336,7 @@ class DownloadManager(QWidget):
         progresses = []  # QVector<int>
         speeds = []  # QVector<double>
 
-        if event.timeId() == self._timer.timerId():
+        if event.timerId() == self._timer.timerId():
             if not self._ui.list.count():
                 self._ui.speedLabel.clear()
                 self.setWindowTitle(_('Download Manager'))

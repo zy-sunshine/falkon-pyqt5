@@ -21,7 +21,7 @@ from mc.common.globalvars import gVar
 
 class DownloadItem(QWidget):
     DEBUG = True
-    def __init__(self, item, downloadItem, path, fileName, openfile, manager):
+    def __init__(self, item, downloadItem, path, fileName, openFile, manager):
         '''
         @param: item QListWidgetItem
         @param: downloadItem QWebEngineDownloadItem
@@ -34,12 +34,12 @@ class DownloadItem(QWidget):
         self._ui = uic.loadUi('mc/downloads/DownloadItem.ui', self)
         self._item = item  # QListWidgetItem
         self._download = downloadItem  # QWebEngineDownloadItem
-        self._path = ''
-        self._fileName = ''
+        self._path = path
+        self._fileName = fileName
         self._downTimer = QTime()
         self._remTime = QTime()
         self._downUrl = QUrl()
-        self._openFile = False
+        self._openFile = openFile
 
         self._downloading = False
         self._downloadStopped = False
@@ -236,7 +236,6 @@ class DownloadItem(QWidget):
         if pathexists(fpath):
             QDesktopServices.openUrl(QUrl.fromLocalFile(abspath(fpath)))
         else:
-            QMessageBox.warning()
             QMessageBox.warning(self._item.listWidget().parentWidget(),
                 _("Not found"), _("Sorry, the file \n %s \n was not found!") % abspath(fpath))
 
@@ -247,7 +246,7 @@ class DownloadItem(QWidget):
             if self._downloading:
                 winFileName += '.download'
 
-            winFileName.replace('/', '\\')
+            winFileName = winFileName.replace('/', '\\')
             shExArg = '/e,/select,"%s"' % winFileName
             system('explorer.exe ' + shExArg)
         else:
@@ -269,7 +268,7 @@ class DownloadItem(QWidget):
         menu.addAction(QIcon.fromTheme('list-remove'), _('Remove From List'),
             self._clear).setEnabled(not self._downloading)
 
-        if self._downloading or self._ui.downloadInfo().text().startsWith(_('Cancelled')) or \
+        if self._downloading or self._ui.downloadInfo.text().startswith(_('Cancelled')) or \
                 self._ui.downloadInfo.text().startswith(_('Error')):
             menu.actions()[0].setEnabled(False)
         menu.exec_(self.mapToGlobal(pos))
