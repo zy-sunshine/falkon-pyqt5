@@ -156,7 +156,7 @@ class MainMenu(QMenu):
         QDesktopServices.openUrl(mainUrl)
 
     def _printPage(self):
-        self._callSlot('printPage')
+        self._callSlot('_printPage')
 
     # Edit menu
     def _editUndo(self):
@@ -184,7 +184,7 @@ class MainMenu(QMenu):
             self._window.weView().editSelectAll()
 
     def _editFind(self):
-        self._callSlot('searchOnPage')
+        self._callSlot('_searchOnPage')
 
     # View menu
     def _showStatusBar(self):
@@ -220,7 +220,7 @@ class MainMenu(QMenu):
 
     # Tools menu
     def _webSearch(self):
-        self._callSlot('webSearch')
+        self._callSlot('_webSearch')
 
     def _showSiteInfo(self):
         if self._window and SiteInfo.canShowSiteInfo(self._window.weView().url()):

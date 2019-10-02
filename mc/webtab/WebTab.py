@@ -18,6 +18,7 @@ from mc.webengine.WebPage import WebPage
 from mc.webengine.WebInspector import WebInspector
 from mc.navigation.LocationBar import LocationBar
 from mc.tabwidget.TabIcon import TabIcon
+from .SearchToolBar import SearchToolBar
 
 class WebTab(QWidget):
 
