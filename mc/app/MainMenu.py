@@ -150,9 +150,9 @@ class MainMenu(QMenu):
             func()
 
     def _sendLink(self):
-        mainUrl = QUrl.fromEncoded('mailto:%20?body=' +
-            QUrl.toPercentEncoding(self._window.weView.url().toEncoded()) +
-            '&subject=' + QUrl.toPercentEncoding(self._window.weView.title()))
+        url = self._window.weView().url().toEncoded().toPercentEncoding()
+        title = QUrl.toPercentEncoding(self._window.weView().title()).data()
+        mainUrl = QUrl.fromEncoded(b'mailto:%20?body=' + url + b'&subject=' + title)
         QDesktopServices.openUrl(mainUrl)
 
     def _printPage(self):
