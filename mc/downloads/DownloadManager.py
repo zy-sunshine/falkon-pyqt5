@@ -1,3 +1,4 @@
+from PyQt5 import uic
 from PyQt5.QtWidgets import QWidget
 from PyQt5.Qt import QBasicTimer
 from PyQt5.Qt import QSize
@@ -7,11 +8,14 @@ from PyQt5.Qt import QStandardPaths
 from PyQt5.Qt import Qt
 from PyQt5.Qt import QIcon
 from PyQt5.Qt import QUrl
+from PyQt5.Qt import QShortcut
+from PyQt5.Qt import QKeySequence
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QListWidgetItem
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWinExtras import QWinTaskbarButton
 from PyQt5.QtWebEngineWidgets import QWebEngineDownloadItem
+from PyQt5.QtWinExtras import QtWin
 from os.path import join as pathjoin, exists as pathexists, basename, abspath
 from mc.common.globalvars import gVar
 from mc.common import const
@@ -56,9 +60,26 @@ class DownloadManager(QWidget):
         self._externalExecutable = ''
         self._externalArguments = ''
 
-        self._lastDownloadOption = self.SaveFile  # DownloadOption
+        self._lastDownloadOption = self.NoOption  # DownloadOption
 
         self._taskbarButton = None  # QPointer<QWinTaskbarButton>
+
+        self._ui = uic.loadUi('mc/downloads/DownloadManager.ui', self)
+        self.setWindowFlags(self.windowFlags() ^ Qt.WindowMaximizeButtonHint)
+        if const.OS_WIN:
+            if QtWin.isCompositionEnabled():  # TODO: ?
+                QtWin.extendFrameIntoClientArea(self, -1, -1, -1, -1)
+        self._ui.clearButton.setIcon(QIcon.fromTheme('edit-clear'))
+        gVar.appTools.centerWidgetOnScreen(self)
+
+        self._ui.clearButton.clicked.connect(self._clearList)
+
+        clearShortcut = QShortcut(QKeySequence('CTRL+L'), self)
+        clearShortcut.activated.connect(self._clearList)
+
+        self.loadSettings()
+
+        gVar.appTools.setWmClass('Download Manager', self)
 
     def loadSettings(self):
         settings = Settings()
@@ -85,7 +106,7 @@ class DownloadManager(QWidget):
         downloadTimer = QTime()
         downloadTimer.start()
 
-        self.closeDownloadTab()
+        self.closeDownloadTab(downloadItem)
 
         downloadPath = ''
         openFile = False
@@ -207,7 +228,7 @@ class DownloadManager(QWidget):
             return True
 
         isDownloading = False
-        for idx in self._ui.list.count():
+        for idx in range(self._ui.list.count()):
             downItem = self._ui.list.itemWidget(self._ui.list.item(idx))
             if not downItem:
                 continue

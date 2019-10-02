@@ -18,3 +18,6 @@ class QtSingleApp(QApplication):
 
     # Q_SIGNALS
     messageReceived = pyqtSignal(str)  # message
+
+    def removeLockFile(self):
+        pass

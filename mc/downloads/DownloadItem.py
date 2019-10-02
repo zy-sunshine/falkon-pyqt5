@@ -32,7 +32,7 @@ class DownloadItem(QWidget):
         '''
         super().__init__()
         self._ui = uic.loadUi('mc/downloads/DownloadItem.ui', self)
-        self._item = None  # QListWidgetItem
+        self._item = item  # QListWidgetItem
         self._download = downloadItem  # QWebEngineDownloadItem
         self._path = ''
         self._fileName = ''
@@ -293,6 +293,7 @@ class DownloadItem(QWidget):
         #            QString          QString       QString     QString
         #          | m_remTime |   |m_currSize|  |m_fileSize|  |m_speed|
         # Remaining 26 minutes -     339MB of      693 MB        (350kB/s)
+        if currSpeed == 0: currSpeed = 1
         estimatedTime = ((total - received) / 1024) / (currSpeed / 1024)
         speed = self.currentSpeedToString(currSpeed)
         # We have QString speed now
