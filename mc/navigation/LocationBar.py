@@ -319,7 +319,7 @@ class LocationBar(LineEdit):
 
     def _updateSiteIcon(self):
         if self._completer.isVisible():
-            self._siteIcon.setIcon(QIcon.fromTheme('edit-find'), QIcon(':icons/menu/search-icon.svg'))
+            self._siteIcon.setIcon(QIcon.fromTheme('edit-find'), QIcon(':/icons/menu/search-icon.svg'))
         else:
             icon = IconProvider.emptyWebIcon()
             secured = self.property('secured')

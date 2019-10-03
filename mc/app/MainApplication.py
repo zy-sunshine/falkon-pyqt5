@@ -102,7 +102,7 @@ class MainApplication(QtSingleApp):
 
         self.setApplicationName('demo')
         self.setOrganizationDomain('org.autowin')
-        self.setWindowIcon(QIcon.fromTheme('demo', QIcon(':icons/demo.svg')))
+        self.setWindowIcon(QIcon.fromTheme('demo', QIcon(':/icons/demo.svg')))
         self.setDesktopFileName('orig.autowin.demo')
 
         self.setApplicationVersion('1.0')

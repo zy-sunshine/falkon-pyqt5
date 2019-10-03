@@ -310,7 +310,7 @@ class DownloadManager(QWidget):
         if downloadingAllFilesFinished:
             if success and gVar.app.activeWindow() != self:
                 gVar.app.desktopNotifications().showNotification(
-                    QIcon.fromTheme('download', QIcon(':icons/other/download.svg')),
+                    QIcon.fromTheme('download', QIcon(':/icons/other/download.svg')),
                     _('App: Download Finished'), _('All files have been successfully downloaded.'))
                 if not self._closeOnFinish:
                     self.raise_()

@@ -15,7 +15,7 @@ class AboutDialog(QDialog):
 
         self.setAttribute(Qt.WA_DeleteOnClose)
 
-        self._ui.label.setPixmap(QIcon(':icons/other/about.svg').pixmap(QSize(256, 100) * 1.1))
+        self._ui.label.setPixmap(QIcon(':/icons/other/about.svg').pixmap(QSize(256, 100) * 1.1))
 
         self._showAbout()
 

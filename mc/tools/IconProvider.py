@@ -1,9 +1,7 @@
+from threading import Lock
 from PyQt5.Qt import QImage
 from PyQt5.Qt import QIcon
-from threading import Lock
-from mc.common.designutil import Singleton
 from PyQt5.Qt import QStyle
-from PyQt5.QtWidgets import QApplication
 from PyQt5.Qt import Qt
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QBuffer
@@ -11,6 +9,8 @@ from PyQt5.Qt import QByteArray
 from PyQt5.Qt import QIODevice
 from PyQt5.Qt import QDateTime
 from PyQt5.Qt import QPixmap
+from PyQt5.Qt import pyqtProperty
+from PyQt5.Qt import QApplication
 from PyQt5.QtWidgets import QWidget
 from .AutoSaver import AutoSaver
 from mc.common.globalvars import gVar
@@ -68,7 +68,7 @@ class IconProvider(QWidget):
         self._autoSaver.changeOccurred()
         self._iconBuffer.append(item)
 
-    def bookmarkIcon(self):
+    def _bookmarkIcon(self):
         '''
         @return: QIcon
         '''
@@ -80,7 +80,7 @@ class IconProvider(QWidget):
         '''
         self._bookmarkIcon = icon
 
-    bookmarkIcon = property(bookmarkIcon, setBookmarkIcon)
+    bookmarkIcon = pyqtProperty(QIcon, _bookmarkIcon, setBookmarkIcon)
 
     # QStyle equivalent
     @classmethod  # noqa C901
@@ -204,7 +204,9 @@ class IconProvider(QWidget):
                 if encodeUrl(url0) == encUrl:
                     return img
 
+            # TODO: is it necessary to use escapeSqlGlobString
             escapedUrl = gVar.appTools.escapeSqlGlobString(encUrl.data().decode())
+
             urlPattern = '%s*' % escapedUrl
             icon = IconsDbModel.select().filter(IconsDbModel.url.regexp(urlPattern)).first()
             img = QImage()
@@ -243,6 +245,7 @@ class IconProvider(QWidget):
                 if url0.host() == url.host():
                     return img
 
+            # TODO: is it necessary to use escapeSqlGlobString
             escapedHost = gVar.appTools.escapeSqlGlobString(url.host())
             hostPattern = '*%s*' % escapedHost
             icon = IconsDbModel.select().filter(IconsDbModel.url.regexp(hostPattern)).first()

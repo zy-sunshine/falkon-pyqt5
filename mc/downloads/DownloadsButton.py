@@ -6,7 +6,7 @@ class DownloadsButton(AbstractButtonInterface):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._manager = gVar.app.downloadManager()  # DownloadManager
-        self.setIcon(QIcon.fromTheme('edit-download', QIcon(':icons/menu/download.svg')))
+        self.setIcon(QIcon.fromTheme('edit-download', QIcon(':/icons/menu/download.svg')))
         self.setTitle('Downloads')
         self.setToolTip('Open Download Manager')
 

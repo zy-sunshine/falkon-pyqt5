@@ -101,12 +101,17 @@ class AppTools(Singleton):
         '''
         pass
 
-    def eascapeSqlGlobString(self, urlString):
+    def escapeSqlGlobString(self, urlString):
         '''
         @param: urlString QString
         @return: QString
         '''
-        pass
+        urlString = urlString.replace('[', "[[")
+        urlString = urlString.replace(']', "[]]")
+        urlString = urlString.replace("[[", "[[]")
+        urlString = urlString.replace('*', "[*]")
+        urlString = urlString.replace('?', "[?]")
+        return urlString
 
     def ensureUniqueFilename(self, name, appendFormat="(%s)"):
         pass
