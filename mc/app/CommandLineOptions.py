@@ -171,13 +171,13 @@ class CommandLineOptions(object):
         if not parser.positionalArguments():
             return
 
-        url = parser.positionalArguments().constLast()
+        url = parser.positionalArguments()[-1]
         fileInfo = QFileInfo(url)
 
         if fileInfo.exists():
             url = fileInfo.absoluteFilePath()
 
-        if not url.isEmpty() and not url.startsWith('-'):
+        if url and not url.startswith('-'):
             pair = self.ActionPair()
             pair.action = const.CL_OpenUrl
             pair.text = url

@@ -142,46 +142,35 @@ class MainApplication(QtSingleApp):
                     startProfile = text
                 elif action == const.CL_StartPortable:
                     self._isPortable = True
-                    break
                 elif action == const.CL_NewTab:
                     messages.append("ACTION:NewTab")
                     self._postLaunchActions.append(self.OpenNewTab)
-                    break
                 elif action == const.CL_NewWindow:
                     messages.append("ACTION:NewWindow")
-                    break
                 elif action == const.CL_ToggleFullScreen:
                     messages.append("ACTION:ToggleFullScreen")
                     self._postLaunchActions.append(self.ToggleFullScreen)
-                    break
                 elif action == const.CL_ShowDownloadManager:
                     messages.append("ACTION:ShowDownloadManager")
                     self._postLaunchActions.append(self.OpenDownloadManager)
-                    break
                 elif action == const.CL_StartPrivateBrowsing:
                     self._isPrivate = True
-                    break
                 elif action == const.CL_StartNewInstance:
                     newInstance = True
-                    break
                 elif action == const.CL_OpenUrlInCurrentTab:
                     startUrl = QUrl.fromUserInput(text)
                     messages.append("ACTION:OpenUrlInCurrentTab" + text)
-                    break
                 elif action == const.CL_OpenUrlInNewWindow:
                     startUrl = QUrl.fromUserInput(text)
                     messages.append("ACTION:OpenUrlInNewWindow" + text)
-                    break
                 elif action == const.CL_OpenUrl:
                     startUrl = QUrl.fromUserInput(text)
                     messages.append("URL:" + text)
-                    break
                 elif action == const.CL_ExitAction:
                     self._isClosing = True
                     return
                 elif action == const.CL_WMClass:
                     self._wmClass = text
-                    break
 
         if not self.isPortable():
             appConf = QSettings(pathjoin(self.applicationDirPath(), '%s.conf' % const.APPNAME), QSettings.IniFormat)
@@ -544,7 +533,7 @@ class MainApplication(QtSingleApp):
         args.append('--private-browsing')
         args.append('--profile=%s' % ProfileManager.currentProfile())
         if not url.isEmpty():
-            args.append(url.toEncoded())
+            args.append(url.toEncoded().data().decode())
         if not QProcess.startDetached(self.applicationFilePath(), args):
             print('MainApplication: Cannot start new browser process for private browsing!'
                 ' %s %s' % (self.applicationFilePath(), args), file=stderr)

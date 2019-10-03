@@ -36,6 +36,7 @@ from mc.tools.IconProvider import IconProvider
 from mc.common import const
 from mc.other.SiteInfo import SiteInfo
 from mc.tools.EnhancedMenu import Action, Menu
+from mc.webengine.LoadRequest import LoadRequest
 
 class WebView(QWebEngineView):
     _s_forceContextMenuOnMouseRelease = False
@@ -493,7 +494,7 @@ class WebView(QWebEngineView):
         @param: url QUrl
         @param: position Qz::NewTabPositionFlags
         '''
-        self.loadInNewTab(url, position)
+        self.loadInNewTab(LoadRequest(url), position)
 
     # pure virtual method
     def closeView(self):
@@ -564,7 +565,7 @@ class WebView(QWebEngineView):
     def _openUrlInNewWindow(self):
         action = self.sender()
         if isinstance(action, QAction):
-            gVar.app.createWindow(const.BW_NewWindow, action.data().toUrl())
+            gVar.app.createWindow(const.BW_NewWindow, action.data())
 
     def _sendTextByMail(self):
         action = self.sender()
@@ -617,19 +618,46 @@ class WebView(QWebEngineView):
     def _openUrlInSelectedTab(self):
         action = self.sender()
         if isinstance(action, QAction):
-            self.openUrlInNewTab(action.data().toUrl(), const.NT_CleanSelectedTab)
+            self.openUrlInNewTab(action.data(), const.NT_CleanSelectedTab)
 
     def _openUrlInBackgroundTab(self):
         action = self.sender()
         if isinstance(action, QAction):
-            self.openUrlInNewTab(action.data().toUrl(), const.NT_CleanNotSelectedTab)
+            self.openUrlInNewTab(action.data(), const.NT_CleanNotSelectedTab)
 
     # To support user's option whether to open in selected or background tab
     def userDefinedOpenUrlInNewTab(self, url=QUrl(), invert=False):
-        pass
+        position = gVar.appSettings.newTabPosition
+        if invert:
+            if position & const.NT_SelectedTab:
+                position &= ~const.NT_SelectedTab
+                position |= const.NT_NotSelectedTab
+            else:
+                position &= ~const.NT_NotSelectedTab
+                position |= const.NT_SelectedTab
+
+        actionUrl = QUrl()
+
+        if not url.isEmpty():
+            actionUrl = url
+        else:
+            action = self.sender()
+            if isinstance(action, QAction):
+                actionUrl = action.data()
+
+        self.openUrlInNewTab(actionUrl, position)
 
     def userDefineOpenUrlInBgTab(self, url=QUrl()):
-        pass
+        actionUrl = QUrl()
+
+        if not url.isEmpty():
+            actionUrl = url
+        else:
+            action = self.sender()
+            if isinstance(action, QAction):
+                actionUrl = action.data()
+
+        self.userDefinedOpenUrlInNewTab(actionUrl, True)
 
     # protected:
     # override
@@ -856,12 +884,14 @@ class WebView(QWebEngineView):
         menu.addSeparator()
         act = Action(IconProvider.newTabIcon(), _('Open link in new &tab'), menu)
         act.setData(hitTest.linkUrl())
-        act.triggered.connect(self.userDefinedOpenUrlInNewTab)
-        act.ctrlTriggered.connect(self.userDefineOpenUrlInBgTab)
+        act.triggered.connect(lambda: self.userDefinedOpenUrlInNewTab())
+        act.ctrlTriggered.connect(lambda: self.userDefineOpenUrlInBgTab())
         menu.addAction(act)
-        act = menu.addAction(IconProvider.newWindowIcon(), _('Open link in new &window'))
+        act = menu.addAction(IconProvider.newWindowIcon(), _('Open link in new &window'),
+                self._openUrlInNewWindow)
         act.setData(hitTest.linkUrl())
-        act = menu.addAction(IconProvider.privateBrowsingIcon(), _('Open link in &private window'))
+        act = menu.addAction(IconProvider.privateBrowsingIcon(), _('Open link in &private window'),
+                gVar.app.startPrivateBrowsing)
         act.setData(hitTest.linkUrl())
         menu.addSeparator()
 
@@ -894,7 +924,7 @@ class WebView(QWebEngineView):
             act = Action(_('Show i&mage'), menu)
             act.setData(hitTest.imageUrl())
             act.triggered.connect(self._openActionUrl)
-            act.ctrlTriggered.connect(self.userDefinedOpenUrlInNewTab)
+            act.ctrlTriggered.connect(lambda: self.userDefinedOpenUrlInNewTab())
             menu.addAction(act)
         menu.addAction(_('Copy image'), self._copyImageToClipboard)
         act = menu.addAction(QIcon.fromTheme('edit-copy'), _('Copy image ad&dress'),
@@ -938,7 +968,7 @@ class WebView(QWebEngineView):
             act.setData(guessedUrl)
 
             act.triggered.connect(self._openActionUrl)
-            act.ctrlTriggered.connect(self.userDefinedOpenUrlInNewTab)
+            act.ctrlTriggered.connect(lambda: self.userDefinedOpenUrlInNewTab())
             menu.addAction(act)
 
         menu.addSeparator()

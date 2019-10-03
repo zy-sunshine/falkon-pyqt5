@@ -334,16 +334,13 @@ class BrowserWindow(QMainWindow):
     def tabCount(self):
         return self._tabWidget.count()
 
-    def weView(self):
+    def weView(self, index=None):
         '''
         @return TabbedWebView
         '''
-        return self.weViewByIndex(self._tabWidget.currentIndex())
 
-    def weViewByIndex(self, index):
-        '''
-        @return TabbedWebView
-        '''
+        if index is None:
+            index = self._tabWidget.currentIndex()
         webTab = self._tabWidget.widget(index)
         if not webTab:
             return None

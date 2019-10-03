@@ -397,7 +397,7 @@ class WebPage(QWebEnginePage):
 
         def createTab(pos):
             index = window.tabWidget().addViewByUrl(QUrl(), pos)
-            view = window.weViewByIndex(index)
+            view = window.weView(index)
             view.setPage(WebPage())
             if tView:
                 tView.webTab().addChildTab(view.webTab())
