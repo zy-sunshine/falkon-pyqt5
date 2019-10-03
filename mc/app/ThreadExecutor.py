@@ -7,6 +7,6 @@ class ThreadExecutor(Singleton):
         self.loop = asyncio.get_event_loop()
         self.threadExecutor = QApplication.instance().threadExecutor
 
-    def run(self, func):
+    def submit(self, func, *args):
         loop = asyncio.get_event_loop()
-        return loop.run_in_executor(self.threadExecutor, func)
+        return loop.run_in_executor(self.threadExecutor, func, *args)

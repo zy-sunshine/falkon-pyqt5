@@ -31,7 +31,7 @@ from .DataPaths import DataPaths
 from mc.network.NetworkManager import NetworkManager
 from mc.session.SessionManager import SessionManager
 from mc.session.RestoreManager import RestoreManager, RestoreData
-from .AutoSaver import AutoSaver
+from mc.tools.AutoSaver import AutoSaver
 from mc.autofill.AutoFill import AutoFill
 from mc.plugins.PluginProxy import PluginProxy
 from mc.other.Updater import Updater

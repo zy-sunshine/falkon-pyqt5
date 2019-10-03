@@ -35,8 +35,8 @@ class SiteInfo(QDialog):
         self._ui.listWidget.item(0).setIcon(QIcon.fromTheme('document-properties',
             QIcon(':/icons/preferences/document-properties.png'),
         ))
-        self._ui.listWidget.item(1).setIcon(QIcon.fromTheme('application-graphics',
-            QIcon(':/icons/preferences/application-graphics.png')
+        self._ui.listWidget.item(1).setIcon(QIcon.fromTheme('applications-graphics',
+            QIcon(':/icons/preferences/applications-graphics.png')
         ))
         self._ui.listWidget.item(0).setSelected(True)
 

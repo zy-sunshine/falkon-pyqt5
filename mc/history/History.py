@@ -120,7 +120,7 @@ class History(QObject):
                 entry = self.HistoryEntry.CreateFromDbobj(dbobj)
                 self.historyEntryAdded.emit(entry)
 
-        gVar.executor.run(addEntryFunc)
+        gVar.executor.submit(addEntryFunc)
 
     def deleteHistoryEntryByIndex(self, index):
         '''
@@ -143,7 +143,7 @@ class History(QObject):
                 self.historyEntryDeleted.emit(entry)
             HistoryDbModel.delete().where(HistoryDbModel.id.in_([obj.id for obj in list_]))
             IconsDbModel.delete().where(IconsDbModel.url.in_(list_))
-        gVar.executor.run(delFunc)
+        gVar.executor.submit(delFunc)
 
     def deleteHistoryEntryByUrl(self, url):
         '''

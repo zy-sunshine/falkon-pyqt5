@@ -3,7 +3,7 @@ from PyQt5.Qt import Qt
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QUrl
 from .BookmarkItem import BookmarkItem
-from mc.app.AutoSaver import AutoSaver
+from mc.tools.AutoSaver import AutoSaver
 from mc.app.Settings import Settings
 from mc.app.DataPaths import DataPaths
 from json import loads as jloads, dumps as jdumps
@@ -269,7 +269,8 @@ class Bookmarks(QObject):
                 print('Warning: Bookmarks::init() Your bookmarks have been backed up in %s' % backupFile)
 
                 # Backup the user bookmarks
-                remove(backupFile)
+                if pathexists(backupFile):
+                    remove(backupFile)
                 copy(bookmarksFile, backupFile)
 
             # Load default bookmarks
