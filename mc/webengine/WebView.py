@@ -56,12 +56,12 @@ class WebView(QWebEngineView):
         self._rwhvqt = None  # QPointer<QWidget>
         self._wheelHelper = WheelHelper()
 
-        self.loadStarted.connect(self._slotLoadStarted)
-        self.loadProgress.connect(self._slotLoadProgress)
+        self.loadStarted.connect(lambda: WebView._slotLoadStarted(self))
+        self.loadProgress.connect(lambda progress: WebView._slotLoadProgress(self, progress))
         self.loadFinished.connect(lambda ok: WebView._slotLoadFinished(self, ok))
-        self.iconChanged.connect(self._slotIconChanged)
-        self.urlChanged.connect(self._slotUrlChanged)
-        self.titleChanged.connect(self._slotTitleChanged)
+        self.iconChanged.connect(lambda: WebView._slotIconChanged(self))
+        self.urlChanged.connect(lambda url: WebView._slotUrlChanged(self, url))
+        self.titleChanged.connect(lambda title: WebView._slotTitleChanged(self, title))
 
         self._currentZoomLevel = self.zoomLevels().index(100)
 
