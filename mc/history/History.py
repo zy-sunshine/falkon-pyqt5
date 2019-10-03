@@ -23,7 +23,7 @@ class History(QObject):
 
         def fillDbobj(self, dbobj):
             for field in ('id', 'count', 'date', 'url', 'urlString', 'title'):
-                setattr(dbobj, getattr(self, field))
+                setattr(dbobj, field, getattr(self, field))
 
         @classmethod
         def CreateFromDbobj(cls, dbobj):
@@ -225,7 +225,7 @@ class History(QObject):
     # Q_SIGNALS
     historyEntryAdded = pyqtSignal(HistoryEntry)  # entry
     historyEntryDeleted = pyqtSignal(HistoryEntry)  # entry
-    historyEntryEdited = pyqtSignal(HistoryEntry)  # entry
+    historyEntryEdited = pyqtSignal(HistoryEntry, HistoryEntry)  # before, after
 
     resetHistory = pyqtSignal()
 

@@ -116,13 +116,14 @@ class SearchEnginesManager(QObject):
         '''
         @param: engines QVector<Engine>
         '''
-        pass
+        self._allEngines = engines
+        self.enginesChanged.emit()
 
     def allEngines(self):
         '''
         @return: QVector<Engine>
         '''
-        pass
+        return self._allEngines
 
     def startingEngineName(self):
         '''

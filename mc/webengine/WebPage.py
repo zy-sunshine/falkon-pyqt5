@@ -6,6 +6,7 @@ from PyQt5.Qt import QUrl
 from PyQt5.Qt import QTime
 from PyQt5.Qt import QPointF
 from PyQt5.Qt import QWebChannel
+from PyQt5.Qt import QEventLoop
 from mc.common.globalvars import gVar
 from PyQt5.Qt import QUrlQuery
 from PyQt5.Qt import QDir
@@ -15,6 +16,7 @@ from .javascript.ExternalJsObject import ExternalJsObject
 from mc.tools.Scripts import Scripts
 from PyQt5.Qt import QFileInfo, QFile
 from mc.tools.DelayedFileWatcher import DelayedFileWatcher
+from .WebHitTestResult import WebHitTestResult
 
 class WebPage(QWebEnginePage):
     # JsWorld
@@ -124,7 +126,20 @@ class WebPage(QWebEnginePage):
         @param: scriptSource QString
         @return: QVariant
         '''
-        pass
+        loop = QEventLoop()  # QPointer<QEventLoop>
+        result = None
+        QTimer.singleShot(timeout, loop.quit)
+
+        def runCb(res):
+            nonlocal result
+            if loop and loop.isRunning():
+                result = res
+                loop.quit()
+
+        self.runJavaScript(scriptSource, worldId, runCb)
+        loop.exec_(QEventLoop.ExcludeUserInputEvents)
+
+        return result
 
     def mapToViewport(self, pos):
         '''
@@ -138,7 +153,7 @@ class WebPage(QWebEnginePage):
         @param: QPoint
         @return: WebHitTestResult
         '''
-        pass
+        return WebHitTestResult(self, pos)
 
     def scroll(self, x, y):
         pass

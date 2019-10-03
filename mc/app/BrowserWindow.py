@@ -654,11 +654,11 @@ class BrowserWindow(QMainWindow):
         if afterLaunch == MainApplication.OpenBlankPage:
             pass
         elif afterLaunch == MainApplication.OpenSpeedDial:
-            startUrl = 'app:speeddial'
+            startUrl = QUrl('app:speeddial')
         elif afterLaunch in (MainApplication.OpenHomePage,
                 MainApplication.RestoreSession,
                 MainApplication.SelectSession):
-            startUrl = self._homepage
+            startUrl = QUrl(self._homepage)
 
         if not gVar.app.isTestModeEnabled():
             self.show()
@@ -676,7 +676,7 @@ class BrowserWindow(QMainWindow):
             addTab = False
 
         if not self._startUrl.isEmpty():
-            startUrl = self._startUrl
+            startUrl = QUrl(self._startUrl)
             addTab = True
         if self._startTab:
             addTab = False

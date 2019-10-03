@@ -22,6 +22,10 @@ from PyQt5.Qt import QDialog
 from PyQt5.Qt import QDesktopServices
 from PyQt5.Qt import qFuzzyCompare
 from PyQt5.Qt import QAction
+from PyQt5.Qt import QKeySequence
+from PyQt5.Qt import QIcon
+from PyQt5.Qt import QContextMenuEvent
+from PyQt5.Qt import QByteArray
 
 from .WebPage import WebPage
 from mc.tools.WheelHelper import WheelHelper
@@ -31,9 +35,10 @@ from .WebScrollBarManager import WebScrollBarManager
 from mc.tools.IconProvider import IconProvider
 from mc.common import const
 from mc.other.SiteInfo import SiteInfo
+from mc.tools.EnhancedMenu import Action, Menu
 
 class WebView(QWebEngineView):
-    s_forceContextMenuOnMouseRelease = False
+    _s_forceContextMenuOnMouseRelease = False
 
     def __init__(self, parent=None):
         super(WebView, self).__init__(parent)
@@ -150,7 +155,7 @@ class WebView(QWebEngineView):
         self.zoomReset()
 
         # actions needs to be initialized for every QWebEngine change
-        self._initializeActions()
+        #self._initializeActions()
 
         # Scrollbars must be added only after QWebEnginePage is set
         gVar.webScrollBarManager.addWebView(self)
@@ -402,24 +407,30 @@ class WebView(QWebEngineView):
             self._applyZoom()
 
     def editUndo(self):
+        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Undo)
 
     def editRedo(self):
+        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Redo)
 
     def editCut(self):
+        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Cut)
 
     def editCopy(self):
+        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Copy)
 
     def editPaste(self):
+        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Paste)
 
     def editSelectAll(self):
         self.triggerPageAction(QWebEnginePage.SelectAll)
 
     def editDelete(self):
+        import ipdb; ipdb.set_trace()
         ev = QKeyEvent(QEvent.KeyPress, Qt.Key_Delete, Qt.NoModifier)
         QApplication.sendEvent(self, ev)
 
@@ -472,9 +483,9 @@ class WebView(QWebEngineView):
             self.page().toHtml(htmlFunc)
 
     def sendPageByEmail(self):
-        body = QUrl.toPercentEncoding(self.url().toEncoded())
+        body = QUrl.toPercentEncoding(self.url().toEncoded().data().decode())
         subject = QUrl.toPercentEncoding(self.title())
-        mailUrl = QUrl.fromEncoded('mailto:%20?body=%s&subject=%s' % (body, subject))
+        mailUrl = QUrl.fromEncoded(b'mailto:%%20?body=%s&subject=%s' % (body, subject))
         QDesktopServices.openUrl(mailUrl)
 
     def openUrlInNewTab(self, url, position):
@@ -558,14 +569,17 @@ class WebView(QWebEngineView):
     def _sendTextByMail(self):
         action = self.sender()
         if isinstance(action, QAction):
-            body = QUrl.toPercentEncoding(action.data().toString())
-            mailUrl = QUrl.fromEncoded('mailto:%20?body=%s' % body)
+            data = action.data()
+            if isinstance(data, QByteArray):
+                data = data.data().decode()
+            body = QUrl.toPercentEncoding(data)
+            mailUrl = QUrl.fromEncoded(b'mailto:%%20?body=%s' % body)
             QDesktopServices.openUrl(mailUrl)
 
     def _copyLinkToClipboard(self):
         action = self.sender()
         if isinstance(action, QAction):
-            QApplication.clipboard().setText(action.data().toUrl().toEncoded())
+            QApplication.clipboard().setText(action.data().toEncoded().data().decode())
 
     def _savePageAs(self):
         self.triggerPageAction(QWebEnginePage.SavePage)
@@ -585,7 +599,7 @@ class WebView(QWebEngineView):
     def _openActionUrl(self):
         action = self.sender()
         if isinstance(action, QAction):
-            self.loadByUrl(action.data().toUrl())
+            self.loadByUrl(action.data())
 
     def _showSiteInfo(self):
         s = SiteInfo(self)
@@ -639,7 +653,19 @@ class WebView(QWebEngineView):
         '''
         @param: event QContextMenuEvent
         '''
-        pass
+        # Context menu is created in mouseReleaseEvent
+        if self._s_forceContextMenuOnMouseRelease:
+            return
+
+        # QPoint
+        pos = event.pos()
+        # QContextMenuEvent::Reason
+        reason = event.reason()
+
+        def contextMenuEventCb():
+            event = QContextMenuEvent(reason, pos)
+            self._contextMenuEvent(event)
+        QTimer.singleShot(0, contextMenuEventCb)
 
     # override
     def focusNextPrevChild(self, next_):
@@ -709,46 +735,264 @@ class WebView(QWebEngineView):
 
         self.zoomLevelChanged.emit(self._currentZoomLevel)
 
-    def _createContextMenu(self, menu, hitTest):
+    def _createContextMenu(self, menu, hitTest):  # noqa C901
         '''
         @param: menu QMenu
         @param: hitTest WebHitTestResult
         '''
-        pass
+        spellCheckActionCount = 0
+
+        # QWebEngineContextMenuData
+        contextMenuData = self.page().contextMenuData()
+        hitTest.updateWithContextMenuData(contextMenuData)
+
+        if contextMenuData.misspelledWord():
+            boldFont = menu.font()
+            boldFont.setBold(True)
+
+            for suggestion in contextMenuData.spellCheckerSuggestions():
+                action = menu.addAction(suggestion)
+                action.setFont(boldFont)
+
+                def sugCb():
+                    self.page().replaceMisspelledWord(suggestion)
+                action.triggered.connect(sugCb)
+
+            if not menu.actions():
+                menu.addAction(_('No suggestions')).setEnabled(False)
+
+            menu.addSeparator()
+            spellCheckActionCount = len(menu.actions())
+
+        if not hitTest.linkUrl().isEmpty() and hitTest.linkUrl().scheme() != 'javascript':
+            self._createLinkContextMenu(menu, hitTest)
+
+        if not hitTest.imageUrl().isEmpty():
+            self._createImageContextMenu(menu, hitTest)
+
+        if not hitTest.mediaUrl().isEmpty():
+            self._createMediaContextMenu(menu, hitTest)
+
+        if hitTest.isContentEditable():
+            # This only checks if the menu is empty (only spellchecker actions added)
+            if len(menu.actions()) == spellCheckActionCount:
+                self._addPageActionToMenu(menu, QWebEnginePage.Undo)
+                self._addPageActionToMenu(menu, QWebEnginePage.Redo)
+                menu.addSeparator()
+                self._addPageActionToMenu(menu, QWebEnginePage.Cut)
+                self._addPageActionToMenu(menu, QWebEnginePage.Copy)
+                self._addPageActionToMenu(menu, QWebEnginePage.Paste)
+
+            if hitTest.tagName() == 'input':
+                act = menu.addAction('')
+                act.setVisible(False)
+                self._checkForForm(act, hitTest.pos())
+
+        if self.selectedText():
+            self._createSelectedTextContextMenu(menu, hitTest)
+
+        if menu.isEmpty():
+            self._createPageContextMenu(menu)
+
+        menu.addSeparator()
+        # TODO:
+        # gVar.app.plugins().populateWebViewMenu(menu, self, hitTest)
 
     def _createPageContextMenu(self, menu):
         '''
         @param: menu QMenu
         '''
-        pass
+        action = menu.addAction(_('&Back'), self.back)
+        action.setIcon(IconProvider.standardIcon(QStyle.SP_ArrowBack))
+        action.setEnabled(self.history().canGoBack())
+
+        action = menu.addAction(_('&Forward'), self.forward)
+        action.setIcon(IconProvider.standardIcon(QStyle.SP_ArrowForward))
+        action.setEnabled(self.history().canGoForward())
+
+        # Special menu for Speed Dial page
+        if self.url().toString() == 'falkon:speeddial':
+            menu.addSeparator()
+            menu.addAction(QIcon.fromTheme('list-add'), _('&Add New Page'),
+                    self._addSpeedDial)
+            menu.addAction(IconProvider.settingsIcon(), _('&Configure Speed Dial'),
+                    self._configureSpeedDial)
+            menu.addSeparator()
+            menu.addAction(QIcon.fromTheme('view-refresh'), _('Reload All Dials'),
+                    self._reloadAllSpeedDials)
+            return
+
+        action, reloadAction = self._addPageActionToMenu(menu, QWebEnginePage.Reload)
+        action.setVisible(reloadAction.isEnabled())
+
+        def reloadCb():
+            nonlocal action
+            # TODO:
+            if getattr(action, 'hasDeleted', False):
+                print('=> reloadCb deleted')
+                return
+            action.setVisible(reloadAction.isEnabled())
+        reloadAction.changed.connect(reloadCb)
+
+        action, stopAction = self._addPageActionToMenu(menu, QWebEnginePage.Stop)
+        action.setVisible(stopAction.isEnabled())
+
+        def stopCb():
+            nonlocal action
+            # TODO:
+            if getattr(action, 'hasDeleted', False):
+                print('=> stopCb deleted')
+                return
+            action.setVisible(stopAction.isEnabled())
+        stopAction.changed.connect(stopCb)
+
+        menu.addSeparator()
+        menu.addAction(QIcon.fromTheme('bookmark-new'), _('Book&mark page'), self._bookmarkLink)
+        menu.addAction(QIcon.fromTheme('document-save'), _('&Save page as...'), self._savePageAs)
+        act = menu.addAction(QIcon.fromTheme('edit-copy'), _('&Copy page link...'), self._copyLinkToClipboard)
+        act.setData(self.url())
+        menu.addAction(QIcon.fromTheme('mail-message-new'), _('Send page link...'), self.sendPageByEmail)
+        menu.addSeparator()
+        menu.addAction(QIcon.fromTheme('edit-select-all'), _('Select &all'), self.editSelectAll)
+        menu.addSeparator()
 
     def _createLinkContextMenu(self, menu, hitTest):
         '''
         @param: menu QMenu
         @param: hitTest WebHitTestResult
         '''
-        pass
+        menu.addSeparator()
+        act = Action(IconProvider.newTabIcon(), _('Open link in new &tab'), menu)
+        act.setData(hitTest.linkUrl())
+        act.triggered.connect(self.userDefinedOpenUrlInNewTab)
+        act.ctrlTriggered.connect(self.userDefineOpenUrlInBgTab)
+        menu.addAction(act)
+        act = menu.addAction(IconProvider.newWindowIcon(), _('Open link in new &window'))
+        act.setData(hitTest.linkUrl())
+        act = menu.addAction(IconProvider.privateBrowsingIcon(), _('Open link in &private window'))
+        act.setData(hitTest.linkUrl())
+        menu.addSeparator()
+
+        bData = [hitTest.linkUrl(), hitTest.linkTitle()]  # QVariantList
+        act = menu.addAction(QIcon.fromTheme('bookmark-new'), _('B&ookmark link'),
+            self._bookmarkLink)
+        act.setData(bData)
+
+        menu.addAction(QIcon.fromTheme('document-save'), _('&Save link as...'),
+                self._downloadLinkToDisk)
+        act = menu.addAction(QIcon.fromTheme('mail-message-new'), _('Send link...'),
+                self._sendTextByMail)
+        act.setData(hitTest.linkUrl().toEncoded())
+        act = menu.addAction(QIcon.fromTheme('edit-copy'), _('&Copy link address'),
+                self._copyLinkToClipboard)
+        act.setData(hitTest.linkUrl())
+        menu.addSeparator()
+
+        if self.selectedText():
+            self._addPageActionToMenu(menu, QWebEnginePage.Copy, QIcon.fromTheme('edit-copy'))
+            setattr(menu, 'hasCopy', True)
 
     def _createImageContextMenu(self, menu, hitTest):
         '''
         @param: menu QMenu
         @param: hitTest WebHitTestResult
         '''
-        pass
+        menu.addSeparator()
+        if hitTest.imageUrl() != self.url():
+            act = Action(_('Show i&mage'), menu)
+            act.setData(hitTest.imageUrl())
+            act.triggered.connect(self._openActionUrl)
+            act.ctrlTriggered.connect(self.userDefinedOpenUrlInNewTab)
+            menu.addAction(act)
+        menu.addAction(_('Copy image'), self._copyImageToClipboard)
+        act = menu.addAction(QIcon.fromTheme('edit-copy'), _('Copy image ad&dress'),
+                self._copyLinkToClipboard)
+        act.setData(hitTest.imageUrl())
+        menu.addSeparator()
+        menu.addAction(QIcon.fromTheme('document-save'), _('&Save image as...'),
+                self._downloadImageToDisk)
+        act = menu.addAction(QIcon.fromTheme('mail-message-new'), _('Send image...'),
+                self._sendTextByMail)
+        act.setData(hitTest.imageUrl().toEncoded())
+        menu.addSeparator()
+
+        if self.selectedText():
+            self._addPageActionToMenu(menu, QWebEnginePage.Copy, QIcon.fromTheme('edit-copy'))
+            setattr(menu, 'hasCopy', True)
 
     def _createSelectedTextContextMenu(self, menu, hitTest):
         '''
         @param: menu QMenu
         @param: hitTest WebHitTestResult
         '''
-        pass
+        selectedText = self.page().selectedText()
+
+        menu.addSeparator()
+        if getattr(menu, 'hasCopy', False):
+            self._addPageActionToMenu(menu, QWebEnginePage.Copy, QIcon.fromTheme('edit-copy'))
+            setattr(menu, 'hasCopy', True)
+        menu.addAction(QIcon.fromTheme('mail-message-new'), _('Send text...'),
+                self._sendTextByMail).setData(selectedText)
+        menu.addSeparator()
+
+        # 379: Remove newlines
+        selectedString = selectedText.strip()
+        if '.' not in selectedString:
+            # Try to add .com
+            selectedString += '.com'
+        guessedUrl = QUrl.fromUserInput(selectedString)
+        if self.isUrlValid(guessedUrl):
+            act = Action(QIcon.fromTheme('document-open-remote'), _('Go to &web address'), menu)
+            act.setData(guessedUrl)
+
+            act.triggered.connect(self._openActionUrl)
+            act.ctrlTriggered.connect(self.userDefinedOpenUrlInNewTab)
+            menu.addAction(act)
+
+        menu.addSeparator()
+        selectedText = selectedText[:20]
+        # KDE is displaying newlines in menu actions ... weird
+        selectedText = selectedText.replace('\n', ' ').replace('\t', ' ')
+
+        engine = gVar.app.searchEnginesManager().defaultEngine()
+        act = Action(engine.icon, _('Search "%s .." with %s') % (selectedText, engine.name), menu)
+        act.triggered.connect(self._searchSelectedText)
+        act.ctrlTriggered.connect(self._searchSelectedTextInBackgroundTab)
+        menu.addAction(act)
+
+        # Search with ...
+        swMenu = Menu(_('Search with...'), menu)
+        swMenu.setCloseOnMiddleClick(True)
+        searchManager = gVar.app.searchEnginesManager()
+        for en in searchManager.allEngines():
+            act = Action(en.icon, en.name, swMenu)
+            act.setData(en)
+
+            act.triggered.connect(self._searchSelectedText)
+            act.ctrlTriggered.connect(self._searchSelectedTextInBackgroundTab)
+            swMenu.addAction(act)
+
+        menu.addMenu(swMenu)
 
     def _createMediaContextMenu(self, menu, hitTest):
         '''
         @param: menu QMenu
         @param: hitTest WebHitTestResult
         '''
-        pass
+        paused = hitTest.mediaPaused()
+        muted = hitTest.mediaMuted()
+
+        menu.addSeparator()
+        act = menu.addAction(paused and _('&Paly') or _('&Pause'), self._toggleMediaPause)
+        act.setIcon(QIcon.fromTheme(paused and 'media-playback-start' or 'media-playback-pause'))
+        act = menu.addAction(muted and _('Un&mute') or _('&Mute'), self._toggleMediaMute)
+        act.setIcon(QIcon.fromTheme(muted and 'audio-volume-muted' or 'audio-volume-high'))
+        menu.addSeparator()
+        act = menu.addAction(QIcon.fromTheme('edit-copy'), _('&Copy Media Address'), self._copyLinkToClipboard)
+        act.setData(hitTest.mediaUrl())
+        act = menu.addAction(QIcon.fromTheme('mail-message-new'), _('&Send Media Address'), self._sendTextByMail)
+        act.setData(hitTest.mediaUrl().toEncoded())
+        menu.addAction(QIcon.fromTheme('document-save'), _('Save Media To &Disk'), self._downloadMediaToDisk)
 
     def _checkForForm(self, action, pos):
         '''
@@ -781,4 +1025,30 @@ class WebView(QWebEngineView):
 
     # private:
     def _initializeActions(self):
-        pass
+        for type_, text, shortcut, useCtx, theme in [
+            (QWebEnginePage.Undo, _('&Undo'), 'Ctrl+Z', True, 'edit-undo'),
+            (QWebEnginePage.Redo, _('&Redo'), 'Ctrl+Shift+Z', True, 'edit-redo'),
+            (QWebEnginePage.Cut, _('&Cut'), 'Ctrl+X', True, 'edit-cut'),
+            (QWebEnginePage.Copy, _('&Copy'), 'Ctrl+C', True, 'edit-copy'),
+            (QWebEnginePage.Paste, _('&Paste'), 'Ctrl+V', True, 'edit-paste'),
+            (QWebEnginePage.SelectAll, _('Select All'), 'Ctrl+A', True, 'edit-select-all'),
+
+            (QWebEnginePage.Reload, _('&Reload'), '', False, 'view-refresh'),
+            (QWebEnginePage.Stop, _('S&top'), '', False, 'process-stop'),
+        ]:
+            act = self.pageAction(type_)
+            act.setText(text)
+            if shortcut:
+                act.setShortcut(QKeySequence(shortcut))
+            if useCtx:
+                act.setShortcutContext(Qt.WidgetWithChildrenShortcut)
+            if not useCtx:
+                self.addAction(act)
+            act.setIcon(QIcon.fromTheme(theme))
+
+    def _addPageActionToMenu(self, menu, type_, icon=None):
+        pageAct = self.pageAction(type_)
+        if icon is not None:
+            pageAct.setIcon(icon)
+        act = menu.addAction(pageAct.icon(), pageAct.text(), pageAct.trigger)
+        return act, pageAct

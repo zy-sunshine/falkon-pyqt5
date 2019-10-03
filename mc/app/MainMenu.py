@@ -247,6 +247,7 @@ class MainMenu(QMenu):
 
     # Help menu
     def _aboutQt(self):
+        import ipdb; ipdb.set_trace()
         QApplication.aboutQt()
 
     def _showInfoAboutApp(self):
@@ -433,6 +434,16 @@ class MainMenu(QMenu):
         action = self._ADD_ACTION('Edit/Find', self._menuEdit, QIcon.fromTheme('edit-find'),
             '&Find', self._editFind, 'Ctrl+F')
         action.setShortcutContext(Qt.WidgetShortcut)
+
+        # TODO: debug code
+        def cb():
+            tt = QApplication.focusWidget()
+            print(tt)
+            import ipdb; ipdb.set_trace()
+        from PyQt5.Qt import QShortcut
+        self.short0 = QShortcut(QKeySequence('Ctrl+M'), self._window)
+        self.short0.activated.connect(cb)
+
         self._menuFile.addSeparator()
 
         # View menu

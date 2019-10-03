@@ -1,7 +1,9 @@
 from mc.webengine.WebView import WebView
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QUrl
+from PyQt5.Qt import QPoint
 from mc.tools.EnhancedMenu import Menu
+from mc.webengine.WebInspector import WebInspector
 
 class TabbedWebView(WebView):
     def __init__(self, webTab):
@@ -9,6 +11,7 @@ class TabbedWebView(WebView):
         @param: webTab WebTab
         '''
         super(TabbedWebView, self).__init__(webTab)
+        self.setObjectName('abc')
         self._window = None  # BrowserWindow
         self._webTab = webTab  # WebTab
         self._menu = Menu(self)  # Menu
@@ -146,7 +149,34 @@ class TabbedWebView(WebView):
         '''
         @param: QContextMenuEvent
         '''
-        pass
+        act = None
+        for action in self._menu.actions():
+            setattr(action, 'hasDeleted', True)
+            action.disconnect()
+            act = action
+        if act:
+            print('before clear', act.parent())
+        self._menu.clear()
+        if act:
+            print('check act parent', act.parent())
+
+        # WebHitTestResult
+        # TODO: check block execJavaScript?
+        hitTest = self.page().hitTestContent(event.pos())
+        self._createContextMenu(self._menu, hitTest)
+
+        if WebInspector.isEnabled():
+            self._menu.addSeparator()
+            self._menu.addAction(_('Inspect Element'), self._inspectElement)
+
+        if not self._menu.isEmpty():
+            # Prevent choosing first option with double rightclick
+            pos = event.globalPos()
+            p = QPoint(pos.x(), pos.y() + 1)
+            self._menu.popup(p)
+            return
+
+        super()._contextMenuEvent(event)
 
     # override
     def _mouseMoveEvent(self, event):

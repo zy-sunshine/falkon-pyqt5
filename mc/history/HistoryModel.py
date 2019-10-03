@@ -7,7 +7,7 @@ from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QApplication
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import QIcon
-from datetime import datetime
+from datetime import datetime, date
 from datetime import timedelta
 from datetime import time as dttime
 from PyQt5.Qt import QModelIndex
@@ -400,8 +400,8 @@ class HistoryModel(QAbstractItemModel):
                 endTs = int(month.timestamp())
                 itemName = _('This Month')
             else:
-                startDate = datetime.date(tsDate.year, tsDate.month, tsDate.day)
-                endDate = datetime.date(startDate.year, startDate.month, 1)
+                startDate = date(tsDate.year, tsDate.month, tsDate.day)
+                endDate = date(startDate.year, startDate.month, 1)
 
                 ts = datetime.combine(startDate, dttime(23, 59, 59)).timestamp()
                 ts = int(ts)
