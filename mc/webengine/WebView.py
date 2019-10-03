@@ -911,8 +911,7 @@ class WebView(QWebEngineView):
         menu.addSeparator()
 
         if self.selectedText():
-            self._addPageActionToMenu(menu, QWebEnginePage.Copy, QIcon.fromTheme('edit-copy'))
-            setattr(menu, 'hasCopy', True)
+            menu.addAction(self.pageAction(QWebEnginePage.Copy))
 
     def _createImageContextMenu(self, menu, hitTest):
         '''
@@ -939,8 +938,7 @@ class WebView(QWebEngineView):
         menu.addSeparator()
 
         if self.selectedText():
-            self._addPageActionToMenu(menu, QWebEnginePage.Copy, QIcon.fromTheme('edit-copy'))
-            setattr(menu, 'hasCopy', True)
+            menu.addAction(self.pageAction(QWebEnginePage.Copy))
 
     def _createSelectedTextContextMenu(self, menu, hitTest):
         '''
@@ -950,9 +948,8 @@ class WebView(QWebEngineView):
         selectedText = self.page().selectedText()
 
         menu.addSeparator()
-        if getattr(menu, 'hasCopy', False):
-            self._addPageActionToMenu(menu, QWebEnginePage.Copy, QIcon.fromTheme('edit-copy'))
-            setattr(menu, 'hasCopy', True)
+        if self.pageAction(QWebEnginePage.Copy) not in menu.actions():
+            menu.addAction(self.pageAction(QWebEnginePage.Copy))
         menu.addAction(QIcon.fromTheme('mail-message-new'), _('Send text...'),
                 self._sendTextByMail).setData(selectedText)
         menu.addSeparator()
