@@ -32,10 +32,12 @@ class SiteInfo(QDialog):
         #delegate.setUniformItemSizes(True)
         #self._ui.listWidget.setItemDelegate(delegate)
 
-        self._ui.listWidget.item(0).setIcon(QIcon.fromTheme('document-properties'),
-                QIcon(':/icons/preferences/document-properties.png'))
-        self._ui.listWidget.item(1).setIcon(QIcon.fromTheme('application-graphics'),
-                QIcon(':/icons/preferences/application-graphics.png'))
+        self._ui.listWidget.item(0).setIcon(QIcon.fromTheme('document-properties',
+            QIcon(':/icons/preferences/document-properties.png'),
+        ))
+        self._ui.listWidget.item(1).setIcon(QIcon.fromTheme('application-graphics',
+            QIcon(':/icons/preferences/application-graphics.png')
+        ))
         self._ui.listWidget.item(0).setSelected(True)
 
         # General
@@ -48,18 +50,16 @@ class SiteInfo(QDialog):
             self._ui.securityLabel.setText('<b>Connection Not Encrypted.</b>')
 
         self._view.page().runJavaScript('document.charset', WebPage.SafeJsWorld,
-                lambda res: self._ui.encodingLabel.setText(res.toString()))
+                lambda res: self._ui.encodingLabel.setText(res))
 
         # Meta
         def metaFunc(res):
-            list_ = res.toList()
-            for val in list_:
-                meta = val.toMap()
-                content = meta['content'].toString()
-                name = meta['name'].toString()
+            for meta in res:
+                content = meta['content']
+                name = meta['name']
 
                 if not name:
-                    name = meta['httpequiv'].toString()
+                    name = meta['httpequiv']
 
                 if not content or not name:
                     continue
@@ -74,11 +74,10 @@ class SiteInfo(QDialog):
 
         # Images
         def imageFunc(res):
-            list_ = res.toList()
-            for val in list_:
-                img = val.toMap()
-                src = img['src'].toString()
-                alt = img['alt'].toString()
+            for val in res:
+                img = val
+                src = img['src']
+                alt = img['alt']
                 if not alt:
                     if src.find('/') == 1:
                         alt = src
@@ -103,9 +102,9 @@ class SiteInfo(QDialog):
         self._ui.treeImages.customContextMenuRequested.connect(self._imagesCustomContextMenuRequested)
 
         self._ui.treeImages.setContextMenuPolicy(Qt.CustomContextMenu)
-        self._ui.treeImages.sortByColumn(-1)
+        self._ui.treeImages.sortByColumn(-1, Qt.AscendingOrder)
 
-        self._ui.treeTags.sortByColumn(-1)
+        self._ui.treeTags.sortByColumn(-1, Qt.AscendingOrder)
 
         gVar.appTools.setWmClass('Site Info', self)
 

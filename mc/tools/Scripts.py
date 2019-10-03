@@ -276,7 +276,7 @@ return out;
     @classmethod
     def getAllMetaAttributes(cls):
         source = '''
-"(function() {
+(function() {
 var out = [];
 var meta = document.getElementsByTagName('meta');
 for (var i = 0; i < meta.length; ++i) {
