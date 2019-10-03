@@ -8,6 +8,7 @@ class Menu(QMenu):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._closeOnMiddleClick = False
+        self.clearActions = []
 
     def closeOnMiddleClick(self):
         '''
@@ -108,6 +109,12 @@ class Menu(QMenu):
             menu.close()
             # TODO: menu = qobject_cast<QMenu*>(QApplication::activePopupWidget())
             menu = QApplication.activePopupWidget()
+
+    def clear(self):
+        super().clear()
+        for trigger, slot in self.clearActions:
+            trigger.disconnect(slot)
+        self.clearActions.clear()
 
 class Action(QAction):
     def __init__(self, *args, **kwargs):

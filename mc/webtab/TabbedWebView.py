@@ -149,16 +149,7 @@ class TabbedWebView(WebView):
         '''
         @param: QContextMenuEvent
         '''
-        act = None
-        for action in self._menu.actions():
-            setattr(action, 'hasDeleted', True)
-            action.disconnect()
-            act = action
-        if act:
-            print('before clear', act.parent())
         self._menu.clear()
-        if act:
-            print('check act parent', act.parent())
 
         # WebHitTestResult
         # TODO: check block execJavaScript?

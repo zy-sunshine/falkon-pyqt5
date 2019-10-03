@@ -1,6 +1,6 @@
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
-from PyQt5.Qt import pyqtSignal
+from PyQt5.Qt import pyqtSignal, pyqtSlot
 from PyQt5.Qt import QSize
 from PyQt5.Qt import QWidget
 from PyQt5.Qt import QUrl
@@ -822,29 +822,21 @@ class WebView(QWebEngineView):
                     self._reloadAllSpeedDials)
             return
 
-        action, reloadAction = self._addPageActionToMenu(menu, QWebEnginePage.Reload)
-        action.setVisible(reloadAction.isEnabled())
+        reloadAct, pageReloadAct = self._addPageActionToMenu(menu, QWebEnginePage.Reload)
+        reloadAct.setVisible(pageReloadAct.isEnabled())
 
         def reloadCb():
-            nonlocal action
-            # TODO:
-            if getattr(action, 'hasDeleted', False):
-                print('=> reloadCb deleted')
-                return
-            action.setVisible(reloadAction.isEnabled())
-        reloadAction.changed.connect(reloadCb)
+            reloadAct.setVisible(pageReloadAct.isEnabled())
+        pageReloadAct.changed.connect(reloadCb)
+        menu.clearActions.append([pageReloadAct.changed, reloadCb])
 
-        action, stopAction = self._addPageActionToMenu(menu, QWebEnginePage.Stop)
-        action.setVisible(stopAction.isEnabled())
+        stopAct, pageStopAct = self._addPageActionToMenu(menu, QWebEnginePage.Stop)
+        stopAct.setVisible(pageStopAct.isEnabled())
 
         def stopCb():
-            nonlocal action
-            # TODO:
-            if getattr(action, 'hasDeleted', False):
-                print('=> stopCb deleted')
-                return
-            action.setVisible(stopAction.isEnabled())
-        stopAction.changed.connect(stopCb)
+            stopAct.setVisible(pageStopAct.isEnabled())
+        pageStopAct.changed.connect(stopCb)
+        menu.clearActions.append([pageStopAct.changed, stopCb])
 
         menu.addSeparator()
         menu.addAction(QIcon.fromTheme('bookmark-new'), _('Book&mark page'), self._bookmarkLink)
