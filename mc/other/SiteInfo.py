@@ -1,14 +1,16 @@
 from PyQt5.QtWidgets import QDialog
 from PyQt5 import uic
 from PyQt5.Qt import Qt
-from mc.common.globalvars import gVar
 from PyQt5.Qt import QIcon
 from PyQt5.Qt import QUrl
-from mc.webengine.WebPage import WebPage
-from mc.tools.Scripts import Scripts
 from PyQt5.QtWidgets import QTreeWidgetItem
 from PyQt5.QtWidgets import QMenu
 from PyQt5.Qt import QAction
+
+from mc.common.globalvars import gVar
+from mc.webengine.WebPage import WebPage
+from mc.tools.Scripts import Scripts
+from mc.tools.ListItemDelegate import ListItemDelegate
 
 class SiteInfo(QDialog):
     def __init__(self, view):
@@ -26,11 +28,10 @@ class SiteInfo(QDialog):
         self._ui.treeTags.setLayoutDirection(Qt.LeftToRight)
         gVar.appTools.centerWidgetOnScreen(self)
 
-        # TODO:
-        #delegate = ListItemDelegate(24, self._ui.listWidget)
-        #delegate.setUpdateParentHeight(True)
-        #delegate.setUniformItemSizes(True)
-        #self._ui.listWidget.setItemDelegate(delegate)
+        delegate = ListItemDelegate(24, self._ui.listWidget)
+        delegate.setUpdateParentHeight(True)
+        delegate.setUniformItemSizes(True)
+        self._ui.listWidget.setItemDelegate(delegate)
 
         self._ui.listWidget.item(0).setIcon(QIcon.fromTheme('document-properties',
             QIcon(':/icons/preferences/document-properties.png'),
