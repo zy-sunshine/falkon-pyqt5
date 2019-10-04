@@ -5,6 +5,7 @@ from mc.common.globalvars import gVar
 from PyQt5.Qt import Qt
 from PyQt5.Qt import QKeySequence
 from PyQt5.Qt import QIcon
+from PyQt5.Qt import QAction
 from mc.common import const
 from mc.tools.EnhancedMenu import Action
 
@@ -107,13 +108,19 @@ class HistoryMenu(Menu):
         pass
 
     def _historyEntryActivated(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            self._openUrl(action.data())
 
     def _historyEntryCtrlActivated(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            self._openUrlInNewTab(action.data())
 
     def _historyEntryShiftActivated(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            self._openUrlInNewWindow(action.data())
 
     def _openUrl(self, url):
         '''

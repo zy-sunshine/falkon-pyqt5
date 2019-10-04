@@ -326,9 +326,9 @@ class BookmarksTools(object):
         act.setData(bookmark)
         act.setIconVisibleInMenu(True)
 
-        act.triggered.connect(receiver.bookmarkActivated)
-        act.ctrlTriggered.connect(receiver.bookmarkCtrlActivated)
-        act.shiftTriggered.connect(receiver.bookmarkShiftActivated)
+        act.triggered.connect(receiver._bookmarkActivated)
+        act.ctrlTriggered.connect(receiver._bookmarkCtrlActivated)
+        act.shiftTriggered.connect(receiver._bookmarkShiftActivated)
 
         menu.addAction(act)
 
@@ -350,8 +350,8 @@ class BookmarksTools(object):
         @param: menu Menu
         @param: folder BookmarkItem
         '''
-        menu.aboutToShow.connect(receiver.menuAboutToShow)
-        menu.menuMiddleClicked.connect(receiver.menuMiddleClicked)
+        menu.aboutToShow.connect(receiver._menuAboutToShow)
+        menu.menuMiddleClicked.connect(receiver._menuMiddleClicked)
 
         for child in folder.children():
             cls.addActionToMenu(receiver, menu, child)

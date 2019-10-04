@@ -1,15 +1,22 @@
 from mc.tools.EnhancedMenu import Menu
 from PyQt5.Qt import QKeySequence
 from PyQt5.Qt import QIcon
+from PyQt5.Qt import QAction
 from mc.common.globalvars import gVar
 from .BookmarksTools import BookmarksTools
+from .BookmarkItem import BookmarkItem
 
 class BookmarksMenu(Menu):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._window = None  # QPointer<BrowserWindow>
-        self._changed = False
+        self._changed = True
         self._init()
+
+        bookmarks = gVar.app.bookmarks()
+        bookmarks.bookmarkAdded.connect(self._bookmarksChanged)
+        bookmarks.bookmarkRemoved.connect(self._bookmarksChanged)
+        bookmarks.bookmarkChanged.connect(self._bookmarksChanged)
 
     def setMainWindow(self, window):
         '''
@@ -31,56 +38,86 @@ class BookmarksMenu(Menu):
             gVar.app.browsingLibrary().showBookmarks(self._window)
 
     def _bookmarksChanged(self):
-        pass
+        self._changed = True
 
     def _aboutToShow(self):
-        pass
+        if self._changed:
+            self._refresh()
+            self._changed = False
 
     def _menuAboutToShow(self):
-        pass
+        menu = self.sender()
+        assert(isinstance(menu, Menu))
+
+        for action in menu.actions():
+            item = action.data()
+            if isinstance(item, BookmarkItem) and item.type() == BookmarkItem.Url and action.icon().isNull():
+                action.setIcon(item.icon())
 
     def _menuMiddleClicked(self, menu):
         '''
         @param: menu Menu
         '''
-        # TODO: BookmarkItem* item =
-        # static_cast<BookmarkItem*>(menu->menuAction()->data().value<void*>());
-        item = menu.menuAction().data().value()
-        assert(item)
+        item = menu.menuAction().data()
+        assert(isinstance(item, BookmarkItem))
         self._openFolder(item)
 
     def _bookmarkActivated(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            item = action.data()
+            assert(isinstance(item, BookmarkItem))
+            self._openBookmark(item)
 
     def _bookmarkCtrlActivated(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            item = action.data()
+            assert(isinstance(item, BookmarkItem))
+            self._openBookmarkInNewTab(item)
 
     def _bookmarkShiftActivated(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            item = action.data()
+            assert(isinstance(item, BookmarkItem))
+            self._openBookmarkInNewWindow(item)
 
     def _openFolder(self, item):
         '''
         @param: item BookmarkItem
         '''
-        pass
+        assert(item.isFolder())
+
+        if self._window:
+            BookmarksTools.openFolderInTabs(self._window, item)
 
     def _openBookmark(self, item):
         '''
         @param: item BookmarkItem
         '''
-        pass
+        assert(item.isUrl())
+
+        if self._window:
+            BookmarksTools.openBookmark(self._window, item)
 
     def _openBookmarkInNewTab(self, item):
         '''
         @param: item BookmarkItem
         '''
-        pass
+        assert(item.isUrl())
+
+        if self._window:
+            BookmarksTools.openBookmarkInNewTab(self._window, item)
 
     def _openBookmarkInNewWindow(self, item):
         '''
         @param: item BookmarkItem
         '''
-        pass
+        assert(item.isUrl())
+
+        if self._window:
+            BookmarksTools.openBookmarkInNewWindow(self._window, item)
 
     # private:
     def _init(self):
@@ -105,3 +142,12 @@ class BookmarksMenu(Menu):
                 act.menu().clear()
             self.removeAction(act)
             del act
+
+        BookmarksTools.addActionToMenu(self, self, gVar.app.bookmarks().toolbarFolder())
+        self.addSeparator()
+
+        for child in gVar.app.bookmarks().menuFolder().children():
+            BookmarksTools.addActionToMenu(self, self, child)
+
+        self.addSeparator()
+        BookmarksTools.addActionToMenu(self, self, gVar.app.bookmarks().unsortedFolder())
