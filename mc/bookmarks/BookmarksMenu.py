@@ -2,6 +2,7 @@ from mc.tools.EnhancedMenu import Menu
 from PyQt5.Qt import QKeySequence
 from PyQt5.Qt import QIcon
 from mc.common.globalvars import gVar
+from .BookmarksTools import BookmarksTools
 
 class BookmarksMenu(Menu):
     def __init__(self, parent=None):
@@ -14,14 +15,16 @@ class BookmarksMenu(Menu):
         '''
         @param: window BrowserWindow
         '''
-        pass
+        self._window = window
 
     # private Q_SLOTS:
     def _bookmarkPage(self):
-        pass
+        if self._window:
+            self._window.bookmarkPage()
 
     def _bookmarkAllTabs(self):
-        pass
+        if self._window:
+            BookmarksTools.bookmarkAllTabsDialog(self._window, self._window.tabWidget())
 
     def _showBookmarksManager(self):
         if self._window:

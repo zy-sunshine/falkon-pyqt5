@@ -5,6 +5,7 @@ from PyQt5.Qt import QMimeData
 from PyQt5.Qt import QByteArray
 from PyQt5.Qt import QDataStream
 from PyQt5.Qt import QIODevice
+from .BookmarkItem import BookmarkItem
 
 class BookmarksModel(QAbstractItemModel):
     # enum Roles
@@ -41,7 +42,7 @@ class BookmarksModel(QAbstractItemModel):
         assert(row >= 0)
         assert(row <= len(parent.children()))
 
-        self.beginInsertRows(self.index(parent), row, row)
+        self.beginInsertRows(self.indexByItem(parent), row, row)
         parent.addChild(item, row)
         self.endInsertRows()
 
@@ -54,7 +55,7 @@ class BookmarksModel(QAbstractItemModel):
 
         idx = item.parent().children().indexOf(item)
 
-        self.beginRemoveRows(self.index(item.parent()), idx, idx)
+        self.beginRemoveRows(self.indexByItem(item.parent()), idx, idx)
         item.parent().removeChild(item)
         self.endRemoveRows()
 
@@ -233,8 +234,6 @@ class BookmarksModel(QAbstractItemModel):
         while not stream.atEnd():
             row = stream.readInt()
             ptr = stream.readUInt64()
-            # TODO: ptr to BookmarkItem
-            import ipdb; ipdb.set_trace()
             index = self.createIndex(row, 0, ptr)
             # BookmarkItem
             item = self.item(index)
@@ -271,7 +270,7 @@ class BookmarksModel(QAbstractItemModel):
             return QModelIndex()
 
         item = self.item(child)
-        return self.index(item.parent())
+        return self.indexByItem(item.parent())
 
     # override
     def index(self, row, column, parent=QModelIndex()):
@@ -304,9 +303,7 @@ class BookmarksModel(QAbstractItemModel):
         @param: index QModelIndex
         @return: BookmarkItem
         '''
-        import ipdb; ipdb.set_trace()
         item = index.internalPointer()
-        # TODO: BookmarkItem* itm = static_cast<BookmarkItem*>(index.internalPointer());
         if item and isinstance(item, BookmarkItem):
             return item
         else:

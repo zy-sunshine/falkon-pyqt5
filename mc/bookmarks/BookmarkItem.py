@@ -82,7 +82,7 @@ class BookmarkItem(object):
         self._icon = icon
 
     def urlString(self):
-        self._url.toEncoded().decode('utf8')
+        self._url.toEncoded().data().decode()
 
     def url(self):
         '''
@@ -176,23 +176,25 @@ class BookmarkItem(object):
         import ipdb; ipdb.set_trace()
         self._children.remove(child)
 
-    def typeFromString(self, string):
+    @classmethod
+    def typeFromString(cls, string):
         '''
         @param: string QString
         @return: Type(enum int)
         '''
-        for type_, str_ in self.TYPE_STR_CHOICES:
+        for type_, str_ in cls.TYPE_STR_CHOICES:
             if string == str_:
                 return type_
         else:
-            return self.Invalid
+            return cls.Invalid
 
-    def typeToString(self, type_):
+    @classmethod
+    def typeToString(cls, type_):
         '''
         @parma: type_ Type(enum int)
         @return: QString
         '''
-        for type0, str_ in self.TYPE_STR_CHOICES:
+        for type0, str_ in cls.TYPE_STR_CHOICES:
             if type0 == type_:
                 return str_
         else:

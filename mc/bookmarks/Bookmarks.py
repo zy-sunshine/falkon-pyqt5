@@ -63,7 +63,7 @@ class Bookmarks(QObject):
         '''
         @return: BookmarkItem
         '''
-        return self._folderMenu
+        return self._folderToolbar
 
     def menuFolder(self):
         '''
@@ -147,7 +147,7 @@ class Bookmarks(QObject):
         assert(parent.isFolder())
         assert(item)
 
-        self.insertBookmark(parent, parent.children().count(), item)
+        self.insertBookmark(parent, len(parent.children()), item)
 
     def insertBookmark(self, parent, row, item):
         '''
