@@ -120,10 +120,19 @@ class AppTools(Singleton):
         '''
         @param: url QUrl
         '''
-        pass
+        fileName = url.toString(QUrl.RemoveFragment | QUrl.RemoveQuery |
+                QUrl.RemoveScheme | QUrl.RemovePort)
 
-    def filterCharsFromFilename(self, filename):
-        value = filename
+        fileName = basename(fileName.rstrip('/\\'))
+        fileName = self.filterCharsFromFilename(fileName)
+
+        if not fileName:
+            fileName = self.filterCharsFromFilename(url.host())
+
+        return fileName
+
+    def filterCharsFromFilename(self, fileName):
+        value = fileName
         value = value.replace('/', '-')
         for delch in ['\\', ':', '*', '?', '"', '<', '>', '|']:
             value = value.replace(delch, '')

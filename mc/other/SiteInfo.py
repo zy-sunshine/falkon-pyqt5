@@ -1,3 +1,4 @@
+from os.path import join as pathjoin
 from PyQt5.QtWidgets import QDialog
 from PyQt5 import uic
 from PyQt5.Qt import Qt
@@ -6,6 +7,14 @@ from PyQt5.Qt import QUrl
 from PyQt5.QtWidgets import QTreeWidgetItem
 from PyQt5.QtWidgets import QMenu
 from PyQt5.Qt import QAction
+from PyQt5.Qt import QDir
+from PyQt5.QtWidgets import QGraphicsPixmapItem
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.Qt import QGraphicsScene
+from PyQt5.Qt import QPixmap
+from PyQt5.Qt import QImage
+from PyQt5.Qt import QNetworkReply
+from PyQt5.Qt import QNetworkRequest
 
 from mc.common.globalvars import gVar
 from mc.webengine.WebPage import WebPage
@@ -130,7 +139,42 @@ class SiteInfo(QDialog):
         '''
         @param: item QTreeWidgetItem
         '''
-        pass
+        if not item:
+            return
+
+        imageUrl = QUrl.fromEncoded(item.text(1).encode())
+        if imageUrl.isRelative():
+            imageUrl = self._baseUrl.resolved(imageUrl)
+
+        pixmap = QPixmap()
+        loading = False
+
+        if imageUrl.scheme() == 'data':
+            # QByteArray
+            encodedUrl = item.text(1)
+            # QByteArray
+            imageData = encodedUrl[encodedUrl.find(',') + 1:]
+            pixmap = gVar.appTools.pixmapFromByteArray(imageData)
+        elif imageUrl.scheme() == 'file':
+            pixmap = QPixmap(imageUrl.toLocalFile())
+        elif imageUrl.scheme() == 'qrc':
+            pixmap = QPixmap(imageUrl.toString()[:3])  # Remove qrc from url
+        else:
+            self._imageReply = gVar.app.networkManager().get(QNetworkRequest(imageUrl))
+
+            def imageReplyCb():
+                if self._imageReply.error() != QNetworkReply.NoError:
+                    return
+
+                # QByteArray
+                data = self._imageReply.readAll()
+                self._showPixmap(QPixmap.fromImage(QImage.fromData(data)))
+            self._imageReply.finished.connect(imageReplyCb)
+            loading = True
+            self._showLoadingText()
+
+        if not loading:
+            self._showPixmap(pixmap)
 
     def _imagesCustomContextMenuRequested(self, point):
         '''
@@ -153,17 +197,62 @@ class SiteInfo(QDialog):
     def _copyActionData(self):
         action = self.sender()
         if isinstance(action, QAction):
-            gVar.app.clipboard().setText(action.data().toString())
+            gVar.app.clipboard().setText(action.data())
 
     def _saveImage(self):
-        pass
+        item = self._ui.treeImages.currentItem()
+        if not item:
+            return
+
+        if not self._ui.mediaPreview.scene() or not self._ui.mediaPreview.scene().items():
+            return
+
+        # QGraphicsItem
+        graphicsItem = self._ui.mediaPreview.scene().items()[0]
+        if graphicsItem.type() != QGraphicsPixmapItem.Type or \
+                not isinstance(graphicsItem, QGraphicsPixmapItem):
+            return
+
+        pixmapItem = graphicsItem
+        if pixmapItem.pixmap().isNull():
+            QMessageBox.warning(self, _('Error!'), _('This preview is not available!'))
+            return
+
+        imageFileName = gVar.appTools.getFileNameFromUrl(QUrl(item.text(1)))
+        index = imageFileName.rfind('.')
+        if index != -1:
+            imageFileName = imageFileName[:index]
+            imageFileName += '.png'
+
+        filePath = gVar.appTools.getSaveFileName('SiteInfo-DownloadImage', self, _('Save image...'),
+                pathjoin(QDir.homePath(), imageFileName), '*.png')
+
+        if not filePath:
+            return
+
+        if not pixmapItem.pixmap().save(filePath, 'PNG'):
+            QMessageBox.critical(self, _('Error!'), _('Cannot write to file!'))
+            return
 
     # private:
     def _showLoadingText(self):
-        pass
+        scene = QGraphicsScene(self._ui.mediaPreview)
+
+        scene.addText(_('Loading...'))
+
+        self._ui.mediaPreview.setScene(scene)
 
     def _showPixmap(self, pixmap):
         '''
         @param: pixmap QPixmap
         '''
-        pass
+        pixmap.setDevicePixelRatio(self.devicePixelRatioF())
+
+        scene = QGraphicsScene(self._ui.mediaPreview)
+
+        if pixmap.isNull():
+            scene.addText(_('Preview not available'))
+        else:
+            scene.addPixmap(pixmap)
+
+        self._ui.mediaPreview.setScene(scene)

@@ -300,4 +300,4 @@ class NetworkManager(QNetworkAccessManager):
         req.setAttribute(QNetworkRequest.SpdyAllowedAttribute, True)
         req.setAttribute(QNetworkRequest.FollowRedirectsAttribute, True)
 
-        return QNetworkAccessManager.createRequest(op, req, outgoingData)
+        return super().createRequest(op, req, outgoingData)

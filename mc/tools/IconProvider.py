@@ -208,7 +208,7 @@ class IconProvider(QWidget):
             escapedUrl = gVar.appTools.escapeSqlGlobString(encUrl.data().decode())
 
             urlPattern = '%s*' % escapedUrl
-            icon = IconsDbModel.select().filter(IconsDbModel.url.regexp(urlPattern)).first()
+            icon = IconsDbModel.select().filter(IconsDbModel.url.contains(urlPattern)).first()
             img = QImage()
             if icon:
                 img.loadFromData(icon.icon)
@@ -248,7 +248,7 @@ class IconProvider(QWidget):
             # TODO: is it necessary to use escapeSqlGlobString
             escapedHost = gVar.appTools.escapeSqlGlobString(url.host())
             hostPattern = '*%s*' % escapedHost
-            icon = IconsDbModel.select().filter(IconsDbModel.url.regexp(hostPattern)).first()
+            icon = IconsDbModel.select().filter(IconsDbModel.url.contains(hostPattern)).first()
             img = QImage()
             if icon:
                 img.loadFromData(icon.icon)
