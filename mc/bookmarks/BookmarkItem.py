@@ -70,7 +70,7 @@ class BookmarkItem(object):
 
         if self._type == self.Url:
             if self._iconTime.isNull() or self._iconTime.elapsed() > iconCacheTime:
-                self._icon = IconProvider.iconFromUrl(self._url)
+                self._icon = IconProvider.iconForUrl(self._url)
                 self._iconTime.restart()
             return self._icon
         elif self._type == self.Folder:
@@ -82,7 +82,7 @@ class BookmarkItem(object):
         self._icon = icon
 
     def urlString(self):
-        self._url.toEncoded().data().decode()
+        return self._url.toEncoded().data().decode()
 
     def url(self):
         '''
@@ -173,7 +173,6 @@ class BookmarkItem(object):
         @param: child BookmarkItem
         '''
         child._parent = None
-        import ipdb; ipdb.set_trace()
         self._children.remove(child)
 
     @classmethod

@@ -356,6 +356,12 @@ class TabWidget(TabStackedWidget):
         assert(isinstance(req, LoadRequest))
         return self.addViewByReqTitle(req, '', openFlags, selectLine, -1, pinned)
 
+
+    def addViewByUrlTitle(self, url, title="New tab", openFlags=const.NT_SelectedTab,  # noqa C901
+            selectLine=False, position=-1, pinned=False):
+        return self.addViewByReqTitle(LoadRequest(url), title, openFlags,
+                selectLine, position, pinned)
+
     def addViewByReqTitle(self, req, title="New tab", openFlags=const.NT_SelectedTab,  # noqa C901
             selectLine=False, position=-1, pinned=False):
         '''
@@ -485,7 +491,7 @@ class TabWidget(TabStackedWidget):
 
         webTab = self._weTabByIndex(index)
 
-        index = self.addViewByReqTitle(QUrl(), webTab.title(), const.NT_CleanSelectedTab)
+        index = self.addViewByUrlTitle(QUrl(), webTab.title(), const.NT_CleanSelectedTab)
         newWebTab = self._weTabByIndex(index)
         newWebTab.p_restoreTabByUrl(webTab.url(), webTab.historyData(), webTab.zoomLevel())
 

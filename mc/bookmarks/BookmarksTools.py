@@ -7,9 +7,14 @@ from PyQt5.QtWidgets import QMenu
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QAction
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.Qt import QFontMetrics
+from PyQt5.Qt import Qt
 from mc.tools.IconProvider import IconProvider
-from .BookmarkItem import BookmarkItem
+from mc.tools.EnhancedMenu import Menu, Action
 from mc.common.globalvars import gVar
+from mc.common import const
+from .BookmarkItem import BookmarkItem
 
 class BookmarksFoldersMenu(QMenu):
     def __init__(self, parent=None):
@@ -184,7 +189,13 @@ class BookmarksTools(object):
         @param: window BrowserWindow
         @param: item BookmarkItem
         '''
-        pass
+        assert(window)
+
+        if not item or not item.isUrl():
+            return
+
+        item.updateVisitCount()
+        window.loadAddress(item.url())
 
     @classmethod
     def openBookmarkInNewTab(cls, window, item):
@@ -192,7 +203,17 @@ class BookmarksTools(object):
         @param: window BrowserWindow
         @param: item BookmarkItem
         '''
-        pass
+        assert(window)
+
+        if not item:
+            return
+
+        if item.isFolder():
+            cls.openFolderInTabs(window, item)
+        elif item.isUrl():
+            item.updateVisitCount()
+            window.tabWidget().addViewByUrlTitle(item.url(), item.title(),
+                    gVar.appSettings.newTabPosition)
 
     @classmethod
     def openBookmarkInNewWindow(cls, window, item):
@@ -200,7 +221,11 @@ class BookmarksTools(object):
         @param: window BrowserWindow
         @param: item BookmarkItem
         '''
-        pass
+        if not item.isUrl():
+            return
+
+        item.updateVisitCount()
+        gVar.app.createWindow(const.BW_NewWindow, item.url())
 
     @classmethod
     def openBookmarkInNewPrivateWindow(cls, window, item):
@@ -208,7 +233,11 @@ class BookmarksTools(object):
         @param: window BrowserWindow
         @param: item BookmarkItem
         '''
-        pass
+        if not item.isUrl():
+            return
+
+        item.updateVisitCount()
+        gVar.app.startPrivateBrowsing(item.url())
 
     @classmethod
     def openFolderInTabs(cls, window, folder):
@@ -216,7 +245,28 @@ class BookmarksTools(object):
         @param: window BrowserWindow
         @param: folder BookmarkItem
         '''
-        pass
+        assert(window)
+        assert(folder.isFolder())
+
+        showWarning = len(folder.children()) > 10
+        if not showWarning:
+            for child in folder.children():
+                if child.isFolder():
+                    showWarning = True
+                    break
+
+        if showWarning:
+            button = QMessageBox.warning(window, _('Confirmation'),
+                _('Are you sure you want to open all bookmarks from "%s" folder in tabs?') % folder.title(),
+                QMessageBox.Yes | QMessageBox.No)
+            if button != QMessageBox.Yes:
+                return
+
+        for child in folder.children():
+            if child.isUrl():
+                cls.openBookmarkInNewTab(window, child)
+            elif child.isFolder():
+                cls.openFolderInTabs(window, child)
 
     @classmethod
     def addActionToMenu(cls, receiver, menu, item):
@@ -225,7 +275,16 @@ class BookmarksTools(object):
         @param: menu Menu
         @param: item BookmarkItem
         '''
-        pass
+        assert(menu)
+        assert(item)
+
+        type_ = item.type()
+        if type_ == BookmarkItem.Url:
+            cls.addUrlToMenu(receiver, menu, item)
+        elif type_ == BookmarkItem.Folder:
+            cls.addFolderToMenu(receiver, menu, item)
+        elif type_ == BookmarkItem.Separator:
+            cls.addSeparatorToMenu(menu, item)
 
     @classmethod
     def addFolderToMenu(cls, receiver, menu, folder):
@@ -234,7 +293,21 @@ class BookmarksTools(object):
         @param: menu Menu
         @param: folder BookmarkItem
         '''
-        pass
+        assert(menu)
+        assert(folder)
+        assert(folder.isFolder())
+
+        subMenu = Menu(menu)
+        title = QFontMetrics(subMenu.font()).elidedText(folder.title(), Qt.ElideRight, 250)
+        subMenu.setTitle(title)
+        subMenu.setIcon(folder.icon())
+
+        cls.addFolderContentsToMenu(receiver, subMenu, folder)
+
+        # QAction
+        act = menu.addMenu(subMenu)
+        act.setData(folder)
+        act.setIconVisibleInMenu(True)
 
     @classmethod
     def addUrlToMenu(cls, receiver, menu, bookmark):
@@ -243,15 +316,32 @@ class BookmarksTools(object):
         @param: menu Menu
         @param: bookmark BookmarkItem
         '''
-        pass
+        assert(menu)
+        assert(bookmark)
+        assert(bookmark.isUrl())
+
+        act = Action(menu)
+        title = QFontMetrics(act.font()).elidedText(bookmark.title(), Qt.ElideRight, 250)
+        act.setText(title)
+        act.setData(bookmark)
+        act.setIconVisibleInMenu(True)
+
+        act.triggered.connect(receiver.bookmarkActivated)
+        act.ctrlTriggered.connect(receiver.bookmarkCtrlActivated)
+        act.shiftTriggered.connect(receiver.bookmarkShiftActivated)
+
+        menu.addAction(act)
 
     @classmethod
-    def addSeparatorToMenu(cls, menu, folder):
+    def addSeparatorToMenu(cls, menu, separator):
         '''
         @param: menu Menu
         @param: separator BookmarkItem
         '''
-        pass
+        assert(menu)
+        assert(separator.isSeparator())
+
+        menu.addSeparator()
 
     @classmethod
     def addFolderContentsToMenu(cls, receiver, menu, folder):
@@ -260,7 +350,14 @@ class BookmarksTools(object):
         @param: menu Menu
         @param: folder BookmarkItem
         '''
-        pass
+        menu.aboutToShow.connect(receiver.menuAboutToShow)
+        menu.menuMiddleClicked.connect(receiver.menuMiddleClicked)
+
+        for child in folder.children():
+            cls.addActionToMenu(receiver, menu, child)
+
+        if menu.isEmpty():
+            menu.addAction(_('Empty')).setDisabled(True)
 
     #@classmethod
     #def migrateBookmarksIfNecessary(cls, bookmarks):

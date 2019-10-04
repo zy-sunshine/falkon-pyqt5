@@ -5,6 +5,8 @@ from PyQt5.Qt import QMimeData
 from PyQt5.Qt import QByteArray
 from PyQt5.Qt import QDataStream
 from PyQt5.Qt import QIODevice
+from PyQt5.Qt import QSortFilterProxyModel
+from PyQt5.Qt import QTimer
 from .BookmarkItem import BookmarkItem
 
 class BookmarksModel(QAbstractItemModel):
@@ -53,7 +55,7 @@ class BookmarksModel(QAbstractItemModel):
         assert(item)
         assert(item.parent())
 
-        idx = item.parent().children().indexOf(item)
+        idx = item.parent().children().index(item)
 
         self.beginRemoveRows(self.indexByItem(item.parent()), idx, idx)
         item.parent().removeChild(item)
@@ -115,7 +117,7 @@ class BookmarksModel(QAbstractItemModel):
             column = index.column()
             if role == Qt.ToolTipRole:
                 if column == 0 and item.isUrl():
-                    return '%s\n%s' % (item.title(), item.url().toEncoded().encode('utf8'))
+                    return '%s\n%s' % (item.title(), item.url().toEncoded().data().decode())
             # fallthrough
             if column == 0:
                 return item.title()
@@ -160,7 +162,7 @@ class BookmarksModel(QAbstractItemModel):
         '''
         @param: parent QModelIndex
         '''
-        if parent.count() > 0:
+        if parent.column() > 0:
             return 0
         return 2
 
@@ -285,7 +287,7 @@ class BookmarksModel(QAbstractItemModel):
 
         # BookmarkItem
         parentItem = self.item(parent)
-        self.createIndex(row, column, parentItem.children()[row])
+        return self.createIndex(row, column, parentItem.children()[row])
 
     def indexByItem(self, item, column=0):
         '''
@@ -316,3 +318,51 @@ class BookmarksModel(QAbstractItemModel):
         '''
         idx = self.indexByItem(item)
         self.dataChanged.emit(idx, idx)
+
+class BookmarksFilterModel(QSortFilterProxyModel):
+    def __init__(self, parent):
+        '''
+        @param: parent QAbstractItemModel
+        '''
+        super().__init__(parent)
+        self._pattern = ''
+        self._filterTimer = None  # QTimer
+        self.setSourceModel(parent)
+        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+
+        self._filterTimer = QTimer(self)
+        self._filterTimer.setSingleShot(True)
+        self._filterTimer.setInterval(300)
+
+        self._filterTimer.timeout.connect(self._startFiltering)
+
+    # public Q_SLOTS:
+    def setFilterFixedString(self, pattern):
+        self._pattern = pattern
+        self._filterTimer.start()
+
+    # protected:
+    # override
+    def filterAcceptsRow(self, sourceRow, sourceParent):
+        index = self.sourceModel().index(sourceRow, 0, sourceParent)
+
+        if index.data(BookmarksModel.TypeRole) == BookmarkItem.Folder:
+            return True
+
+        pattern = self._pattern
+        title = index.data(BookmarksModel.TitleRole)
+        url = index.data(BookmarksModel.UrlStringRole)
+        desc = index.data(BookmarksModel.DescriptionRole)
+        keyword = index.data(BookmarksModel.KeywordRole)
+        if self.filterCaseSensitivity() == Qt.CaseInsensitive:
+            pattern = pattern.lower()
+            title = title.lower()
+            url = url.lower()
+            desc = desc.lower()
+            keyword = keyword.lower()
+        return pattern in title or pattern in url or pattern in desc or \
+            pattern == keyword
+
+    # private Q_SLOTS:
+    def _startFiltering(self):
+        super().setFilterFixedString(self._pattern)
