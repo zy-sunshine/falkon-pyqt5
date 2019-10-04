@@ -188,7 +188,6 @@ class BookmarksTreeView(QTreeView):
         '''
         @param: event QMouseEvent
         '''
-        print('mouseMoveEvent')
         super().mouseMoveEvent(event)
 
         if self._type == self.BookmarksSidebarViewType:
@@ -205,7 +204,6 @@ class BookmarksTreeView(QTreeView):
         '''
         @param: event QMouseEvent
         '''
-        print('mousePressEvent')
         super().mousePressEvent(event)
 
         if len(self.selectionModel().selectedRows()) == 1:
@@ -229,7 +227,6 @@ class BookmarksTreeView(QTreeView):
         '''
         @param: event QMouseEvent
         '''
-        print('mouseReleaseEvent')
         super().mouseReleaseEvent(event)
 
         if len(self.selectionModel().selectedRows()) == 1:
@@ -250,7 +247,6 @@ class BookmarksTreeView(QTreeView):
         '''
         @param: event QMouseEvent
         '''
-        print('mouseDoubleClickEvent')
         super().mouseDoubleClickEvent(event)
 
         if len(self.selectionModel().selectedRows()) == 1:
@@ -275,7 +271,6 @@ class BookmarksTreeView(QTreeView):
         '''
         @param: event QKeyEvent
         '''
-        print('keyPressEvent')
         super().keyPressEvent(event)
 
         if len(self.selectionModel().selectedRows()) == 1:

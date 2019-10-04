@@ -258,7 +258,7 @@ class Bookmarks(QObject):
 
         try:
             res = jloads(gVar.appTools.readAllFileContents(bookmarksFile))
-            if type(res) != map:
+            if type(res) != dict:
                 error = True
         except ValueError:
             error = True
@@ -346,7 +346,7 @@ class Bookmarks(QObject):
             item = BookmarkItem(type_, parent)
 
             if type_ == BookmarkItem.Url:
-                item.setUrl(QUrl.fromEncoded(map_['url']))
+                item.setUrl(QUrl.fromEncoded(map_['url'].encode()))
                 item.setTitle(map_['name'])
                 item.setDescription(map_['description'])
                 item.setKeyword(map_['keyword'])
