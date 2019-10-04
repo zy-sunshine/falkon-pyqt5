@@ -10,6 +10,9 @@ from PyQt5.Qt import QAction
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.Qt import QFontMetrics
 from PyQt5.Qt import Qt
+from PyQt5.Qt import QUrl
+from PyQt5.QtWidgets import QFormLayout
+from PyQt5.QtWidgets import QPlainTextEdit
 from mc.tools.IconProvider import IconProvider
 from mc.tools.EnhancedMenu import Menu, Action
 from mc.common.globalvars import gVar
@@ -173,7 +176,43 @@ class BookmarksTools(object):
         @param: tabWidget TabWidget
         @param: folder BookmarkItem
         '''
-        pass
+        assert(tabWidget)
+
+        dialog = QDialog(parent)
+        layout = QBoxLayout(QBoxLayout.TopToBottom, dialog)
+        label = QLabel(dialog)
+        folderButton = BookmarksFoldersButton(dialog, folder)
+
+        box = QDialogButtonBox(dialog)
+        box.addButton(QDialogButtonBox.Ok)
+        box.addButton(QDialogButtonBox.Cancel)
+        box.rejected.connect(dialog.reject)
+        box.accepted.connect(dialog.accept)
+
+        layout.addWidget(label)
+        layout.addWidget(folderButton)
+        layout.addWidget(box)
+
+        label.setText(_('Choose folder for bookmarks:'))
+        dialog.setWindowTitle(_('Bookmark All Tabs'))
+
+        size = dialog.size()
+        size.setWidth(350)
+        dialog.resize(size)
+        dialog.exec_()
+
+        if dialog.result() == QDialog.Rejected:
+            return False
+
+        for tab in tabWidget.allTabs(False):
+            if tab.url().isEmpty(): continue
+            bookmark = BookmarkItem(BookmarkItem.Url)
+            bookmark.setTitle(tab.title())
+            bookmark.setUrl(tab.url())
+            gVar.app.bookmarks().addBookmark(folderButton.selectedFolder(), bookmark)
+
+        del dialog
+        return True
 
     @classmethod
     def editBookmarkDialog(cls, parent, item):
@@ -181,7 +220,48 @@ class BookmarksTools(object):
         @param: parent QWidget
         @param: item BookmarkItem
         '''
-        pass
+        dialog = QDialog(parent)
+        layout = QFormLayout(dialog)
+
+        title = QLineEdit()
+        address = QLineEdit()
+        keyword = QLineEdit()
+        description = QPlainTextEdit()
+
+        box = QDialogButtonBox(dialog)
+        box.addButton(QDialogButtonBox.Ok)
+        box.addButton(QDialogButtonBox.Cancel)
+        box.rejected.connect(dialog.reject)
+        box.accepted.connect(dialog.accept)
+
+        layout.addRow(_('Title:'), title)
+        title.setText(item.title())
+        if not item.isFolder():
+            layout.addRow(_('Address:'), address)
+            address.setText(item.urlString())
+            layout.addRow(_('Keyword:'), keyword)
+            keyword.setText(item.keyword())
+        layout.addRow(_('Description:'), description)
+        description.document().setPlainText(item.description())
+        layout.addWidget(box)
+
+        dialog.setWindowIcon(item.icon())
+        dialog.setWindowTitle(_('Edit Bookmark'))
+
+        dialog.exec_()
+
+        if dialog.result() == QDialog.Rejected:
+            del dialog
+            return False
+
+        item.setTitle(title.text())
+        if not item.isFolder():
+            item.setUrl(QUrl.fromEncoded(address.text().encode()))
+            item.setKeyword(keyword.text())
+        item.setDescription(description.toPlainText())
+
+        del dialog
+        return True
 
     @classmethod
     def openBookmark(cls, window, item):

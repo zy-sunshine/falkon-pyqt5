@@ -175,14 +175,14 @@ class TabWidget(TabStackedWidget):
         for tab in tabs:
             index = self.addViewByUrl(QUrl(), const.NT_CleanSelectedTab,
                 False, tab.isPinned)
-            webTab = self._weTabByIndex(index)
+            webTab = self._weTab(index)
             webTab.restoreTab(tab)
             if tab.childTabs:
                 childTabs.append([webTab, tab.childTabs])
 
         for webTab, tabs in childTabs:
             for index in tabs:
-                t = self._weTabByIndex(index)
+                t = self._weTab(index)
                 if t:
                     webTab.addChildTab(t)
 
@@ -214,7 +214,7 @@ class TabWidget(TabStackedWidget):
         self._lastBackgroundTab = None
         self._currentTabFresh = False
 
-        webTab = self._weTabByIndex(index)
+        webTab = self._weTab(index)
         webTab.tabActivated()
 
         locBar = webTab.locationBar()
@@ -242,7 +242,7 @@ class TabWidget(TabStackedWidget):
         if index < 0:
             return self._weTab()
         else:
-            return self._weTabByIndex(index)
+            return self._weTab(index)
 
     def tabBar(self):
         '''
@@ -489,10 +489,10 @@ class TabWidget(TabStackedWidget):
         if not self._validIndex(index):
             return
 
-        webTab = self._weTabByIndex(index)
+        webTab = self._weTab(index)
 
         index = self.addViewByUrlTitle(QUrl(), webTab.title(), const.NT_CleanSelectedTab)
-        newWebTab = self._weTabByIndex(index)
+        newWebTab = self._weTab(index)
         newWebTab.p_restoreTabByUrl(webTab.url(), webTab.historyData(), webTab.zoomLevel())
 
         return index
@@ -504,7 +504,7 @@ class TabWidget(TabStackedWidget):
         if index == -1:
             index = self.currentIndex()
 
-        webTab = self._weTabByIndex(index)
+        webTab = self._weTab(index)
         if not webTab or not self._validIndex(index):
             return
 
@@ -538,7 +538,7 @@ class TabWidget(TabStackedWidget):
         if index == -1:
             index = self.currentIndex()
 
-        webTab = self._weTabByIndex(index)
+        webTab = self._weTab(index)
         if not webTab or not self._validIndex(index):
             return
 
@@ -565,7 +565,7 @@ class TabWidget(TabStackedWidget):
         if not self._validIndex(index):
             return
 
-        self._weTabByIndex(index).reload()
+        self._weTab(index).reload()
 
     def reloadAllTabs(self):
         for idx in range(self.count()):
@@ -575,13 +575,13 @@ class TabWidget(TabStackedWidget):
         if not self._validIndex(index):
             return
 
-        self._weTabByIndex(index).stop()
+        self._weTab(index).stop()
 
     def closeAllButCurrent(self, index):
         if not self._validIndex(index):
             return
 
-        akt = self._weTabByIndex(index)
+        akt = self._weTab(index)
         tabs = self.allTabs(False)
         for tab in tabs:
             tabIndex = tab.tabIndex()
@@ -613,7 +613,7 @@ class TabWidget(TabStackedWidget):
 
     # NOTICE: detachTab renamed to detachTabByIndex
     def detachTabByIndex(self, index):
-        tab = self._weTabByIndex(index)
+        tab = self._weTab(index)
         assert(tab)
 
         if self.count() == 1 and gVar.app.windowCount() == 1:
@@ -629,13 +629,13 @@ class TabWidget(TabStackedWidget):
         if not self._validIndex(index):
             return
 
-        self._weTabByIndex(index).tabActivated()
+        self._weTab(index).tabActivated()
 
     def unloadTab(self, index):
         if not self._validIndex(index):
             return
 
-        self._weTabByIndex(index).unload()
+        self._weTab(index).unload()
 
     def restoreClosedTab(self, obj=0):
         '''
@@ -660,7 +660,7 @@ class TabWidget(TabStackedWidget):
             return
 
         index = self.addViewByUrl(QUrl(), tab.tabState.title, const.NT_CleanSelectedTab, False, tab.position)
-        webTab = self._weTabByIndex(index)
+        webTab = self._weTab(index)
         webTab.setParentTab(tab.parentTab)
         webTab.p_restoreTab(tab.tabState)
 
@@ -673,7 +673,7 @@ class TabWidget(TabStackedWidget):
         closedTabs = self._closedTabsManager.closedTabs()
         for tab in closedTabs:
             index = self.addViewByUrl(QUrl(), tab.tabState.title, const.NT_CleanSelectedTab)
-            webTab = self._weTabByIndex(index)
+            webTab = self._weTab(index)
             webTab.setParentTab(tab.parentTab)
             webTab.p_restoreTab(tab.tabState)
 
@@ -730,7 +730,7 @@ class TabWidget(TabStackedWidget):
         self._menuTabs.clear()
 
         for idx in range(self.count()):
-            tab = self._weTabByIndex(idx)
+            tab = self._weTab(idx)
             if not tab or tab.isPinned():
                 continue
 
@@ -792,16 +792,12 @@ class TabWidget(TabStackedWidget):
             self.tabMoved.emit(before, after)
 
     # private:
-    def _weTab(self):
+    def _weTab(self, index=None):
         '''
         @return: WebTab
         '''
-        return self._weTabByIndex(self.currentIndex())
-
-    def _weTabByIndex(self, index):
-        '''
-        @return: WebTab
-        '''
+        if index is None:
+            index = self.currentIndex()
         result = self.widget(index)
         if isinstance(result, WebTab):
             return result
@@ -812,7 +808,7 @@ class TabWidget(TabStackedWidget):
         '''
         @return: TabIcon
         '''
-        self._weTabByIndex(index).tabIcon()
+        self._weTab(index).tabIcon()
 
     def _validIndex(self, index):
         return index >= 0 and index < self.count()
