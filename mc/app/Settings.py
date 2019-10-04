@@ -54,7 +54,7 @@ class Settings(object):
         return self.s_settings.contains(key)
 
     def remove(self, key):
-        self.s_serttings.remove(key)
+        self.s_settings.remove(key)
 
     def setValue(self, key, defaultValue=QVariant()):
         self.s_settings.setValue(key, defaultValue)

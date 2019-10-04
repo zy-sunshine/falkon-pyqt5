@@ -36,4 +36,5 @@ class DownloadsButton(AbstractButtonInterface):
         '''
         @param: ClickController
         '''
+        import ipdb; ipdb.set_trace()
         gVar.app.downloadManager().show()

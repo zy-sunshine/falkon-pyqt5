@@ -473,9 +473,7 @@ class NavigationBar(QWidget):
 
         action = self.sender()
         if isinstance(action, QAction):
-            # TODO:
-            import ipdb; ipdb.set_trace()
-            self._loadHistoryItem(history.itemAt(action.data(type=int)))
+            self._loadHistoryItem(history.itemAt(action.data()))
 
     def _loadHistoryIndexInNewTab(self, index=-1):
         action = self.sender()
