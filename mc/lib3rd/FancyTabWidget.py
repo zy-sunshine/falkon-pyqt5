@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.Qt import QPropertyAnimation
 from PyQt5.Qt import QIcon
 from PyQt5.Qt import pyqtSignal
+from PyQt5.Qt import pyqtProperty
 from PyQt5.Qt import QTimer
 from PyQt5.QtWidgets import QTabBar
 from PyQt5.Qt import QSize
@@ -622,13 +623,15 @@ class FancyTabWidget(QWidget):
         '''
         @return: Mode
         '''
-        return self.mode_
+        return self._mode
 
     def bgPixmap(self):
         '''
         @return: QPixmap
         '''
-        return self.background_pixmap_
+        return self._background_pixmap
+
+    bgPixmap = pyqtProperty(QPixmap, bgPixmap, SetBackgroundPixmap)
 
     # public Q_SLOTS:
     def SetCurrentIndex(self, index):
