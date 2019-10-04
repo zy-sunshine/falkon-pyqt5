@@ -61,8 +61,6 @@ class NavigationBarToolButton(ToolButton):
 
         def popupClosedFunc():
             self.setDown(False)
-            # TODO: delete c
-            c.__del__()
         c.popupClosed = popupClosedFunc
         self._button.clicked.emit(c)
         if c.popupOpened:
@@ -95,8 +93,8 @@ class NavigationBarToolButton(ToolButton):
         '''
         popupOpened = False
 
-        if event.button == Qt.LeftButton and self.rect().contains(event.pos()):
-            self.clicked()
+        if event.button() == Qt.LeftButton and self.rect().contains(event.pos()):
+            self._clicked()
             popupOpened = self.isDown()
 
         if popupOpened:

@@ -24,6 +24,7 @@ class DownloadsButton(AbstractButtonInterface):
 
     # private:
     def _updateState(self):
+        # NOTE: show always
         # self.setVisible(self._manager.downloadsCount() > 0)
         self.setVisible(True)
         count = self._manager.activeDownloadsCount()
@@ -36,5 +37,4 @@ class DownloadsButton(AbstractButtonInterface):
         '''
         @param: ClickController
         '''
-        import ipdb; ipdb.set_trace()
         gVar.app.downloadManager().show()

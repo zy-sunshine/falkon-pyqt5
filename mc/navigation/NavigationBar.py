@@ -478,7 +478,7 @@ class NavigationBar(QWidget):
     def _loadHistoryIndexInNewTab(self, index=-1):
         action = self.sender()
         if isinstance(action, QAction):
-            index = action.data(type=int)
+            index = action.data()
 
         if index == -1:
             return
@@ -509,7 +509,7 @@ class NavigationBar(QWidget):
         act = self.sender()
         if not isinstance(act, QAction):
             return
-        id_ = act.data(type=str)
+        id_ = act.data()
         if id_ not in self._widgets:
             return
         data = self._widgets[id_]
