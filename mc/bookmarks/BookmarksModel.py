@@ -381,7 +381,7 @@ class BookmarksButtonMimeData(QMimeData):
         @param: format_ QString
         @return: true
         '''
-        self.mimeType() == format_
+        return self.mimeType() == format_
 
     # override
     def formats(self):

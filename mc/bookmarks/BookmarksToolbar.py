@@ -8,10 +8,13 @@ from PyQt5.Qt import QApplication
 from PyQt5.QtWidgets import QMenu
 from PyQt5.Qt import QIcon
 from PyQt5.Qt import QRect
+from PyQt5.Qt import QUrl
 from mc.common.globalvars import gVar
 from .BookmarksTools import BookmarksTools
 from mc.tools.IconProvider import IconProvider
 from .BookmarksToolbarButton import BookmarksToolbarButton
+from .BookmarksModel import BookmarksButtonMimeData
+from .BookmarkItem import BookmarkItem
 
 class BookmarksToolbar(QWidget):
     def __init__(self, window, parent=None):
@@ -207,14 +210,54 @@ class BookmarksToolbar(QWidget):
         '''
         @param: event QDropEvent
         '''
-        pass
+        row = self._dropRow
+        self._clearDropIndicator()
+
+        mime = event.mimeData()
+        if not mime.hasUrls() and not mime.hasFormat(BookmarksButtonMimeData.mimeType()):
+            super().dropEvent(event)
+            return
+
+        # BookmarkItem
+        parent = self._bookmarks.toolbarFolder()
+        bookmark = None
+
+        if mime.hasFormat(BookmarksButtonMimeData.mimeType()):
+            bookmarkMime = mime
+            assert(isinstance(bookmarkMime, BookmarksButtonMimeData))
+            bookmark = bookmarkMime.item()
+            initialIndex = bookmark.parent().children().index(bookmark)
+            current = self._buttonAt(self._dropPos)
+            if initialIndex < self._layout.indexOf(current):
+                row -= 1
+        else:
+            url = mime.urls()[0]
+            if mime.hasText():
+                title = mime.text()
+            else:
+                title = url.toEncoded(QUrl.RemoveScheme)
+
+            bookmark = BookmarkItem(BookmarkItem.Url)
+            bookmark.setTitle(title)
+            bookmark.setUrl(url)
+
+        if row >= 0:
+            self._bookmarks.insertBookmark(parent, row, bookmark)
+        else:
+            self._bookmarks.addBookmark(parent, bookmark)
 
     # override
     def dragEnterEvent(self, event):
         '''
         @param: event QDragEnterEvent
         '''
-        pass
+        mime = event.mimeData()
+
+        if (mime.hasUrls() and mime.hasText()) or mime.hasFormat(BookmarksButtonMimeData.mimeType()):
+            event.acceptProposedAction()
+            return
+
+        super().dragEnterEvent(event)
 
     # override
     def dragMoveEvent(self, event):

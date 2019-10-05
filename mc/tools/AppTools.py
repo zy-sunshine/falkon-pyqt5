@@ -439,7 +439,7 @@ class AppTools(Singleton):
         '''
         # Modified code from KFilePlacesView
         color = widget.palette().brush(QPalette.Normal, QPalette.Highlight).color()
-        x = (rect.left() - rect.right()) / 2
+        x = (rect.left() + rect.right()) / 2
         thickness = int(rect.width() / 2.0 + 0.5)
         alpha = 255
         alphaDec = alpha / (thickness + 1)
