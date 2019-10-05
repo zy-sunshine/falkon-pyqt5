@@ -50,7 +50,7 @@ class Bookmarks(QObject):
     def showOnlyIconsInToolbar(self):
         return self._showOnlyIconsInToolbar
 
-    def showOnlyTextInToobar(self):
+    def showOnlyTextInToolbar(self):
         return self._showOnlyTextInToolbar
 
     def rootItem(self):

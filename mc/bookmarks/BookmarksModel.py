@@ -366,3 +366,42 @@ class BookmarksFilterModel(QSortFilterProxyModel):
     # private Q_SLOTS:
     def _startFiltering(self):
         super().setFilterFixedString(self._pattern)
+
+class BookmarksButtonMimeData(QMimeData):
+    def __init__(self):
+        super().__init__()
+        self._item = None  # BookmarkItem
+
+    def item(self):
+        '''
+        @return: BookmarkItem
+        '''
+        return self._item
+
+    def setBookmarkItem(self, item):
+        '''
+        @param: item BookmarkItem
+        '''
+        self._item = item
+
+    # override
+    def hasFormat(self, format_):
+        '''
+        @param: format_ QString
+        @return: true
+        '''
+        self.mimeType() == format_
+
+    # override
+    def formats(self):
+        '''
+        @return: QStringList
+        '''
+        return [self.mimeType(), ]
+
+    @classmethod
+    def mimeType(cls):
+        '''
+        @return: QString
+        '''
+        return 'application/app.bookmarktoolbutton.bookmarkitem'
