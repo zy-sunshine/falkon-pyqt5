@@ -175,13 +175,16 @@ class WebPage(QWebEnginePage):
         return WebHitTestResult(self, pos)
 
     def scroll(self, x, y):
-        pass
+        self.runJavaScript("window.scrollTo(window.scrollX + %s, window.scrollY + %s)" %
+                (x, y), self.SafeJsWorld)
 
     def setScrollPosition(self, pos):
         '''
         @param: pos QPointF
         '''
-        pass
+        # QPointF
+        v = self.mapToViewport(pos.toPoint())
+        self.runJavaScript("window.scrollTo(%s, %s)" % (v.x(), v.y()), self.SafeJsWorld)
 
     # override
     def javaScriptPrompt(self, securityOrigin, msg, defaultValue):
@@ -478,7 +481,14 @@ class WebPage(QWebEnginePage):
         '''
         @param: fullScreenRequest QWebEngineFullScreenRequest
         '''
-        pass
+        self.view().requestFullScreen(fullScreenRequest.toggleOn())
+
+        accepted = fullScreenRequest.toggleOn() == self.view().isFullScreen()
+
+        if accepted:
+            fullScreenRequest.accept()
+        else:
+            fullScreenRequest.reject()
 
     def _featurePermissionRequested(self, origin, feature):
         '''

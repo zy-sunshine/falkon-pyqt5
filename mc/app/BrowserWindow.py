@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import QLabel
 from PyQt5.Qt import QDir
 from PyQt5.QtWidgets import QMenuBar
 from PyQt5.Qt import QAction, QActionGroup
+from PyQt5.Qt import QWindowStateChangeEvent
 
 from mc.webengine.LoadRequest import LoadRequest
 from mc.common import const
@@ -525,23 +526,21 @@ class BrowserWindow(QMainWindow):
         else:
             self.setWindowState(self.windowState() & ~Qt.WindowFullScreen)
         if self._sideBar:
-            self._sideBar.data().setHidden(enable)
+            self._sideBar.setHidden(enable)
         self._htmlFullScreenView = enable and view or None
 
     def loadActionUrl(self, obj=None):
         if not obj:
             obj = self.sender()
-        # TODO: QAction* action = qobject_cast<QAction*>(obj)
         action = obj
-        if action:
+        if isinstance(action, QAction):
             self.loadAddress(action.data().toUrl())
 
     def loadActionUrlInNewTab(self, obj=None):
         if not obj:
             obj = self.sender()
-        # TODO: QAction* action = qobject_cast<QAction*>(obj)
         action = obj
-        if action:
+        if isinstance(action, QAction):
             self.loadAddress(action.data().toUrl(), const.NT_SelectedTabAtTheEnd)
 
     def bookmarkPage(self):
@@ -747,8 +746,8 @@ class BrowserWindow(QMainWindow):
         @param: event QEvent
         '''
         if event.type() == QEvent.WindowStateChange:
-            # TODO: QWindowStateChangeEvent *e = static_cast<QWindowStateChangeEvent*>(event);
             e = event
+            assert(isinstance(e, QWindowStateChangeEvent))
             if not (e.oldState() & Qt.WindowFullScreen) and (self.windowState() & Qt.WindowFullScreen):
                 # Enter fullscreen
                 self._statusBarVisible = self._statusBar.isVisible()
