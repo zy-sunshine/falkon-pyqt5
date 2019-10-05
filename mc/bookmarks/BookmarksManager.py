@@ -300,7 +300,7 @@ class BookmarksManager(QWidget):
     # override
     def keyPressEvent(self, event):
         '''
-        @param: event QkeyEvent
+        @param: event QKeyEvent
         '''
         if event.key() == Qt.Key_Delete:
             self._deleteBookmarks()

@@ -12,6 +12,7 @@ from PyQt5.Qt import QUrlQuery
 from PyQt5.Qt import QDir
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import QFileInfo, QFile
+from PyQt5.Qt import Qt
 from PyQt5.QtCore import qEnvironmentVariable
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QDialogButtonBox
@@ -24,9 +25,19 @@ from mc.other.CheckBoxDialog import CheckBoxDialog
 from .javascript.ExternalJsObject import ExternalJsObject
 from .WebHitTestResult import WebHitTestResult
 
+class CloseableFrame(QFrame):
+    closeRequested = pyqtSignal()
+    def keyPressEvent(self, event):
+        '''
+        @param: event QKeyEvent
+        '''
+        if event.key() == Qt.Key_Escape:
+            self.closeRequested.emit()
+        super().keyPressEvent(event)
+
 class WebPage(QWebEnginePage):
-    s_kEnableJsOutput = qEnvironmentVariable('APP_ENABLE_JS_OUTPUT') != ''
-    s_kEnableJsNonBlockDialogs = qEnvironmentVariable('APP_ENABLE_JS_NONBLOCK_DIALOGS') != ''
+    _s_kEnableJsOutput = qEnvironmentVariable('APP_ENABLE_JS_OUTPUT') != ''
+    _s_kEnableJsNonBlockDialogs = qEnvironmentVariable('APP_ENABLE_JS_NONBLOCK_DIALOGS', 'yes') != '0'
     # JsWorld
     UnsafeJsWorld = QWebEngineScript.MainWorld
     SafeJsWorld = QWebEngineScript.ApplicationWorld
@@ -180,7 +191,8 @@ class WebPage(QWebEnginePage):
         @param: defaultValue QString
         @return: ret bool, result QString
         '''
-        pass
+        if not self._s_kEnableJsNonBlockDialogs:
+            return super().javaScriptPrompt(securityOrigin, msg, defaultValue)
 
     # override
     def javaScriptConfirm(self, securityOrigin, msg):
@@ -188,7 +200,8 @@ class WebPage(QWebEnginePage):
         @param: securityOrigin QUrl
         @param: msg QString
         '''
-        pass
+        if not self._s_kEnableJsNonBlockDialogs:
+            return super().javaScriptConfirm(securityOrigin, msg)
 
     # override
     def javaScriptAlert(self, securityOrigin, msg):
@@ -199,7 +212,7 @@ class WebPage(QWebEnginePage):
         if self._blockAlerts or self._runningLoop:
             return
 
-        if not self.s_kEnableJsNonBlockDialogs:
+        if not self._s_kEnableJsNonBlockDialogs:
             title = _('JavaScript alert')
             if self.url().host():
                 title = '%s - %s' % (title, self.url().host())
@@ -215,7 +228,7 @@ class WebPage(QWebEnginePage):
             self._blockAlerts = dialog.isChecked()
             return
 
-        widget = QFrame(self.view().overlayWidget())
+        widget = CloseableFrame(self.view().overlayWidget())
 
         widget.setObjectName('jsFrame')
         ui = uic.loadUi('mc/webengine/JsAlert.ui', widget)
@@ -228,6 +241,7 @@ class WebPage(QWebEnginePage):
 
         eLoop = QEventLoop()
         self._runningLoop = eLoop
+        widget.closeRequested.connect(eLoop.quit)
         ui.buttonBox.clicked.connect(eLoop.quit)
 
         if eLoop.exec_() == 1:
@@ -238,6 +252,9 @@ class WebPage(QWebEnginePage):
         self._blockAlerts = ui.preventAlerts.isChecked()
 
         self.view().setFocus()
+        self.view().viewportResized.disconnect(widget.resize)
+        widget.close()
+        widget.deleteLater()
 
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
         '''
@@ -246,7 +263,19 @@ class WebPage(QWebEnginePage):
         @param: lineNumber int
         @param: sourceID QString
         '''
-        pass
+        if not self._s_kEnableJsOutput:
+            return
+
+        prefix = ''
+        if level == self.InfoMessageLevel:
+            prefix = '[I]'
+        elif level == self.WarningMessageLevel:
+            prefix = '[W]'
+        elif level == self.ErrorMessageLevel:
+            prefix = '[E]'
+
+        msg = '%s%s:%s %s' % (prefix, sourceID, lineNumber, message)
+        print(msg)
 
     def autoFillUsernames(self):
         return []  # QStringList
