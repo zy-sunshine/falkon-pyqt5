@@ -198,15 +198,15 @@ class BookmarksModel(QAbstractItemModel):
         @return: QMimeData
         '''
         mimeData = QMimeData()
-        encodedData = QByteArray()
-        stream = QDataStream()
+        self._tmpMimeItems = []
         for index in indexes:
             # If item's parent (=folder) is also selected, we will just move the
             # whole folder
             if index.isValid() and index.column() == 0 and index.parent() not in indexes:
-                stream.writeInt(index.row())
-                stream.writeUInt64(index.internalPointer())
-        mimeData.setData(self.MIMETYPE, encodedData)
+                item = index.internalPointer()
+                assert(isinstance(item, BookmarkItem))
+                self._tmpMimeItems.append(item)
+        mimeData.setData(self.MIMETYPE, b'')
         return mimeData
 
     # override
@@ -219,35 +219,26 @@ class BookmarksModel(QAbstractItemModel):
         @param: parent QModelIndex
         '''
         if action == Qt.IgnoreAction:
+            del self._tmpMimeItems
             return True
 
         if not self._bookmarks or not data.hasFormat(self.MIMETYPE) or \
                 not parent.isValid():
+            del self._tmpMimeItems
             return False
 
         parentItem = self.item(parent)
         assert(parentItem.isFolder())
 
-        # QByteArray
-        encodedData = data.data(self.MIMETYPE)
-        stream = QDataStream(encodedData, QIODevice.ReadOnly)
-        items = []  # QList<BookmarkItem>
+        items = self._tmpMimeItems
+        del self._tmpMimeItems
 
-        while not stream.atEnd():
-            row = stream.readInt()
-            ptr = stream.readUInt64()
-            index = self.createIndex(row, 0, ptr)
-            # BookmarkItem
-            item = self.item(index)
-
-            assert(index.isValid())
+        for item in items:
             assert(item != self._bookmarks.rootItem())
 
             # Cannot move bookmark to itself
             if item == parentItem:
                 return False
-
-            items.append(item)
 
         row = max(row, 0)
 
