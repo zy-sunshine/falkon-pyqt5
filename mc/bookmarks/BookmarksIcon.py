@@ -2,6 +2,7 @@ from mc.tools.ClickableLabel import ClickableLabel
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import Qt
 from mc.common.globalvars import gVar
+from .BookmarksWidget import BookmarksWidget
 
 class BookmarksIcon(ClickableLabel):
     def __init__(self, parent=None):
@@ -18,26 +19,48 @@ class BookmarksIcon(ClickableLabel):
         gVar.app.bookmarks().bookmarkAdded.connect(self._bookmarksChanged)
         gVar.app.bookmarks().bookmarkRemoved.connect(self._bookmarksChanged)
         gVar.app.bookmarks().bookmarkChanged.connect(self._bookmarksChanged)
-        # TODO:
-        #gVar.app.plugins().speedDial().pagesChanged.connect(self._speedDialChanged)
+        gVar.app.plugins().speedDial().pagesChanged.connect(self._speedDialChanged)
 
         self.clicked.connect(self._iconClicked)
 
     def setWebView(self, view):
-        pass
+        self._view = view
+
+        def urlChangedCb(url):
+            self.checkBookmark(url)
+        view.urlChanged.connect(urlChangedCb)
 
     def checkBookmark(self, url, forceCheck=False):
-        pass
+        '''
+        @param: url QUrl
+        '''
+        if not forceCheck and self._lastUrl == url:
+            return
+
+        # QList<BookmarkItem>
+        items = gVar.app.bookmarks().searchBookmarksByUrl(url)
+        self._bookmark = len(items) and items[0] or None
+
+        if self._bookmark or gVar.app.plugins().speedDial().pageForUrl(url).isValid():
+            self._setBookmarkSaved()
+        else:
+            self._setBookmarkDisabled()
+
+        self._lastUrl = url
 
     # private Q_SLOTS:
     def _bookmarksChanged(self):
-        pass
+        self.checkBookmark(self._lastUrl, True)
 
     def _speedDialChanged(self):
-        pass
+        self.checkBookmark(self._lastUrl, True)
 
     def _iconClicked(self):
-        pass
+        if not self._view:
+            return
+
+        widget = BookmarksWidget(self._view, self._bookmark, self.parentWidget())
+        widget.showAt(self.parentWidget())
 
     # private:
     # override
@@ -45,14 +68,24 @@ class BookmarksIcon(ClickableLabel):
         '''
         @param: event QContextMenuEvent
         '''
-        pass
+        # Prevent propagating to LocationBar
+        event.accept()
 
     # override
     def mousePressEvent(self, event):
-        pass
+        super().mousePressEvent(event)
+
+        # Prevent propagating to LocationBar
+        event.accept()
 
     def _setBookmarkSaved(self):
-        pass
+        self.setProperty('bookmarked', True)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.setToolTip(_('Edit this bookmark'))
 
     def _setBookmarkDisabled(self):
-        pass
+        self.setProperty('bookmarked', False)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.setToolTip(_('Bookmark this page'))

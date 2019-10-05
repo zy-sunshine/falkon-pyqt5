@@ -1,7 +1,8 @@
 from PyQt5.Qt import QObject
 from PyQt5.Qt import pyqtSignal, pyqtSlot
-from .PluginInterface import PluginInterface
 from PyQt5.Qt import QPixmap
+from .PluginInterface import PluginInterface
+from .SpeedDial import SpeedDial
 
 class PluginSpec:
     def __init__(self):
@@ -61,9 +62,14 @@ class Plugins(QObject):
 
         self._pluginsLoaded = False
 
-        self._speedDial = None  # SpeedDial
+        self._speedDial = SpeedDial(self)  # SpeedDial
         self._internalPlugins = []  # QList<PluginInterface>
         self._pythonPlugin = None  # QLibrary
+
+        self.loadSettings()
+        from mc.app.MainApplication import MainApplication
+        if not MainApplication.isTestModeEnabled():
+            return self._loadPythonSupport()
 
     def getAvailablePlugins(self):
         '''

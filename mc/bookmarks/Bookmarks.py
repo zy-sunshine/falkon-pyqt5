@@ -399,7 +399,7 @@ class Bookmarks(QObject):
         @param: parent BookmarkItem
         @param: url QUrl
         '''
-        assert(items)
+        assert(items is not None)
         assert(parent)
 
         type_ = parent.type()
