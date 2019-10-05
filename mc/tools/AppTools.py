@@ -10,6 +10,10 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.Qt import QFile
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QFileInfo
+from PyQt5.Qt import QByteArray
+from PyQt5.Qt import QIODevice
+from PyQt5.Qt import QBuffer
+from PyQt5.Qt import QPixmap
 
 class AppTools(Singleton):
 
@@ -18,21 +22,34 @@ class AppTools(Singleton):
         @param: pix QPixmap
         @return: QByteArray
         '''
-        pass
+        bytes_ = QByteArray
+        buffer_ = QBuffer(bytes_)
+        buffer_.open(QIODevice.WriteOnly)
+        if pix.save(buffer_, 'PNG'):
+            return buffer_.buffer().toBase64()
+        return QByteArray()
 
     def pixmapFromByteArray(self, data):
         '''
         @param: data QByteArray
         @return: QPixmap
         '''
-        pass
+        pixmap = QPixmap()
+        bArray = QByteArray.fromBase64(data)
+        pixmap.loadFromData(bArray)
+
+        return pixmap
 
     def pixmapToDataUrl(self, pix):
         '''
         @param: pix QPixmap
         @return: QUrl
         '''
-        pass
+        data = self.pixmapToByteArray(pix)
+        if not data:
+            return QUrl()
+        else:
+            return QUrl('data:image/png;base64,' + data)
 
     def dpiAwarePixmap(self, path):
         '''
@@ -193,7 +210,20 @@ class AppTools(Singleton):
         @param: pageContents QString
         @return: QStirng
         '''
-        pass
+        direction = "ltr"
+        right_str = "right"
+        left_str = "left"
+
+        if QApplication.isRightToLeft():
+            direction = "rtl"
+            right_str = "left"
+            left_str = "right"
+
+        pageContents = pageContents.replace("%DIRECTION%", direction) \
+            .replace("%RIGHT_STR%", right_str) \
+            .replace("%LEFT_STR%", left_str)
+
+        return pageContents
 
     def truncatedText(self, text, size):
         '''
@@ -287,6 +317,7 @@ class AppTools(Singleton):
         @param: filter_ QString
         @param: selectedFilter QString TODO: this is an output parameter
         @param: options QFileDialog::Options
+        @return: QString
         '''
         settings = Settings()
         settings.beginGroup('FileDialogPaths')

@@ -13,6 +13,8 @@ from PyQt5.Qt import QDir
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import QFileInfo, QFile
 from PyQt5.Qt import Qt
+from PyQt5.Qt import QStyle
+from PyQt5.Qt import QDesktopServices
 from PyQt5.QtCore import qEnvironmentVariable
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QDialogButtonBox
@@ -22,6 +24,7 @@ from mc.common import const
 from mc.tools.Scripts import Scripts
 from mc.tools.DelayedFileWatcher import DelayedFileWatcher
 from mc.other.CheckBoxDialog import CheckBoxDialog
+from mc.tools.IconProvider import IconProvider
 from .javascript.ExternalJsObject import ExternalJsObject
 from .WebHitTestResult import WebHitTestResult
 
@@ -44,7 +47,7 @@ class WebPage(QWebEnginePage):
 
     # static members
     s_lastUploadLocation = ''
-    s_lastUnsupportedUrl = ''
+    s_lastUnsupportedUrl = QUrl()
     s_lastUnsupportedUrlTime = QTime()
 
     # private members
@@ -495,14 +498,33 @@ class WebPage(QWebEnginePage):
         @param: origin QUrl
         @param: feature QWebEnginePage::feature
         '''
-        pass
+        if feature == self.MouseLock and self.view().isFullScreen():
+            self.setFeaturePermission(origin, feature, self.PermissionGrantedByUser)
+        else:
+            gVar.app.html5PermissionsManager().requestPermissions(self, origin, feature)
 
     def _renderProcessTerminated(self, terminationStatus, exitCode):
         '''
         @param: terminationStatus RenderProcessTerminationStatus
         @param: exitCode int
         '''
-        pass
+        if terminationStatus == self.NormalTerminationStatus:
+            return
+
+        def showCrashHtmlCb():
+            page = gVar.appTools.readAllFileContents(':html/tabcrash.html')
+            img = gVar.appTools.pixmapToDataUrl(IconProvider.standardIcon(
+                QStyle.SP_MessageBoxWarning).pixmap(45)).toString()
+            page = page.replace("%IMAGE%", img) \
+                .replace("%TITLE%", _("Failed loading page")) \
+                .replace("%HEADING%", _("Failed loading page")) \
+                .replace("%LI-1%", _("Something went wrong while loading this page.")) \
+                .replace("%LI-2%", _("Try reloading the page or closing some tabs to make more memory available.")) \
+                .replace("%RELOAD-PAGE%", _("Reload page"))
+            page = gVar.appTool.applyDirectionToPage(page)
+            self.setHtml(page, self.url())
+
+        QTimer.singleShot(0, showCrashHtmlCb)
 
     # private:
     # override
@@ -545,7 +567,7 @@ class WebPage(QWebEnginePage):
         '''
         @param: error QWebEngineCertificateError
         '''
-        pass
+        return gVar.app.networkManager().certificateError(error, self.view())
 
     # override
     def chooseFiles(self, mode, oldFiles, acceptedMimeTypes):
@@ -555,7 +577,24 @@ class WebPage(QWebEnginePage):
         @param: acceptedMimeTypes QStringList
         @return: QStringList
         '''
-        pass
+        files = []  # QStringList
+        suggestedFileName = self._s_lastUploadLocation
+        if oldFiles and oldFiles[0]:
+            suggestedFileName = oldFiles[0]
+
+        if mode == self.FileSelectOpen:
+            path = gVar.appTools.getOpenFileName('WebPage-ChooseFile', self.view(),
+                _('Choose file...'), suggestedFileName)
+            files = [path, ]
+        elif mode == self.FileSelectOpenMultiple:
+            files = gVar.appTools.getOpenFileNames('WebPage-ChooseFile', self.view(),
+                _('Choose file...'), suggestedFileName)
+        else:
+            files = super().chooseFiles(mode, oldFiles, acceptedMimeTypes)
+        if files:
+            self._s_lastUploadLocation = files[0]
+
+        return files
 
     # override
     def createWindow(self, type_):
@@ -616,10 +655,56 @@ class WebPage(QWebEnginePage):
         '''
         @param: url QUrl
         '''
-        pass
+        protocol = url.scheme()
+
+        if protocol == 'mailto':
+            self.desktopServicesOpen(url)
+            return
+
+        if protocol in gVar.appSettings.blockedProtocols:
+            print('DEBUG: WebPage::handleUnknownProtocol', protocol, 'is blocked!')
+            return
+
+        if protocol in gVar.appSettings.autoOpenProtocols:
+            self.desktopServicesOpen(url)
+            return
+
+        dialog = CheckBoxDialog(QMessageBox.Yes | QMessageBox.No, self.view())
+        dialog.setDefaultButton(QMessageBox.Yes)
+
+        wrappedUrl = gVar.appTools.alignTextToWidth(url.toString(), '<br/>',
+                dialog.fontMetrics(), 450)
+        text = _("Falkon cannot handle <b>%s:</b> links. The requested link "
+                "is <ul><li>%s</li></ul>Do you want Falkon to try "
+                "open this link in system application?") % (protocol, wrappedUrl)
+
+        dialog.setText(text)
+        dialog.setCheckBoxText(_("Remember my choice for this protocol"))
+        dialog.setWindowTitle(_("External Protocol Request"))
+        dialog.setIcon(QMessageBox.Question)
+        ret = dialog.exec_()
+        if ret == QMessageBox.Yes:
+            if dialog.isChecked():
+                gVar.appSettings.autoOpenProtocols.append(protocol)
+                gVar.appSettings.saveSettings()
+
+            QDesktopServices.openUrl(url)
+        elif ret == QMessageBox.No:
+            if dialog.isChecked():
+                gVar.appSettings.autoOpenProtocols.append(protocol)
+                gVar.appSettings.saveSettings()
 
     def desktopServicesOpen(self, url):
         '''
         @param: url QUrl
         '''
-        pass
+        # Open same url only once in 2 secs
+        sameUrlTimeout = 2 * 1000
+        if self.s_lastUnsupportedUrl != url or self.s_lastUnsupportedUrlTime.isNull() or \
+                self.s_lastUnsupportedUrlTime.elapsed() > sameUrlTimeout:
+            self.s_lastUnsupportedUrl = url
+            self.s_lastUnsupportedUrlTime.restart()
+            QDesktopServices.openUrl(url)
+        else:
+            print('WARNING: WebPage::desktopServicesOpen Url', url, 'has already been opened!\n',
+                'Ignoring it to prevent infinite loop!')
