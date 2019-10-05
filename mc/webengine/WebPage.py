@@ -203,6 +203,48 @@ class WebPage(QWebEnginePage):
         if not self._s_kEnableJsNonBlockDialogs:
             return super().javaScriptConfirm(securityOrigin, msg)
 
+        if self._runningLoop:
+            return False
+
+        widget = CloseableFrame(self.view().overlayWidget())
+
+        widget.setObjectName('jsFrame')
+        ui = uic.loadUi('mc/webengine/JsConfirm.ui', widget)
+        ui.message.setText(msg)
+        ui.buttonBox.button(QDialogButtonBox.Ok).setFocus()
+        widget.resize(self.view().size())
+        widget.show()
+
+        # QAbstractButton
+        clicked = None
+
+        def clickedCb(button):
+            nonlocal clicked
+            clicked = button
+
+        ui.buttonBox.clicked.connect(clickedCb)
+        self.view().viewportResized.connect(widget.resize)
+
+        eLoop = QEventLoop()
+        self._runningLoop = eLoop
+        widget.closeRequested.connect(eLoop.quit)
+        ui.buttonBox.clicked.connect(eLoop.quit)
+
+        if eLoop.exec_() == 1:
+            return False
+        self._runningLoop = None
+
+        result = ui.buttonBox.buttonRole(clicked) == QDialogButtonBox.AcceptRole
+
+        self.view().setFocus()
+        self.view().viewportResized.disconnect(widget.resize)
+        ui.buttonBox.clicked.disconnect(clickedCb)
+
+        widget.close()
+        widget.deleteLater()
+
+        return result
+
     # override
     def javaScriptAlert(self, securityOrigin, msg):
         '''
@@ -246,13 +288,13 @@ class WebPage(QWebEnginePage):
 
         if eLoop.exec_() == 1:
             return
-
         self._runningLoop = None
 
         self._blockAlerts = ui.preventAlerts.isChecked()
 
         self.view().setFocus()
         self.view().viewportResized.disconnect(widget.resize)
+
         widget.close()
         widget.deleteLater()
 
