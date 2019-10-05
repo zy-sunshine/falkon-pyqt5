@@ -189,6 +189,16 @@ class NavigationBar(QWidget):
 
         self._loadSettings()
 
+        self._window.destroyed.connect(self._clearAction)
+
+    def _clearAction(self):
+        if self._backConnection:
+            self._connPage.action(QWebEnginePage.Back).changed.disconnect(self._backConnection)
+            self._backConnection = None
+        if self._forwardConnection:
+            self._connPage.action(QWebEnginePage.Forward).changed.disconnect(self._forwardConnection)
+            self._forwardConnection = None
+
     def setSplitterSizes(self, locationBar, websearchBar):
         '''
         @param: locationBar int
@@ -241,11 +251,11 @@ class NavigationBar(QWidget):
         updateForwardButton()
 
         if self._backConnection:
-            #self._backConnection.disconnect()
             self._connPage.action(QWebEnginePage.Back).changed.disconnect(self._backConnection)
+            self._backConnection = None
         if self._forwardConnection:
-            #self._forwardConnection.disconnect()
             self._connPage.action(QWebEnginePage.Forward).changed.disconnect(self._forwardConnection)
+            self._forwardConnection = None
         self._backConnection = page.action(QWebEnginePage.Back).changed.connect(updateBackButton)
         self._forwardConnection = page.action(QWebEnginePage.Forward).changed.connect(updateForwardButton)
         self._connPage = page
