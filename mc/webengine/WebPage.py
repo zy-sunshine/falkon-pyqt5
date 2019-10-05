@@ -1,3 +1,4 @@
+from PyQt5 import uic
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from PyQt5.QtWebEngineWidgets import QWebEngineScript
 from PyQt5.QtWebEngineCore import QWebEngineRegisterProtocolHandlerRequest
@@ -7,18 +8,25 @@ from PyQt5.Qt import QTime
 from PyQt5.Qt import QPointF
 from PyQt5.Qt import QWebChannel
 from PyQt5.Qt import QEventLoop
-from mc.common.globalvars import gVar
 from PyQt5.Qt import QUrlQuery
 from PyQt5.Qt import QDir
-from mc.common import const
 from PyQt5.Qt import QTimer
-from .javascript.ExternalJsObject import ExternalJsObject
-from mc.tools.Scripts import Scripts
 from PyQt5.Qt import QFileInfo, QFile
+from PyQt5.QtCore import qEnvironmentVariable
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QDialogButtonBox
+from PyQt5.QtWidgets import QFrame
+from mc.common.globalvars import gVar
+from mc.common import const
+from mc.tools.Scripts import Scripts
 from mc.tools.DelayedFileWatcher import DelayedFileWatcher
+from mc.other.CheckBoxDialog import CheckBoxDialog
+from .javascript.ExternalJsObject import ExternalJsObject
 from .WebHitTestResult import WebHitTestResult
 
 class WebPage(QWebEnginePage):
+    s_kEnableJsOutput = qEnvironmentVariable('APP_ENABLE_JS_OUTPUT') != ''
+    s_kEnableJsNonBlockDialogs = qEnvironmentVariable('APP_ENABLE_JS_NONBLOCK_DIALOGS') != ''
     # JsWorld
     UnsafeJsWorld = QWebEngineScript.MainWorld
     SafeJsWorld = QWebEngineScript.ApplicationWorld
@@ -112,7 +120,7 @@ class WebPage(QWebEnginePage):
         '''
         @return: WebView
         '''
-        # TODO: return static_cast<WebView*>(QWebEnginePage::view())
+        # return static_cast<WebView*>(QWebEnginePage::view())
         return super().view()
 
     def execPrintPage(self, printer, timeout=1000):
@@ -188,7 +196,48 @@ class WebPage(QWebEnginePage):
         @param: securityOrigin QUrl
         @param: msg QString
         '''
-        pass
+        if self._blockAlerts or self._runningLoop:
+            return
+
+        if not self.s_kEnableJsNonBlockDialogs:
+            title = _('JavaScript alert')
+            if self.url().host():
+                title = '%s - %s' % (title, self.url().host())
+
+            dialog = CheckBoxDialog(QMessageBox.Ok, self.view())
+            dialog.setDefaultButton(QMessageBox.Ok)
+            dialog.setWindowTitle(title)
+            dialog.setText(msg)
+            dialog.setCheckBoxText(_('Prevent this page from creating additional dialogs'))
+            dialog.setIcon(QMessageBox.Information)
+            dialog.exec_()
+
+            self._blockAlerts = dialog.isChecked()
+            return
+
+        widget = QFrame(self.view().overlayWidget())
+
+        widget.setObjectName('jsFrame')
+        ui = uic.loadUi('mc/webengine/JsAlert.ui', widget)
+        ui.message.setText(msg)
+        ui.buttonBox.button(QDialogButtonBox.Ok).setFocus()
+        widget.resize(self.view().size())
+        widget.show()
+
+        self.view().viewportResized.connect(widget.resize)
+
+        eLoop = QEventLoop()
+        self._runningLoop = eLoop
+        ui.buttonBox.clicked.connect(eLoop.quit)
+
+        if eLoop.exec_() == 1:
+            return
+
+        self._runningLoop = None
+
+        self._blockAlerts = ui.preventAlerts.isChecked()
+
+        self.view().setFocus()
 
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
         '''

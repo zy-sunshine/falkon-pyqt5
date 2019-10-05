@@ -674,7 +674,7 @@ class WebView(QWebEngineView):
         @param: event QResizeEvent
         '''
         super().resizeEvent(event)
-        pass
+        self.viewportResized.emit(self.size())
 
     # override
     def contextMenuEvent(self, event):

@@ -12,7 +12,6 @@ class TabbedWebView(WebView):
         @param: webTab WebTab
         '''
         super(TabbedWebView, self).__init__(webTab)
-        self.setObjectName('abc')
         self._window = None  # BrowserWindow
         self._webTab = webTab  # WebTab
         self._menu = Menu(self)  # Menu
@@ -65,7 +64,6 @@ class TabbedWebView(WebView):
         '''
         @return: QWidget
         '''
-        import ipdb; ipdb.set_trace()
         return self._webTab
 
     # override

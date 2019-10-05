@@ -100,7 +100,11 @@ class AppSchemeReply(QIODevice):
         elif self._pageName == 'config':
             contents = tpl % {'title': 'config', 'content': 'Config Page'}
         elif self._pageName == 'restore':
-            contents = tpl % {'title': 'restore', 'content': 'Restore Page'}
+            contents = tpl % {'title': 'restore', 'content': '''Restore Page<br/>
+                    <a onclick="javascript: alert('test')">alert</a><br/>
+                    <a onclick="javascript: confirm('confirm test')">confirm</a><br/>
+                    <a onclick="javascript: prompt('prompt test', 'prompt content')">prompt</a>
+                    '''}
 
         with self._mutex:
             self._buffer = BytesIO(contents.encode('utf8'))

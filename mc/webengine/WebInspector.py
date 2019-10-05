@@ -32,11 +32,9 @@ class WebInspector(QWebEngineView):
 
         self.page().windowCloseRequested.connect(self._onDestroyed)
         self.page().loadFinished.connect(self._loadFinished)
-        #self.destroyed.connect(self._onDestroyed)
 
     def _onDestroyed(self):
         self.deleteLater()
-        # TODO: check destroy can run these logics
         if self._view and self.hasFocus():
             self._view.setFocus()
 
@@ -88,7 +86,7 @@ class WebInspector(QWebEngineView):
     @classmethod
     def isEnabled(cls):
         if const.QTWEBENGINEWIDGETS_VERSION < const.QT_VERSION_CHECK(5, 11, 0):
-            if qEnvironmentVariable('QTWEBENGINE_REMOTE_DEBUGGING') is None:
+            if qEnvironmentVariable('QTWEBENGINE_REMOTE_DEBUGGING'):
                 return False
         if not gVar.app.webSettings().testAttribute(QWebEngineSettings.JavascriptEnabled):
             return False

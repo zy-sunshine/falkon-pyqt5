@@ -8,7 +8,8 @@ class CheckBoxDialog(QMessageBox):
         @param: buttons QMessageBox.StandardButtons
         '''
         super().__init__(parent)
-        self._checkBox = QCheckBox()
+        self._checkBox = QCheckBox(self)
+        self.setCheckBox(self._checkBox)
         self.setStandardButtons(buttons)
         self.setWindowFlags(self.windowFlags() | Qt.MSWindowsFixedSizeDialogHint |
                 Qt.WindowTitleHint | Qt.WindowSystemMenuHint |
