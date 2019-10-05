@@ -167,7 +167,10 @@ class BookmarksToolbar(QWidget):
     def _clear(self):
         for idx in range(self._layout.count()):
             item = self._layout.takeAt(0)
-            del item
+            widget = item.widget()
+            if widget:
+                widget.setParent(None)
+                widget.deleteLater()
 
         assert(self._layout.isEmpty())
 
@@ -204,12 +207,14 @@ class BookmarksToolbar(QWidget):
         '''
         @param: event QDropEvent
         '''
+        pass
 
     # override
     def dragEnterEvent(self, event):
         '''
         @param: event QDragEnterEvent
         '''
+        pass
 
     # override
     def dragMoveEvent(self, event):
