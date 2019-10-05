@@ -2,6 +2,7 @@ from mc.webengine.WebView import WebView
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QPoint
+from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from mc.tools.EnhancedMenu import Menu
 from mc.webengine.WebInspector import WebInspector
 
@@ -141,7 +142,10 @@ class TabbedWebView(WebView):
         pass
 
     def _inspectElement(self):
-        pass
+        if self._webTab.haveInspector():
+            self.triggerPageAction(QWebEnginePage.InspectElement)
+        else:
+            self._webTab.showWebInspector(True)
 
     # private:
     # override
