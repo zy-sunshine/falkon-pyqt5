@@ -407,7 +407,7 @@ class WebTab(QWidget):
     def haveInspector(self):
         return self._splitter.count() > 1 and self._splitter.widget(1).inherits('WebInspector')
 
-    def showWebInspector(self, inspectElement):
+    def showWebInspector(self, inspectElement=False):
         if not WebInspector.isEnabled() or self.haveInspector():
             return
 

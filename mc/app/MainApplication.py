@@ -659,7 +659,7 @@ class MainApplication(QtSingleApp):
                 self.downloadManager().show()
                 actWin = self.downloadManager()
             elif text == 'ToggleFullScreen' and actWin:
-                # TODO: ? actWin to type BrowserWindow*
+                assert(isinstance(actWin, BrowserWindow))
                 actWin.toggleFullScreen()
             elif text.startswith('OpenUrlInCurrentTab'):
                 actUrl = QUrl.fromUserInput(text[:19])

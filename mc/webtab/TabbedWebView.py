@@ -2,6 +2,7 @@ from mc.webengine.WebView import WebView
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QPoint
+from PyQt5.Qt import QHostInfo
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from mc.tools.EnhancedMenu import Menu
 from mc.webengine.WebInspector import WebInspector
@@ -114,7 +115,10 @@ class TabbedWebView(WebView):
         self._currentIp = ''
 
     def _slotLoadFinished(self, ok):
-        pass
+        QHostInfo.lookupHost(self.url().host(), self._setIp)
+
+        if self._webTab.isCurrentTab() and self._window:
+            self._window.updateLoadingActions()
 
     def _slotLoadProgress(self, prog):
         '''
@@ -137,7 +141,13 @@ class TabbedWebView(WebView):
         '''
         @param: info QHostInfo
         '''
-        pass
+        if not info.addresses():
+            return
+
+        self._currentIp = '%s (%s)' % (info.hostName(), info.addresses()[0].toString())
+
+        if self._webTab.isCurrentTab():
+            self.ipChanged.emit(self._currentIp)
 
     def _inspectElement(self):
         if self._webTab.haveInspector():
@@ -176,4 +186,9 @@ class TabbedWebView(WebView):
         '''
         @param: QMouseEvent
         '''
-        pass
+        if self._window and self._window.isFullScreen():
+            if self._window.fullScreenNavigationVisible():
+                self._window.hideNavigationWithFullScreen()
+            elif event.y() < 5:
+                self._window.showNavigationWithFullScreen()
+        super()._mouseMoveEvent(event)

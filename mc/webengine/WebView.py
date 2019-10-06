@@ -26,6 +26,9 @@ from PyQt5.Qt import QKeySequence
 from PyQt5.Qt import QIcon
 from PyQt5.Qt import QContextMenuEvent
 from PyQt5.Qt import QByteArray
+from PyQt5.Qt import QChildEvent
+from PyQt5.QtQuickWidgets import QQuickWidget
+from PyQt5 import sip
 
 from .WebPage import WebPage
 from mc.tools.WheelHelper import WheelHelper
@@ -37,6 +40,8 @@ from mc.common import const
 from mc.other.SiteInfo import SiteInfo
 from mc.tools.EnhancedMenu import Action, Menu
 from mc.webengine.LoadRequest import LoadRequest
+from mc.opensearch.SearchEnginesManager import SearchEngine
+from mc.bookmarks.BookmarksTools import BookmarksTools
 
 class WebView(QWebEngineView):
     _s_forceContextMenuOnMouseRelease = False
@@ -257,9 +262,6 @@ class WebView(QWebEngineView):
         @param: obj QObject
         @param: event QEvent
         '''
-        # TODO:
-        return super().eventFilter(obj, event)
-
         evtype = event.type()
         # Keyboard events are sent to parent widget
         if obj == self and evtype == QEvent.ParentChange and self.parentWidget():
@@ -267,35 +269,33 @@ class WebView(QWebEngineView):
 
         # Hack to find widget that receives input events
         if obj == self and evtype == QEvent.ChildAdded:
-            # if QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-            # TODO: qobject_cast<QWidget*>(static_cast<QChildEvent*>(event)->child());
-            child = event.child()
+            if const.QTWEBENGINEWIDGETS_VERSION >= const.QT_VERSION_CHECK(5, 12, 0):
+                # NOTE: qobject_cast<QWidget*>(static_cast<QChildEvent*>(event)->child());
+                assert(isinstance(event, QChildEvent))
+                child = event.child()
+                #assert(isinstance(child, QWidget))
 
-            def xxx():
-                if child and child.inherits('QWebEngineCore::RenderWidgetHostViewQtDelegateWidget'):
-                    self._rwhvqt = child
-                    self._rwhvqt.installEvent(self)
-                    # TODO: QQuickWidget *w =
-                    # qobject_cast<QQuickWidget*>(m_rwhvqt)
-                    w = self._rwhvqt
-                    if w:
-                        w.setClearColor(self.palette().color(QPalette.Window))
-            QTimer.singleShot(0, xxx)
-
-            # else // QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-            if 0:
-                def yyy():  # TODO: yyy(self?)
+                def xxx():
+                    if not sip.isdeleted(child) and \
+                            child.inherits('QWebEngineCore::RenderWidgetHostViewQtDelegateWidget'):
+                        self._rwhvqt = child
+                        self._rwhvqt.installEvent(self)
+                        w = self._rwhvqt
+                        if isinstance(w, QQuickWidget):
+                            w.setClearColor(self.palette().color(QPalette.Window))
+                QTimer.singleShot(0, xxx)
+            else:
+                def yyy():
                     focusProxy = self.focusProxy()
                     if focusProxy and self._rwhvqt != focusProxy:
                         self._rwhvqt = focusProxy
                         self._rwhvqt.installEventFilter(self)
-                        # qobject_cast<QQuickWidget*>(m_rwhvqt)
                         w = self._rwhvqt
-                        if w:
+                        if isinstance(w, QQuickWidget):
                             w.setClearColor(self.palette().color(QPalette.Window))
                 QTimer.singleShot(0, yyy)
 
-        def __handleEvent(f, t):
+        def _HANDLE_EVENT(f, t):
             wasAccepted = event.isAccepted()
             event.setAccepted(False)
             f(event)
@@ -305,19 +305,19 @@ class WebView(QWebEngineView):
         # Forward events to WebView
         if obj == self._rwhvqt:
             if evtype == QEvent.MouseButtonPress:
-                __handleEvent(self._mousePressEvent, QMouseEvent)
+                return _HANDLE_EVENT(self._mousePressEvent, QMouseEvent)
             elif evtype == QEvent.MouseButtonRelease:
-                __handleEvent(self.mouseReleaseEvent, QMouseEvent)
+                return _HANDLE_EVENT(self.mouseReleaseEvent, QMouseEvent)
             elif evtype == QEvent.MouseMove:
-                __handleEvent(self.mouseMoveEvent, QMouseEvent)
+                return _HANDLE_EVENT(self.mouseMoveEvent, QMouseEvent)
             elif evtype == QEvent.Wheel:
-                __handleEvent(self._wheelEvent, QWheelEvent)
+                return _HANDLE_EVENT(self._wheelEvent, QWheelEvent)
 
         if obj == self.parentWidget():
             if evtype == QEvent.KeyPress:
-                __handleEvent(self._keyPressEvent, QKeyEvent)
+                return _HANDLE_EVENT(self._keyPressEvent, QKeyEvent)
             if evtype == QEvent.KeyRelease:
-                __handleEvent(self._keyReleaseEvent, QKeyEvent)
+                return _HANDLE_EVENT(self._keyReleaseEvent, QKeyEvent)
 
         # Block already handled events
         if obj == self:
@@ -341,7 +341,6 @@ class WebView(QWebEngineView):
         '''
         @return: QWidget
         '''
-        import ipdb; ipdb.set_trace()
         if self._rwhvqt:
             return self._rwhvqt
         else:
@@ -607,13 +606,42 @@ class WebView(QWebEngineView):
         s.show()
 
     def _searchSelectedText(self):
-        pass
+        engine = gVar.app.searchEnginesManager().defaultEngine()
+        act = self.sender()
+        if isinstance(act, QAction):
+            data = act.data()
+            if data and isinstance(data, SearchEngine):
+                engine = data
+
+        # LoadRequest
+        req = gVar.app.searchEnginesManager().searchResult(engine, self.selectedText())
+        self.loadInNewTab(req, const.NT_SelectedTab)
 
     def _searchSelectedTextInBackgroundTab(self):
-        pass
+        engine = gVar.app.searchEnginesManager().defaultEngine()
+        act = self.sender()
+        if isinstance(act, QAction):
+            data = act.data()
+            if data and isinstance(data, SearchEngine):
+                engine = data
+
+        # LoadRequest
+        req = gVar.app.searchEnginesManager().searchResult(engine, self.selectedText())
+        self.loadInNewTab(req, const.NT_NotSelectedTab)
 
     def _bookmarkLink(self):
-        pass
+        action = self.sender()
+        if isinstance(action, QAction):
+            data = action.data()
+            if not data:
+                BookmarksTools.addBookmarkDialog(self, self.url(), self.title())
+            elif type(data) in (list, tuple):
+                url = QUrl(data[0])
+                title = data[1]
+                if not title:
+                    title = self.title()
+
+                BookmarksTools.addBookmarkDialog(self, url, title)
 
     def _openUrlInSelectedTab(self):
         action = self.sender()
@@ -666,7 +694,10 @@ class WebView(QWebEngineView):
         @param: event QShowEvent
         '''
         super().showEvent(event)
-        pass
+
+        if self._backgroundActivity:
+            self._backgroundActivity = False
+            self.backgroundActivityChanged.emit(self._backgroundActivity)
 
     # override
     def resizeEvent(self, event):
@@ -1037,10 +1068,10 @@ class WebView(QWebEngineView):
         pass
 
     def _toggleMediaPause(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.ToggleMediaPlayPause)
 
     def _toggleMediaMute(self):
-        pass
+        self.triggerPageAction(QWebEnginePage.ToggleMediaMute)
 
     # private:
     def _initializeActions(self):

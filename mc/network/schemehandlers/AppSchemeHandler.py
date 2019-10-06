@@ -101,12 +101,15 @@ class AppSchemeReply(QIODevice):
             contents = tpl % {'title': 'config', 'content': 'Config Page'}
         elif self._pageName == 'restore':
             contents = tpl % {'title': 'restore', 'content': '''Restore Page<br/>
-                <a onclick="javascript: alert('test')">alert</a><br/>
-                <a onclick="javascript: confirm('confirm test')">confirm</a><br/>
-                <a onclick="javascript: prompt('prompt test', 'prompt content')">prompt</a><br/>
+                <a href="#" onclick="javascript: alert('test')">alert</a><br/>
+                <a href="#" onclick="javascript: confirm('confirm test')">confirm</a><br/>
+                <a href="#" onclick="javascript: prompt('prompt test', 'prompt content')">prompt</a><br/>
                 <input type="file" name="myFile" accept="image/x-png" /><br/>
                 <a href="mailto:test@test.com"/>mailto</a><br/>
-                <a href="appxx:testxx"/>appxx protocol</a>
+                <a href="#" href="appxx:testxx"/>appxx protocol</a><br/>
+                <a href="#" onclick="javascript: document.documentElement.webkitRequestFullscreen()"/>
+                    enter fullscreen</a><br/>
+                <a href="#" onclick="javascript: document.webkitExitFullscreen()"/>exit fullscreen</a><br/>
             '''}
 
         with self._mutex:
