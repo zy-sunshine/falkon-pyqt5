@@ -377,7 +377,7 @@ class TabWidget(TabStackedWidget):
         url = req.url()
         self._currentTabFresh = False
 
-        if not url and not (openFlags & const.NT_CleanTab):
+        if url.isEmpty() and not (openFlags & const.NT_CleanTab):
             url = self._urlOnNewTab
 
         openAfterActive = self._newTabAfterActive and not (openFlags & const.NT_TabAtTheEnd)
@@ -425,7 +425,7 @@ class TabWidget(TabStackedWidget):
         if url.isValid() and url != req.url():
             r = LoadRequest(req)
             r.setUrl(url)
-            webTab.webView().load(r)
+            webTab.webView().loadByReq(r)
         elif req.url().isValid():
             webTab.webView().loadByReq(req)
 

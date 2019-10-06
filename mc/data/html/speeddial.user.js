@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name     _falkon_speeddial
+// @name     _app_speeddial
 // @run-at   document-end
-// @include  falkon:speeddial
+// @include  app:speeddial
 // ==/UserScript==
 
 var scriptData = {};
@@ -491,8 +491,8 @@ function init() {
 %JQUERY-UI%
 
 // Initialize
-if (window._falkon_external) {
+if (window._app_external) {
     init();
 } else {
-    document.addEventListener("_falkon_external_created", init);
+    document.addEventListener("_app_external_created", init);
 }

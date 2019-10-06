@@ -12,17 +12,17 @@ function registerExternal(e) {
     window.external = e;
     if (window.external) {
         var event = document.createEvent('Event');
-        event.initEvent('_falkon_external_created', true, true);
-        window._falkon_external = true;
+        event.initEvent('_app_external_created', true, true);
+        window._app_external = true;
         document.dispatchEvent(event);
     }
 }
 
 if (self !== top) {
-    if (top._falkon_external)
+    if (top._app_external)
         registerExternal(top.external);
     else
-        top.document.addEventListener('_falkon_external_created', function() {
+        top.document.addEventListener('_app_external_created', function() {
             registerExternal(top.external);
         });
     return;
@@ -121,7 +121,7 @@ observer.observe(document.documentElement, { childList: true, subtree: true });
 (function() {
 var external = {};
 external.AddSearchProvider = function(url) {
-    window.location = 'falkon:AddSearchProvider?url=' + url;
+    window.location = 'app:AddSearchProvider?url=' + url;
 };
 external.IsSearchProviderInstalled = function(url) {
     console.warn('NOT IMPLEMENTED: IsSearchProviderInstalled()');
@@ -129,7 +129,7 @@ external.IsSearchProviderInstalled = function(url) {
 };
 window.external = external;
 window.print = function() {
-    window.location = 'falkon:PrintPage';
+    window.location = 'app:PrintPage';
 };
 
 })()

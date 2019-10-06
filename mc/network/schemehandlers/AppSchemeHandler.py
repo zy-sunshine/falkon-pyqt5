@@ -1,11 +1,13 @@
 from PyQt5.QtWebEngineCore import QWebEngineUrlSchemeHandler
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestJob
 from PyQt5.Qt import QIODevice
-from threading import Lock
 from PyQt5.Qt import QUrlQuery, QUrl
+from threading import Lock
+from io import BytesIO
+from base64 import b64encode
 from mc.common import const
 from mc.common.globalvars import gVar
-from io import BytesIO
+from mc.common.designutil import cached_property
 
 class AppSchemeHandler(QWebEngineUrlSchemeHandler):
     def __init__(self, parent=None):
@@ -96,7 +98,8 @@ class AppSchemeReply(QIODevice):
         elif self._pageName == 'start':
             contents = tpl % {'title': 'start', 'content': 'Start Page'}
         elif self._pageName == 'speeddial':
-            contents = tpl % {'title': 'speeddial', 'content': 'Speeddial Page'}
+            #contents = tpl % {'title': 'speeddial', 'content': 'Speeddial Page'}
+            contents = self._speeddialPage()
         elif self._pageName == 'config':
             contents = tpl % {'title': 'config', 'content': 'Config Page'}
         elif self._pageName == 'restore':
@@ -124,8 +127,65 @@ class AppSchemeReply(QIODevice):
     def _startPage(self):
         pass
 
+    @cached_property
+    def _speeddialPageBaseContent(self):
+        dPage = (
+            gVar.appTools.readAllFileContents(":html/speeddial.html")
+            .replace("%IMG_PLUS%", "qrc:html/plus.svg")
+            .replace("%IMG_CLOSE%", "qrc:html/close.svg")
+            .replace("%IMG_EDIT%", "qrc:html/edit.svg")
+            .replace("%IMG_RELOAD%", "qrc:html/reload.svg")
+            .replace("%LOADING-IMG%", "qrc:html/loading.gif")
+            .replace("%IMG_SETTINGS%", "qrc:html/configure.svg")
+
+            .replace("%SITE-TITLE%", _("Speed Dial"))
+            .replace("%ADD-TITLE%", _("Add New Page"))
+            .replace("%TITLE-EDIT%", _("Edit"))
+            .replace("%TITLE-REMOVE%", _("Remove"))
+            .replace("%TITLE-RELOAD%", _("Reload"))
+            .replace("%TITLE-WARN%", _("Are you sure you want to remove this speed dial?"))
+            .replace("%TITLE-WARN-REL%", _("Are you sure you want to reload all speed dials?"))
+            .replace("%TITLE-FETCHTITLE%", _("Load title from page"))
+            .replace("%JAVASCRIPT-DISABLED%", _("SpeedDial requires enabled JavaScript."))
+            .replace("%URL%", _("Url"))
+            .replace("%TITLE%", _("Title"))
+            .replace("%APPLY%", _("Apply"))
+            .replace("%CANCEL%", _("Cancel"))
+            .replace("%NEW-PAGE%", _("New Page"))
+            .replace("%SETTINGS-TITLE%", _("Speed Dial settings"))
+            .replace("%TXT_PLACEMENT%", _("Placement: "))
+            .replace("%TXT_AUTO%", _("Auto"))
+            .replace("%TXT_COVER%", _("Cover"))
+            .replace("%TXT_FIT%", _("Fit"))
+            .replace("%TXT_FWIDTH%", _("Fit Width"))
+            .replace("%TXT_FHEIGHT%", _("Fit Height"))
+            .replace("%TXT_NOTE%", _("Use custom wallpaper"))
+            .replace("%TXT_SELECTIMAGE%", _("Click to select image"))
+            .replace("%TXT_NRROWS%", _("Maximum pages in a row:"))
+            .replace("%TXT_SDSIZE%", _("Change size of pages:"))
+            .replace("%TXT_CNTRDLS%", _("Center speed dials"))
+        )
+        dPage = gVar.appTools.applyDirectionToPage(dPage)
+        return dPage
+
     def _speeddialPage(self):
-        pass
+        dPage = self._speeddialPageBaseContent
+
+        # SpeedDial
+        dial = gVar.app.plugins().speedDial()
+
+        scriptB64 = b64encode(dial.initialScript().encode()).decode()
+        page = (
+            dPage.replace("%INITIAL-SCRIPT%", scriptB64)
+            .replace("%IMG_BACKGROUND%", dial.backgroundImage())
+            .replace("%URL_BACKGROUND%", dial.backgroundImageUrl())
+            .replace("%B_SIZE%", dial.backgroundImageSize())
+            .replace("%ROW-PAGES%", str(dial.pagesInRow()))
+            .replace("%SD-SIZE%", str(dial.sdSize()))
+            .replace("%SD-CENTER%", dial.sdCenter() and "true" or "false")
+        )
+
+        return page
 
     def _restorePage(self):
         pass

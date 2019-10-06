@@ -547,7 +547,7 @@ class Preferences(QDialog):
         elif newTabCurIdx == 1:
             settings.setValue("newTabUrl", homepage)
         elif newTabCurIdx == 2:
-            settings.setValue("newTabUrl", QUrl("falkon:speeddial"))
+            settings.setValue("newTabUrl", QUrl("app:speeddial"))
         elif newTabCurIdx == 3:
             settings.setValue("newTabUrl", QUrl.fromUserInput(self._ui.newTabUrl.text()))
 

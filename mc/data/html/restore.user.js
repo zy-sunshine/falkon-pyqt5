@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name     _falkon_restore
+// @name     _app_restore
 // @run-at   document-end
-// @include  falkon:restore
+// @include  app:restore
 // ==/UserScript==
 
 (function() {
@@ -174,10 +174,10 @@ function init()
 }
 
 // Initialize
-if (window._falkon_external) {
+if (window._app_external) {
     init();
 } else {
-    document.addEventListener("_falkon_external_created", init);
+    document.addEventListener("_app_external_created", init);
 }
 
 })();

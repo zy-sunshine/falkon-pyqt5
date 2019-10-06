@@ -7,12 +7,17 @@ class LoadRequest(object):
     GetOperation = 0
     PostOperation = 1
 
-    def __init__(self, url=QUrl(), op=GetOperation, data=QByteArray()):
-        if not isinstance(url, QUrl):
-            url = QUrl(url)
-        self._url = url
-        self._op = op
-        self._data = data
+    def __init__(self, urlOrReq=QUrl(), op=GetOperation, data=QByteArray()):
+        if isinstance(urlOrReq, self.__class__):
+            otherReq = urlOrReq
+            self._url = QUrl(otherReq._url)
+            self._op = otherReq._op
+            self._data = QByteArray(otherReq._data)
+        else:
+            url = QUrl(urlOrReq)
+            self._url = url
+            self._op = op
+            self._data = data
 
     def isValid(self):
         return self._url.isValid()

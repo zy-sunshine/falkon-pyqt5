@@ -873,7 +873,7 @@ class WebView(QWebEngineView):
         action.setEnabled(self.history().canGoForward())
 
         # Special menu for Speed Dial page
-        if self.url().toString() == 'falkon:speeddial':
+        if self.url().toString() == 'app:speeddial':
             menu.addSeparator()
             menu.addAction(QIcon.fromTheme('list-add'), _('&Add New Page'),
                     self._addSpeedDial)

@@ -22,7 +22,7 @@ class AppTools(Singleton):
         @param: pix QPixmap
         @return: QByteArray
         '''
-        bytes_ = QByteArray
+        bytes_ = QByteArray()
         buffer_ = QBuffer(bytes_)
         buffer_.open(QIODevice.WriteOnly)
         if pix.save(buffer_, 'PNG'):

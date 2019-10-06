@@ -672,7 +672,7 @@ class BrowserWindow(QMainWindow):
         from .MainApplication import MainApplication
         afterLaunch = gVar.app.afterLaunch()
         if afterLaunch == MainApplication.OpenBlankPage:
-            pass
+            startUrl = QUrl()
         elif afterLaunch == MainApplication.OpenSpeedDial:
             startUrl = QUrl('app:speeddial')
         elif afterLaunch in (MainApplication.OpenHomePage,
