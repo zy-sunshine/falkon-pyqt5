@@ -6,7 +6,7 @@ class Scripts(object):
     def setupWebChannel(cls):
         source = '''
 (function() {
-{0}
+%s
 
 function registerExternal(e) {
     window.external = e;
@@ -31,10 +31,10 @@ if (self !== top) {
 function registerWebChannel() {
     try {
         new QWebChannel(qt.webChannelTransport, function(channel) {
-            var external = channel.objects.qz_object;
+            var external = channel.objects.app_object;
             external.extra = {};
             for (var key in channel.objects) {
-                if (key != 'qz_object' && key.startsWith('qz_')) {
+                if (key != 'app_object' && key.startsWith('app_')) {
                     external.extra[key.substr(3)] = channel.objects[key];
                 }
             }
@@ -44,12 +44,13 @@ function registerWebChannel() {
         setTimeout(registerWebChannel, 100);
     }
 }
+
 registerWebChannel();
 
 })()
 '''
         js = gVar.appTools.readAllFileContents(":/qtwebchannel/qwebchannel.js")
-        return source.format(js)
+        return source % js
 
     @classmethod
     def setupFormObserver(cls):
@@ -138,9 +139,9 @@ window.print = function() {
 
     @classmethod
     def setupSpeedDial(cls):
-        source = gVar.appTools.readAllFileContents(":html/speeddial.user.js")
-        source.replace("%JQUERY%", gVar.appTools.readAllFileContents(":html/jquery.js"))
-        source.replace("%JQUERY-UI%", gVar.appTools.readAllFileContents(":html/jquery-ui.js"))
+        source = gVar.appTools.readAllFileContents(":html/speeddial.user.js") \
+            .replace("%JQUERY%", gVar.appTools.readAllFileContents(":html/jquery.js")) \
+            .replace("%JQUERY-UI%", gVar.appTools.readAllFileContents(":html/jquery-ui.js"))
         return source
 
     @classmethod
@@ -154,15 +155,15 @@ var head = document.getElementsByTagName('head')[0];
 if (!head) return;
 var css = document.createElement('style');
 css.setAttribute('type', 'text/css');
-css.appendChild(document.createTextNode('{0}'));
+css.appendChild(document.createTextNode('%s'));
 head.appendChild(css);
 })()
 '''
 
-        style = css
-        style.replace("'", "\\'")
-        style.replace("\n", "\\n")
-        return source.format(style)
+        style = css \
+            .replace("'", "\\'") \
+            .replace("\n", "\\n")
+        return source % style
 
     @classmethod
     def sendPostData(cls, url, data):

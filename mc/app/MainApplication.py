@@ -1,4 +1,5 @@
 import re
+from os import environ
 from sys import stderr
 from os import remove
 from os.path import join as pathjoin, exists as pathexists
@@ -15,6 +16,7 @@ from PyQt5.Qt import QTimer
 from PyQt5.Qt import QByteArray
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineDownloadItem
 from PyQt5.QtWebEngineWidgets import QWebEngineSettings
+from PyQt5.QtWebEngineWidgets import QWebEngineScript
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QIODevice
 from PyQt5.Qt import QDataStream
@@ -24,6 +26,7 @@ from PyQt5.Qt import QProcess
 from PyQt5.Qt import QDir
 from PyQt5.Qt import QAction
 from PyQt5.Qt import QDateTime
+from PyQt5.Qt import QPalette
 from .BrowserWindow import BrowserWindow
 from .ProfileManager import ProfileManager
 from .Settings import Settings
@@ -52,6 +55,8 @@ from mc.notifications.DesktopNotificationsFactory import DesktopNotificationsFac
 from mc.common.globalvars import gVar
 from mc.other.BrowsingLibrary import BrowsingLibrary
 from .CommandLineOptions import CommandLineOptions
+from mc.webengine.WebPage import WebPage
+from mc.tools.Scripts import Scripts
 
 class MainApplication(QtSingleApp):
     s_testMode = False
@@ -868,10 +873,71 @@ class MainApplication(QtSingleApp):
         self.setStyleSheet(qss)
 
     def setupUserScripts(self):
-        pass
+        # WebChannel for SafeJsWorld
+        script = QWebEngineScript()
+        script.setName('_app_webchannel')
+        script.setInjectionPoint(QWebEngineScript.DocumentCreation)
+        script.setWorldId(WebPage.SafeJsWorld)
+        script.setRunsOnSubFrames(True)
+        script.setSourceCode(Scripts.setupWebChannel())
+        self._webProfile.scripts().insert(script)
+
+        # app:restore
+        appRestore = QWebEngineScript()
+        appRestore.setWorldId(WebPage.SafeJsWorld)
+        appRestore.setSourceCode(gVar.appTools.readAllFileContents(':html/restore.user.js'))
+        self._webProfile.scripts().insert(appRestore)
+
+        # app:speeddial
+        appSpeedDial = QWebEngineScript()
+        appSpeedDial.setWorldId(WebPage.SafeJsWorld)
+        appSpeedDial.setSourceCode(Scripts.setupSpeedDial())
+        self._webProfile.scripts().insert(appSpeedDial)
+
+        # document.window object addons
+        documentWindowAddons = QWebEngineScript()
+        documentWindowAddons.setName('_app_window_object')
+        documentWindowAddons.setInjectionPoint(QWebEngineScript.DocumentCreation)
+        documentWindowAddons.setWorldId(WebPage.UnsafeJsWorld)
+        documentWindowAddons.setRunsOnSubFrames(True)
+        documentWindowAddons.setSourceCode(Scripts.setupWindowObject())
+        self._webProfile.scripts().insert(documentWindowAddons)
 
     def setUserStyleSheet(self, filePath):
-        pass
+        userCss = ''
+        if not const.OS_UNIX and not const.OS_MACOS:
+            # Don't grey out selection on losing focus (to prevent graying out
+            # found text)
+            highlightColor = ''
+            highlightedTextColor = ''
+            if const.OS_MACOS:  # TODO: ? can not enter this branch
+                highlightColor = '#b6d6fc'
+                highlightedTextColor = '#000'
+            else:
+                pal = self.style().standardPalette()
+                highlightColor = pal.color(QPalette.Highlight).name()
+                highlightedTextColor = pal.color(QPalette.HighlightedText).name()
+            userCss += "::selection {background: %s; color: %s;} " % \
+                (highlightColor, highlightedTextColor)
+
+        userCss += gVar.appTools.readAllFileContents(filePath).replace('\n', '')
+
+        name = '_app_userstylesheet'
+
+        oldScript = self._webProfile.scripts().findScript(name)
+        if not oldScript.isNull():
+            self._webProfile.scripts().remove(oldScript)
+
+        if not userCss:
+            return
+
+        script = QWebEngineScript()
+        script.setName(name)
+        script.setInjectionPoint(QWebEngineScript.DocumentReady)
+        script.setWorldId(WebPage.SafeJsWorld)
+        script.setRunsOnSubFrames(True)
+        script.setSourceCode(Scripts.setCss(userCss))
+        self._webProfile.scripts().insert(script)
 
     def checkDefaultWebBrowser(self):
         pass
@@ -885,3 +951,6 @@ class MainApplication(QtSingleApp):
 
     def _initPulseSupport(self):
         pass
+        environ["PULSE_PROP_OVERRIDE_application.name"] = "App"
+        environ["PULSE_PROP_OVERRIDE_application.icon_name"] = "app"
+        environ["PULSE_PROP_OVERRIDE_media.icon_name"] = "app"
