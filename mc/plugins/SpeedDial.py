@@ -7,6 +7,7 @@ from PyQt5.Qt import QUrl
 from PyQt5.Qt import QCryptographicHash
 from PyQt5.Qt import QDir
 from PyQt5.Qt import QPixmap
+from PyQt5.Qt import pyqtSlot
 from mc.tools.AutoSaver import AutoSaver
 from mc.app.Settings import Settings
 from mc.app.DataPaths import DataPaths
@@ -231,6 +232,7 @@ class SpeedDial(QObject):
     pageTitleLoaded = pyqtSignal(str, str)  # url, title
 
     # public Q_SLOTS:
+    @pyqtSlot(str)
     def changed(self, allPages):
         '''
         @param: allPages QString
@@ -257,6 +259,7 @@ class SpeedDial(QObject):
         self._regenerateScript = True
         self.pagesChanged.emit()
 
+    @pyqtSlot(str, bool)
     def loadThumbnail(self, url, loadTitle):
         '''
         @param: url QString
@@ -276,6 +279,7 @@ class SpeedDial(QObject):
         return self._thumbnailsDir + QCryptographicHash.hash(url.encode(),
                 QCryptographicHash.Md4).toHex() + '.png'
 
+    @pyqtSlot(str)
     def removeImageForUrl(self, url):
         '''
         @param: url QString
@@ -285,6 +289,7 @@ class SpeedDial(QObject):
         if pathexists(fileName):
             remove(fileName)
 
+    @pyqtSlot()
     def getOpenFileName(self):
         '''
         @return: QStringList
@@ -299,12 +304,14 @@ class SpeedDial(QObject):
         return [ gVar.appTools.pixmapToDataUrl(QPixmap(image)).toString(),
             QUrl.fromLocalFile(image).toEncoded() ]
 
+    @pyqtSlot(str)
     def urlFromUserInput(self, url):
         '''
         @param: QString
         '''
         return QUrl.fromUserInput(url).toString()
 
+    @pyqtSlot(str)
     def setBackgroundImage(self, image):
         '''
         @param: image QString
@@ -313,24 +320,28 @@ class SpeedDial(QObject):
             QPixmap(QUrl(image).toLocalFile())
         ).toString()
 
+    @pyqtSlot(str)
     def setBackgourndImageSize(self, size):
         '''
         @param: size QString
         '''
         self._backgroundImageSize = size
 
+    @pyqtSlot(int)
     def setPageInRow(self, count):
         '''
         @param: count int
         '''
         self._maxPagesInRow = count
 
+    @pyqtSlot(int)
     def setSdSize(self, count):
         '''
         @param: count int
         '''
         self._sizeOfSpeedDials = count
 
+    @pyqtSlot(bool)
     def setSdCentered(self, centered):
         '''
         @param: centered bool
