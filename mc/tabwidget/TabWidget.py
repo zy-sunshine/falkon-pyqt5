@@ -196,7 +196,7 @@ class TabWidget(TabStackedWidget):
     def setCurrentIndex(self, index):
         super(TabWidget, self).setCurrentIndex(index)
 
-    def nexTab(self):
+    def nextTab(self):
         index = (self.currentIndex() + 1) % self.count()
         self.setCurrentIndex(index)
 

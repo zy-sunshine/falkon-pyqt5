@@ -58,7 +58,7 @@ class MainMenu(QMenu):
         sessionManager = gVar.app.sessionManager()
         if sessionManager:
             superMenu.addSeparator()
-            sessionsSubmenu = QMenu('Sessions')
+            sessionsSubmenu = QMenu('Sessions', superMenu)
             sessionsSubmenu.aboutToShow.connect(
                 sessionManager._aboutToShowSessionsMenu
             )
@@ -370,7 +370,7 @@ class MainMenu(QMenu):
         self._actions['Standard/Quit'] = action
 
         # File menu
-        self._menuFile = QMenu('&File')
+        self._menuFile = QMenu('&File', self)
         self._menuFile.aboutToShow.connect(self._aboutToShowFileMenu)
 
         self._ADD_ACTION('File/NewTab', self._menuFile, IconProvider.newTabIcon(),
@@ -389,7 +389,7 @@ class MainMenu(QMenu):
 
         sessionManager = gVar.app.sessionManager()
         if sessionManager:
-            sessionsSubmenu = QMenu('Sessions')
+            sessionsSubmenu = QMenu('Sessions', self)
             sessionsSubmenu.aboutToShow.connect(sessionManager._aboutToShowSessionsMenu)
             self._menuFile.addMenu(sessionsSubmenu)
             action = QAction('Session Manager', self)
@@ -408,7 +408,7 @@ class MainMenu(QMenu):
         self._menuFile.addAction(self._actions['Standard/Quit'])
 
         # Edit Menu
-        self._menuEdit = QMenu('&Edit')
+        self._menuEdit = QMenu('&Edit', self)
         self._menuEdit.aboutToShow.connect(self._aboutToShowEditMenu)
 
         action = self._ADD_ACTION('Edit/Undo', self._menuEdit, QIcon.fromTheme('edit-undo'),
@@ -435,19 +435,10 @@ class MainMenu(QMenu):
             '&Find', self._editFind, 'Ctrl+F')
         action.setShortcutContext(Qt.WidgetShortcut)
 
-        # TODO: debug code
-        def cb():
-            tt = QApplication.focusWidget()
-            print(tt)
-            import ipdb; ipdb.set_trace()
-        from PyQt5.Qt import QShortcut
-        self.short0 = QShortcut(QKeySequence('Ctrl+M'), self._window)
-        self.short0.activated.connect(cb)
-
         self._menuFile.addSeparator()
 
         # View menu
-        self._menuView = QMenu('&View')
+        self._menuView = QMenu('&View', self)
         self._menuView.aboutToShow.connect(self._aboutToShowViewMenu)
 
         toolbarsMenu = QMenu('Toolbars', self._menuView)
@@ -488,7 +479,7 @@ class MainMenu(QMenu):
             '&FullScreen', self._showFullScreen, 'F11')
 
         # Tool menu
-        self._menuTools = QMenu('&Tools')
+        self._menuTools = QMenu('&Tools', self)
         self._menuTools.aboutToShow.connect(self._aboutToShowToolsMenu)
 
         self._ADD_ACTION('Tools/WebSearch', self._menuTools, QIcon.fromTheme('edit-find'),
@@ -509,13 +500,13 @@ class MainMenu(QMenu):
         if not WebInspector.isEnabled():
             self._actions['Tools/WebInspector'].setVisible(False)
 
-        self._submenuExtensions = QMenu('&Extensions')
+        self._submenuExtensions = QMenu('&Extensions', self)
         self._submenuExtensions.menuAction().setVisible(False)
         self._menuTools.addMenu(self._submenuExtensions)
         self._menuTools.addSeparator()
 
         # Help menu
-        self._menuHelp = QMenu('&Help')
+        self._menuHelp = QMenu('&Help', self)
 
         # ifndef Q_OS_MACOS
         self._ADD_ACTION('Help/AboutQt', self._menuHelp, QIcon(),

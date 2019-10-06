@@ -481,6 +481,9 @@ class WebView(QWebEngineView):
             def htmlFunc(html):
                 print(html)
             self.page().toHtml(htmlFunc)
+            return
+
+        self.triggerPageAction(QWebEnginePage.ViewSource)
 
     def sendPageByEmail(self):
         body = QUrl.toPercentEncoding(self.url().toEncoded().data().decode())

@@ -247,7 +247,7 @@ class BrowserWindow(QMainWindow):
 
         action = menu.addAction('&Bookmarks Toolbar', self.toggleShowBookmarksToolbar)
         action.setCheckable(True)
-        action.setChecked(Settings().value('Browser-View-Settings/showBookmarksToolbar', type=bool))
+        action.setChecked(Settings().value('Browser-View-Settings/showBookmarksToolbar', True))
 
         menu.addSeparator()
 
@@ -561,6 +561,8 @@ class BrowserWindow(QMainWindow):
 
     def showSource(self, view=None):
         if not view:
+            view = self.weView()
+        if not view:
             return
         view.showSource()
 
@@ -604,10 +606,10 @@ class BrowserWindow(QMainWindow):
         settings.endGroup()
         # Browser Window settings
         settings.beginGroup('Browser-View-Settings')
-        showStatusBar = settings.value('showStatusBar', False, type=bool)
-        showBookmarksToolbar = settings.value('showBookmarksToolbar', False, type=bool)
-        showNavigationToolbar = settings.value('showNavigationToolbar', True, type=bool)
-        showMenuBar = settings.value('showMenuBar', False, type=bool)
+        showStatusBar = settings.value('showStatusBar', False)
+        showBookmarksToolbar = settings.value('showBookmarksToolbar', False)
+        showNavigationToolbar = settings.value('showNavigationToolbar', True)
+        showMenuBar = settings.value('showMenuBar', False)
         # Make sure both menubar and navigationbar are not hidden
         if not showNavigationToolbar:
             showMenuBar = True
@@ -615,14 +617,14 @@ class BrowserWindow(QMainWindow):
         settings.endGroup()
 
         settings.beginGroup('Shortcuts')
-        self._useTabNumberShortcuts = settings.value('useTabNumberShortcuts', True, type=bool)
-        self._useSpeedDialNumberShortcuts = settings.value('useSpeedDialNumberShortcuts', True, type=bool)
-        self._useSingleKeyShortcuts = settings.value('useSingleKeyShortcuts', False, type=bool)
+        self._useTabNumberShortcuts = settings.value('useTabNumberShortcuts', True)
+        self._useSpeedDialNumberShortcuts = settings.value('useSpeedDialNumberShortcuts', True)
+        self._useSingleKeyShortcuts = settings.value('useSingleKeyShortcuts', False)
         settings.endGroup()
 
         settings.beginGroup('Web-Browser-Settings')
         quitAction = self._mainMenu.action('Standard/Quit')
-        if settings.value('closeAppWithCtrlQ', True, type=bool):
+        if settings.value('closeAppWithCtrlQ', True):
             quitAction.setShortcut(gVar.appTools.actionShortcut(QKeySequence.Quit, QKeySequence('Ctrl+Q')))
         else:
             quitAction.setShortcut(QKeySequence())
@@ -788,8 +790,150 @@ class BrowserWindow(QMainWindow):
         '''
         @param: event QKeyEvent
         '''
-        # TODO:
-        pass
+        if gVar.app.plugins().processKeyPress(const.ON_BrowserWindow, self, event):
+            return
+
+        number = -1
+        # TabbedWebView
+        view = self.weView()
+        evtKey = event.key()
+
+        if evtKey == Qt.Key_Back:
+            if view:
+                view.back()
+                event.accept()
+
+        elif evtKey == Qt.Key_Forward:
+            if view:
+                view.forward()
+                event.accept()
+
+        elif evtKey == Qt.Key_Stop:
+            if view:
+                view.stop()
+                event.accept()
+
+        elif evtKey in (Qt.Key_Reload, Qt.Key_Refresh):
+            if view:
+                view.reload()
+                event.accept()
+
+        elif evtKey == Qt.Key_HomePage:
+            self.goHome()
+            event.accept()
+
+        elif evtKey == Qt.Key_Favorites:
+            gVar.app.browsingLibrary().showBookmarks(self)
+            event.accept()
+
+        elif evtKey == Qt.Key_Search:
+            self.searchOnPage()
+            event.accept()
+
+        elif evtKey in (Qt.Key_F6, Qt.Key_OpenUrl):
+            self.openLocation()
+            event.accept()
+
+        elif evtKey == Qt.Key_History:
+            self.showHistoryManager()
+            event.accept()
+
+        elif evtKey == Qt.Key_AddFavorite:
+            self.bookmarkPage()
+            event.accept()
+
+        elif evtKey == Qt.Key_News:
+            self.action("Tools/RssReader").trigger()
+            event.accept()
+
+        elif evtKey == Qt.Key_Tools:
+            self.action("Standard/Preferences").trigger()
+            event.accept()
+
+        elif evtKey == Qt.Key_Tab:
+            if event.modifiers() == Qt.ControlModifier:
+                self._tabWidget.event(event)
+
+        elif evtKey == Qt.Key_Backtab:
+            if event.modifiers() == Qt.ControlModifier + Qt.ShiftModifier:
+                self._tabWidget.event(event)
+
+        elif evtKey == Qt.Key_PageDown:
+            if event.modifiers() == Qt.ControlModifier:
+                self._tabWidget.nextTab()
+                event.accept()
+
+        elif evtKey == Qt.Key_PageUp:
+            if event.modifiers() == Qt.ControlModifier:
+                self._tabWidget.previousTab()
+                event.accept()
+
+        elif evtKey == Qt.Key_Equal:
+            if view and event.modifiers() == Qt.ControlModifier:
+                view.zoomIn()
+                event.accept()
+
+        elif evtKey == Qt.Key_I:
+            if event.modifiers() == Qt.ControlModifier:
+                self.action("Tools/SiteInfo").trigger()
+                event.accept()
+
+        elif evtKey == Qt.Key_U:
+            if event.modifiers() == Qt.ControlModifier:
+                self.action("View/PageSource").trigger()
+                event.accept()
+
+        elif evtKey == Qt.Key_F:
+            if event.modifiers() == Qt.ControlModifier:
+                self.action("Edit/Find").trigger()
+                event.accept()
+
+        elif evtKey == Qt.Key_Slash:
+            if self._useSingleKeyShortcuts:
+                self.action("Edit/Find").trigger()
+                event.accept()
+
+        elif evtKey == Qt.Key_1:
+            number = 1
+        elif evtKey == Qt.Key_2:
+            number = 2
+        elif evtKey == Qt.Key_3:
+            number = 3
+        elif evtKey == Qt.Key_4:
+            number = 4
+        elif evtKey == Qt.Key_5:
+            number = 5
+        elif evtKey == Qt.Key_6:
+            number = 6
+        elif evtKey == Qt.Key_7:
+            number = 7
+        elif evtKey == Qt.Key_8:
+            number = 8
+        elif evtKey == Qt.Key_9:
+            number = 9
+
+        if number != -1:
+            modifiers = event.modifiers()
+            if modifiers & Qt.AltModifier and self._useTabNumberShortcuts:
+                if number == 9:
+                    number = self._tabWidget.count()
+                self._tabWidget.setCurrentIndex(number - 1)
+                event.accept()
+                return
+            if modifiers & Qt.ControlModifier and self._useSpeedDialNumberShortcuts:
+                # QUrl
+                url = gVar.app.plugins().speedDial().urlForShortcut(number - 1)
+                if url.isValid():
+                    self.loadAddress(url)
+                    event.accept()
+                    return
+            if modifiers == Qt.NoModifier and self._useSingleKeyShortcuts:
+                if number == 1:
+                    self._tabWidget.previousTab()
+                if number == 2:
+                    self._tabWidget.nextTab()
+
+        super().keyPressEvent(event)
 
     # override
     def keyReleaseEvent(self, event):
@@ -808,7 +952,7 @@ class BrowserWindow(QMainWindow):
             self._saveSettings()
             return
         settings = Settings()
-        askOnClose = settings.value('Browser-Tabs-Settings/AskOnClosing', True, type=bool)
+        askOnClose = settings.value('Browser-Tabs-Settings/AskOnClosing', True)
 
         from .MainApplication import MainApplication
         if gVar.app.afterLaunch() in (MainApplication.SelectSession,

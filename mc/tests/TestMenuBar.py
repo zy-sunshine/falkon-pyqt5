@@ -3,6 +3,9 @@ from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QApplication
 from PyQt5.QtGui import QIcon
 from PyQt5.Qt import QKeySequence
 from PyQt5.Qt import Qt
+from PyQt5.Qt import QHBoxLayout
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QMenuBar
 
 class Example(QMainWindow):
 
@@ -12,6 +15,10 @@ class Example(QMainWindow):
         self.initUI()
 
     def initUI(self):
+        #self._layout = QHBoxLayout(self)
+        self._widget = QWidget(self)
+        #self._layout.addWidget(self._widget)
+        self._menuBar = QMenuBar(self._widget)
 
         exitAct = QAction(QIcon('exit.png'), '&Exit', self)
         exitAct.setShortcut('Ctrl+Q')
@@ -20,22 +27,30 @@ class Example(QMainWindow):
 
         self.statusBar()
 
-        menubar = self.menuBar()
+        #menubar = self.menuBar()
+        menubar = self._menuBar
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(exitAct)
 
-        act = self.menuBar().addAction('test')
+        act = self._menuBar.addAction('test')
         act.setShortcut(QKeySequence('Ctrl+M'))
+
         def testCb():
             print('hello')
         act.triggered.connect(testCb)
         act.setShortcutContext(Qt.WidgetShortcut)
-        print(self.menuBar())
-        print(act.parent())
-        act.setParent(self)
-        print(act.parent())
+        print('_menuBar parent', self._menuBar.parent())
+        print('act parent', act.parent())
+        print('_widget parent', self._widget.parent())
+        #act.setParent(self)
+        #print(act.parent())
         self.addAction(act)
-        self.setFocus()
+        # This is important for Qt.WidgetShortcut
+        # the Example is focused, and it's menu's act can trigger
+        # Qt.WidgetShortcut context action
+        #self.setFocus()
+        #act.parent().setFocus()
+        print('focusWidget', QApplication.focusWidget())
 
         def cb():
             tt = QApplication.focusWidget()
