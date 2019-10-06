@@ -381,10 +381,10 @@ class MainApplication(QtSingleApp):
             # This can only happend when recovering crashed session!
             # Don't restore tabs in current window as user already opened some
             # new tabs
-            window = (self.createWindow(None, const.BW_OtherRestoredWindow)
-                .restoreWindow(restoreData.windows.takeAt(0)))
+            window = self.createWindow(None, const.BW_OtherRestoredWindow) \
+                .restoreWindow(restoreData.windows.takeAt(0))
         else:
-            self.createWindow(restoreData.windows.takeAt(0))
+            window.restoreWindow(restoreData.windows.takeAt(0))
 
         # data -> BrowserWindow::SavedWindow
         for data in restoreData.windows:

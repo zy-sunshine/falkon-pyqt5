@@ -42,6 +42,7 @@ from mc.downloads.DownloadsButton import DownloadsButton
 from mc.tools.MenuBar import MenuBar
 from mc.app.MainMenu import MainMenu
 from mc.navigation.LocationBar import LocationBar
+from mc.webtab.WebTab import WebTab
 
 class BrowserWindow(QMainWindow):
     class SavedWindow(object):
@@ -49,18 +50,39 @@ class BrowserWindow(QMainWindow):
             '''
             @param: window BrowserWindow
             '''
-            self.init(window)
-
-        def init(self, window):
-            if window:
-                pass
-            else:
+            if not window:
                 self.windowState = QByteArray()
                 self.windowGeometry = QByteArray()
                 self.windowUiState = {}  # QString -> QVariant
                 self.virtualDesktop = -1
                 self.currentTab = -1
                 self.tabs = []  # WebTab.SavedTab
+            else:
+                self.init(window)
+
+        def init(self, window):
+            if window.isFullScreen():
+                self.windowState = QByteArray()
+            else:
+                self.windowState = window.saveState()
+            self.windowGeometry = window.saveGeometry()
+            self.windowUiState = window.saveUiState()
+
+            tabsCount = window.tabCount()
+            for idx in range(tabsCount):
+                # TabbedWebView
+                webView = window.weView(idx)
+                if not webView:
+                    continue
+                webTab = webView.webTab()
+                if not webTab:
+                    continue
+                tab = WebTab.SavedTab(webTab)
+                if not tab.isValid():
+                    continue
+                if webTab.isCurrentTab():
+                    self.currentTab = len(self.tabs)
+                self.tabs.append(tab)
 
         def isValid(self):
             for tab in self.tabs:
@@ -786,7 +808,7 @@ class BrowserWindow(QMainWindow):
         super().resizeEvent(event)
 
     # override
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event):  # noqa C901
         '''
         @param: event QKeyEvent
         '''
@@ -940,8 +962,16 @@ class BrowserWindow(QMainWindow):
         '''
         @param: event QKeyEvent
         '''
-        # TODO
-        pass
+        if gVar.app.plugins().processKeyRelease(const.ON_BrowserWindow, self, event):
+            return
+
+        evtKey = event.key()
+        if evtKey == Qt.Key_F:
+            if event.modifiers() == Qt.ControlModifier:
+                self.action('Edit/Find').trigger()
+                event.accept()
+
+        super().keyReleaseEvent(event)
 
     # override
     def closeEvent(self, event):
