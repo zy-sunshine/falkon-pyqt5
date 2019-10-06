@@ -64,7 +64,7 @@ class ExternalJsObject(QObject):
 
         return gVar.app.plugins().speedDial()
 
-    speedDial = pyqtProperty(QObject, _speedDial)
+    speedDial = pyqtProperty(QObject, _speedDial, constant=True)
 
     def _autoFill(self):
         '''
@@ -72,7 +72,7 @@ class ExternalJsObject(QObject):
         '''
         return self._autoFill
 
-    autoFill = pyqtProperty(QObject, _autoFill)
+    autoFill = pyqtProperty(QObject, _autoFill, constant=True)
 
     def _recovery(self):
         '''
@@ -83,4 +83,4 @@ class ExternalJsObject(QObject):
 
         return gVar.app.restoreManager().recoveryObject(self._page)
 
-    recovery = pyqtProperty(QObject, _recovery)
+    recovery = pyqtProperty(QObject, _recovery, constant=True)

@@ -108,7 +108,7 @@ class SpeedDial(QObject):
 
         page = self.Page()
         page.title = self._escapeTitle(title)
-        page.url = self._escapeUrl(url.toString())
+        page.url = self._escapeUrl(url.toString()).rstrip('/\\')
 
         self._pages.append(page)
         self._regenerateScript = True
