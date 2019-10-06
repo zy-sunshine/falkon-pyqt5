@@ -763,41 +763,42 @@ class BrowserWindow(QMainWindow):
         if self.isFullScreen() and mouseInView:
             self._navigationContainer.hide()
 
+    # TODO: event override will get much event call cause a performance problem?
     # private
     # override
-    def event(self, event):
-        '''
-        @param: event QEvent
-        '''
-        if event.type() == QEvent.WindowStateChange:
-            e = event
-            assert(isinstance(e, QWindowStateChangeEvent))
-            if not (e.oldState() & Qt.WindowFullScreen) and (self.windowState() & Qt.WindowFullScreen):
-                # Enter fullscreen
-                self._statusBarVisible = self._statusBar.isVisible()
-                self._menuBarVisible = self.menuBar().isVisible()
-                self.menuBar().hide()
-                self._statusBar.hide()
+    #def event(self, event):
+    #    '''
+    #    @param: event QEvent
+    #    '''
+    #    if event.type() == QEvent.WindowStateChange:
+    #        e = event
+    #        assert(isinstance(e, QWindowStateChangeEvent))
+    #        if not (e.oldState() & Qt.WindowFullScreen) and (self.windowState() & Qt.WindowFullScreen):
+    #            # Enter fullscreen
+    #            self._statusBarVisible = self._statusBar.isVisible()
+    #            self._menuBarVisible = self.menuBar().isVisible()
+    #            self.menuBar().hide()
+    #            self._statusBar.hide()
 
-                self._navigationContainer.hide()
-                self._navigationToolbar.enterFullScreen()
+    #            self._navigationContainer.hide()
+    #            self._navigationToolbar.enterFullScreen()
 
-                # Show main menu button since menubar is hidden
-                self._navigationToolbar.setSuperMenuVisible(True)
-            elif (e.oldState() & Qt.WindowFullScreen) and not (self.windowState() & Qt.WindowFullScreen):
-                # Leave fullscreen
-                self._statusBar.setVisible(self._statusBarVisible)
-                self.menuBar().setVisible(self._menuBarVisible)
+    #            # Show main menu button since menubar is hidden
+    #            self._navigationToolbar.setSuperMenuVisible(True)
+    #        elif (e.oldState() & Qt.WindowFullScreen) and not (self.windowState() & Qt.WindowFullScreen):
+    #            # Leave fullscreen
+    #            self._statusBar.setVisible(self._statusBarVisible)
+    #            self.menuBar().setVisible(self._menuBarVisible)
 
-                self._navigationContainer.show()
-                self._navigationToolbar.setSuperMenuVisible(not self._menuBarVisible)
-                self._navigationToolbar.leaveFullScreen()
-                self._htmlFullScreenView = None
+    #            self._navigationContainer.show()
+    #            self._navigationToolbar.setSuperMenuVisible(not self._menuBarVisible)
+    #            self._navigationToolbar.leaveFullScreen()
+    #            self._htmlFullScreenView = None
 
-            if self._hideNavigationTimer:
-                self._hideNavigationTimer.stop()
+    #        if self._hideNavigationTimer:
+    #            self._hideNavigationTimer.stop()
 
-        return super().event(event)
+    #    return super().event(event)
 
     # override
     def resizeEvent(self, event):

@@ -338,7 +338,7 @@ class WebTab(QWidget):
         '''
         if self.isRestored():
             self.tabActivated()
-            QTimer.singleShot(0, lambda: self.load(self, request))
+            QTimer.singleShot(0, lambda: self.load(request))
         else:
             self._webView.load(request)
 
