@@ -49,7 +49,7 @@ class AppTools(Singleton):
         if not data:
             return QUrl()
         else:
-            return QUrl('data:image/png;base64,' + data)
+            return QUrl('data:image/png;base64,' + data.data().decode())
 
     def dpiAwarePixmap(self, path):
         '''

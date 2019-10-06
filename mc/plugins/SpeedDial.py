@@ -276,8 +276,10 @@ class SpeedDial(QObject):
         '''
         @param: url QString
         '''
-        return self._thumbnailsDir + QCryptographicHash.hash(url.encode(),
-                QCryptographicHash.Md4).toHex() + '.png'
+        # QByteArray
+        hexBytes = QCryptographicHash.hash(url.encode(),
+            QCryptographicHash.Md4).toHex()
+        return self._thumbnailsDir + hexBytes.data().decode() + '.png'
 
     @pyqtSlot(str)
     def removeImageForUrl(self, url):
@@ -289,7 +291,7 @@ class SpeedDial(QObject):
         if pathexists(fileName):
             remove(fileName)
 
-    @pyqtSlot()
+    @pyqtSlot(result=list)
     def getOpenFileName(self):
         '''
         @return: QStringList
@@ -304,7 +306,7 @@ class SpeedDial(QObject):
         return [ gVar.appTools.pixmapToDataUrl(QPixmap(image)).toString(),
             QUrl.fromLocalFile(image).toEncoded() ]
 
-    @pyqtSlot(str)
+    @pyqtSlot(str, result=str)
     def urlFromUserInput(self, url):
         '''
         @param: QString

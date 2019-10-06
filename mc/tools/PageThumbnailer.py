@@ -5,6 +5,7 @@ from PyQt5.Qt import QSize
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.Qt import Qt
 from PyQt5.Qt import pyqtSignal
+from PyQt5.Qt import pyqtSlot
 from PyQt5.Qt import QTimer
 from mc.common.globalvars import gVar
 from mc.webengine.WebView import WebView
@@ -67,12 +68,14 @@ class PageThumbnailer(QObject):
     thumbnailCreated = pyqtSignal(QPixmap)
 
     # public Q_SLOTS:
+    @pyqtSlot(result=str)
     def afterLoadScript(self):
         '''
         @return: QString
         '''
         return Scripts.setCss('::~webkit-scrollbar{display:none;}')
 
+    @pyqtSlot(bool)
     def createThumbnail(self, status):
         '''
         @param: status bool
