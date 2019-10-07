@@ -66,7 +66,7 @@ class BrowserWindow(QMainWindow):
             else:
                 self.windowState = window.saveState()
             self.windowGeometry = window.saveGeometry()
-            self.windowUiState = window.saveUiState()
+            self.windowUiState = window._saveUiState()
 
             tabsCount = window.tabCount()
             for idx in range(tabsCount):

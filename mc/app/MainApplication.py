@@ -252,8 +252,8 @@ class MainApplication(QtSingleApp):
 
             settings = QSettings()
             settings.beginGroup('SessionRestore')
-            wasRunning = settings.value('isRunning', False, type=bool)
-            wasRestoring = settings.value('isRestoring', False, type=bool)
+            wasRunning = settings.value('isRunning', False)
+            wasRestoring = settings.value('isRestoring', False)
             settings.setValue('isRunning', True)
             settings.setValue('isRestoring', wasRunning)
             settings.endGroup()
@@ -285,7 +285,7 @@ class MainApplication(QtSingleApp):
         if not self.isPrivate() and not self.isTestModeEnabled():
             # check updates
             settings = Settings()
-            checkUpdates = settings.value('Web-Browser-Settings/CheckUpdates', True, type=bool)
+            checkUpdates = settings.value('Web-Browser-Settings/CheckUpdates', True)
 
             if checkUpdates:
                 Updater(window)
@@ -615,13 +615,13 @@ class MainApplication(QtSingleApp):
         settings.setValue('sRestoring', False)
 
         settings.beginGroup('Web-Browser-Settings')
-        deleteCache = settings.value('deleteCacheOnClose', False, type=bool)
-        deleteHistory = settings.value('deleteHistoryOnClose', False, type=bool)
-        deleteHtml5Storage = settings.value('deleteHTML5StorageOnClose', False, type=bool)
+        deleteCache = settings.value('deleteCacheOnClose', False)
+        deleteHistory = settings.value('deleteHistoryOnClose', False)
+        deleteHtml5Storage = settings.value('deleteHTML5StorageOnClose', False)
         settings.endGroup()
 
         settings.beginGroup('Cookies-Settings')
-        deleteCookies = settings.value('deleteCookiesOnClose', False, type=bool)
+        deleteCookies = settings.value('deleteCookiesOnClose', False)
         settings.endGroup()
 
         if deleteHistory:
@@ -735,50 +735,51 @@ class MainApplication(QtSingleApp):
         settings.beginGroup('Web-Browser-Settings')
 
         webSettings.setAttribute(QWebEngineSettings.LocalStorageEnabled,
-                settings.value("HTML5StorageEnabled", True, type=bool))
+                settings.value("HTML5StorageEnabled", True))
         webSettings.setAttribute(QWebEngineSettings.PluginsEnabled,
-                settings.value("allowPlugins", True, type=bool))
+                settings.value("allowPlugins", True))
         webSettings.setAttribute(QWebEngineSettings.JavascriptEnabled,
-                settings.value("allowJavaScript", True, type=bool))
+                settings.value("allowJavaScript", True))
         webSettings.setAttribute(QWebEngineSettings.JavascriptCanOpenWindows,
-                settings.value("allowJavaScriptOpenWindow", False, type=bool))
+                settings.value("allowJavaScriptOpenWindow", False))
         webSettings.setAttribute(QWebEngineSettings.JavascriptCanAccessClipboard,
-                settings.value("allowJavaScriptAccessClipboard", True, type=bool))
+                settings.value("allowJavaScriptAccessClipboard", True))
         webSettings.setAttribute(QWebEngineSettings.LinksIncludedInFocusChain,
-                settings.value("IncludeLinkInFocusChain", False, type=bool))
+                settings.value("IncludeLinkInFocusChain", False))
         webSettings.setAttribute(QWebEngineSettings.XSSAuditingEnabled,
-                settings.value("XSSAuditing", False, type=bool))
+                settings.value("XSSAuditing", False))
         webSettings.setAttribute(QWebEngineSettings.PrintElementBackgrounds,
-                settings.value("PrintElementBackground", True, type=bool))
+                settings.value("PrintElementBackground", True))
         webSettings.setAttribute(QWebEngineSettings.SpatialNavigationEnabled,
-                settings.value("SpatialNavigation", False, type=bool))
+                settings.value("SpatialNavigation", False))
         webSettings.setAttribute(QWebEngineSettings.ScrollAnimatorEnabled,
-                settings.value("AnimateScrolling", True, type=bool))
+                settings.value("AnimateScrolling", True))
         webSettings.setAttribute(QWebEngineSettings.HyperlinkAuditingEnabled, False)
         webSettings.setAttribute(QWebEngineSettings.FullScreenSupportEnabled, True)
         webSettings.setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
         webSettings.setAttribute(QWebEngineSettings.FocusOnNavigationEnabled, False)
 
         webSettings.setAttribute(QWebEngineSettings.AllowWindowActivationFromJavaScript,
-                settings.value("allowJavaScriptActivationWindow", False, type=bool))
+                settings.value("allowJavaScriptActivationWindow", False))
 
         webSettings.setAttribute(QWebEngineSettings.JavascriptCanPaste,
-                settings.value("allowJavaScriptPaste", True, type=bool))
+                settings.value("allowJavaScriptPaste", True))
         webSettings.setAttribute(QWebEngineSettings.PlaybackRequiresUserGesture,
-                settings.value("DisableVideoAutoPlay", False, type=bool))
+                settings.value("DisableVideoAutoPlay", False))
         webSettings.setAttribute(QWebEngineSettings.WebRTCPublicInterfacesOnly,
-                settings.value("WebRTCPublicIpOnly", True, type=bool))
+                settings.value("WebRTCPublicIpOnly", True))
         webSettings.setUnknownUrlSchemePolicy(QWebEngineSettings.AllowAllUnknownUrlSchemes)
 
         webSettings.setAttribute(QWebEngineSettings.DnsPrefetchEnabled,
-                settings.value("DNSPrefetch", True, type=bool))
+                settings.value("DNSPrefetch", True))
 
         webSettings.setDefaultTextEncoding(settings.value("DefaultEncoding",
             webSettings.defaultTextEncoding(), type=str))
 
-        self.setWheelScrollLines(settings.value("wheelScrollLines", self.wheelScrollLines(), type=int))
+        scrollLines = settings.value("wheelScrollLines", self.wheelScrollLines())
+        self.setWheelScrollLines(scrollLines)
 
-        userCss = settings.value("userStyleSheet", '', type=str)
+        userCss = settings.value("userStyleSheet", '')
         settings.endGroup()
 
         self.setUserStyleSheet(userCss)
@@ -803,13 +804,13 @@ class MainApplication(QtSingleApp):
                 settings.value("SerifFont", webSettings.fontFamily(
                     QWebEngineSettings.SerifFont), type=str))
         webSettings.setFontSize(QWebEngineSettings.DefaultFontSize,
-                settings.value("DefaultFontSize", 15, type=int))
+                settings.value("DefaultFontSize", 15))
         webSettings.setFontSize(QWebEngineSettings.DefaultFixedFontSize,
-                settings.value("FixedFontSize", 14, type=int))
+                settings.value("FixedFontSize", 14))
         webSettings.setFontSize(QWebEngineSettings.MinimumFontSize,
-                settings.value("MinimumFontSize", 3, type=int))
+                settings.value("MinimumFontSize", 3))
         webSettings.setFontSize(QWebEngineSettings.MinimumLogicalFontSize,
-                settings.value("MinimumLogicalFontSize", 5, type=int))
+                settings.value("MinimumLogicalFontSize", 5))
         settings.endGroup()
 
         profile = QWebEngineProfile.defaultProfile()
@@ -822,14 +823,14 @@ class MainApplication(QtSingleApp):
         cachePath = settings.value("Web-Browser-Settings/CachePath", defaultPath, type=str)
         profile.setCachePath(cachePath)
 
-        allowCache = settings.value("Web-Browser-Settings/AllowLocalCache", True, type=bool)
+        allowCache = settings.value("Web-Browser-Settings/AllowLocalCache", True)
         profile.setHttpCacheType(allowCache and QWebEngineProfile.DiskHttpCache or QWebEngineProfile.MemoryHttpCache)
 
-        cacheSize = settings.value("Web-Browser-Settings/LocalCacheSize", 50, type=int) * 1000 * 1000
+        cacheSize = settings.value("Web-Browser-Settings/LocalCacheSize", 50) * 1000 * 1000
         profile.setHttpCacheMaximumSize(cacheSize)
 
         settings.beginGroup("SpellCheck")
-        profile.setSpellCheckEnabled(settings.value("Enabled", False, type=bool))
+        profile.setSpellCheckEnabled(settings.value("Enabled", False))
         profile.setSpellCheckLanguages(settings.value("Languages", type=list))
         settings.endGroup()
 

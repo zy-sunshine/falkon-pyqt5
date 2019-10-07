@@ -243,7 +243,6 @@ class WebView(QWebEngineView):
         @return: QRect
         '''
         # QScrollBar s
-        # TODO: const_cast<WebView*>(self)
         s = WebScrollBarManager.instance().scrollBar(orientation, self)
         if s and s.isVisible():
             return s.geometry()
@@ -277,9 +276,9 @@ class WebView(QWebEngineView):
 
                 def xxx():
                     if not sip.isdeleted(child) and \
-                            child.inherits('QWebEngineCore::RenderWidgetHostViewQtDelegateWidget'):
+                            child.inherits('QtWebEngineCore::RenderWidgetHostViewQtDelegateWidget'):
                         self._rwhvqt = child
-                        self._rwhvqt.installEvent(self)
+                        self._rwhvqt.installEventFilter(self)
                         w = self._rwhvqt
                         if isinstance(w, QQuickWidget):
                             w.setClearColor(self.palette().color(QPalette.Window))
@@ -407,30 +406,24 @@ class WebView(QWebEngineView):
             self._applyZoom()
 
     def editUndo(self):
-        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Undo)
 
     def editRedo(self):
-        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Redo)
 
     def editCut(self):
-        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Cut)
 
     def editCopy(self):
-        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Copy)
 
     def editPaste(self):
-        import ipdb; ipdb.set_trace()
         self.triggerPageAction(QWebEnginePage.Paste)
 
     def editSelectAll(self):
         self.triggerPageAction(QWebEnginePage.SelectAll)
 
     def editDelete(self):
-        import ipdb; ipdb.set_trace()
         ev = QKeyEvent(QEvent.KeyPress, Qt.Key_Delete, Qt.NoModifier)
         QApplication.sendEvent(self, ev)
 
@@ -741,7 +734,39 @@ class WebView(QWebEngineView):
         '''
         @param: event QWheelEvent
         '''
-        pass
+        if gVar.app.plugins().processWheelEvent(const.ON_WebView, self, event):
+            event.accept()
+            return
+
+        if event.modifiers() & Qt.ControlModifier:
+            self._wheelHelper.processEvent(event)
+            # WheelHelper::Direction
+            direction = self._wheelHelper.takeDirection()
+            while direction:
+                if direction in (WheelHelper.WheelUp,
+                        WheelHelper.WheelLeft):
+                    self.zoomIn()
+                elif direction in (WheelHelper.WheelDown,
+                        WheelHelper.WheelRight):
+                    self.zoomOut()
+                event.accept()
+                return
+        self._wheelHelper.reset()
+
+        # QtWebEngine ignore QApplication::wheelScrollLines() and instead always
+        # scrolls 3 lines
+        if event.spontaneous():  # send wheel event manually will not into this
+            # qreal
+            multiplier = QApplication.wheelScrollLines() / 3.0
+            # QtWebEngine always not wheel expect lines, so resend the wheel
+            # event to scroll correctly
+            #if multiplier != 1.0:
+            if 1:
+                event = QWheelEvent(event.pos(), event.globalPos(), event.pixelDelta(),
+                        event.angleDelta() * multiplier, 0, Qt.Horizontal, event.buttons(),
+                        event.modifiers(), event.phase(), event.source(), event.inverted())
+                QApplication.sendEvent(self._rwhvqt, event)
+                event.accept()
 
     # virtual method
     def _mousePressEvent(self, event):
@@ -769,7 +794,33 @@ class WebView(QWebEngineView):
         '''
         @param: event QKeyEvent
         '''
-        pass
+        if gVar.app.plugins().processKeyPress(const.ON_WebView, self, event):
+            event.accept()
+            return
+
+        evtKey = event.key()
+        if evtKey == Qt.Key_ZoomIn:
+            self.zoomIn()
+            event.accept()
+        elif evtKey == Qt.Key_ZoomOut:
+            self.zoomOut()
+            event.accept()
+        elif evtKey == Qt.Key_Plus:
+            if event.modifiers() & Qt.ControlModifier:
+                self.zoomIn()
+                event.accept()
+        elif evtKey == Qt.Key_Minus:
+            if event.modifiers() & Qt.ControlModifier:
+                self.zoomOut()
+                event.accept()
+        elif evtKey == Qt.Key_0:
+            if event.modifiers() & Qt.ControlModifier:
+                self.zoomReset()
+                event.accept()
+        elif evtKey == Qt.Key_M:
+            if event.modifiers() & Qt.ControlModifier:
+                self.page().setAudioMuted(not self.page().isAudioMuted())
+                event.accept()
 
     # virtual method
     def _keyReleaseEvent(self, event):
@@ -783,7 +834,7 @@ class WebView(QWebEngineView):
         '''
         @param: event QContextMenuEvent
         '''
-        pass
+        # subclass override to implement
 
     def _loadRequest(self, req):
         '''
@@ -1062,13 +1113,13 @@ class WebView(QWebEngineView):
 
     # Q_SLOTS
     def _addSpeedDial(self):
-        pass
+        self.page().runJavaScript('addSpeedDial()', WebPage.SafeJsWorld)
 
     def _configureSpeedDial(self):
-        pass
+        self.page().runJavaScript('configureSpeedDial()', WebPage.SafeJsWorld)
 
     def _reloadAllSpeedDials(self):
-        pass
+        self.page().runJavaScript('reloadAll()', WebPage.SafeJsWorld)
 
     def _toggleMediaPause(self):
         self.triggerPageAction(QWebEnginePage.ToggleMediaPlayPause)
