@@ -4,7 +4,8 @@ from PyQt5.Qt import Qt
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import QStandardItem
 from mc.common.globalvars import gVar
-from mc.navigation.LocationBar import LocationBar
+from .LocationCompleterModel import LocationCompleterModel
+from .LocationCompleterRefreshJob import LocationCompleterRefreshJob
 
 class LocationCompleter(QObject):
     _s_view = None  # LocationCompleterView
@@ -58,6 +59,7 @@ class LocationCompleter(QObject):
                 self._openSearchEngine = OpenSearchEngine(self)
                 self._openSearchEngine.setNetworkAccessManager(gVar.app.networkManager())
                 self._openSearchEngine.suggestions.connect(self._addSuggestions)
+            from mc.navigation.LocationBar import LocationBar
             self._openSearchEngine.setSuggestionsUrl(LocationBar.searchEngine().suggestionsUrl)
             self._openSearchEngine.setSuggestionsParameters(LocationBar.searchEngine().suggestionsParameters)
             self._suggestionsTerm = trimmedStr
@@ -88,7 +90,7 @@ class LocationCompleter(QObject):
         QTimer.singleShot(0, func)
 
     def showMostVisited(self):
-        self._locationBar = setFocus()
+        self._locationBar.setFocus()
         self.complete('')
 
     # Q_SIGNALS:
