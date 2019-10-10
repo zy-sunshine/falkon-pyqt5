@@ -345,7 +345,7 @@ class LocationCompleterView(QWidget):
 
     # private:
     def _setupSearchEngines(self):
-        for idx in (self._searchEnginesLayout.count()):
+        for idx in (range(self._searchEnginesLayout.count())):
             item = self._searchEnginesLayout.takeAt(0)
             item.deleteLater()
 

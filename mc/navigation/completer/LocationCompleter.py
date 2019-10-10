@@ -6,6 +6,7 @@ from PyQt5.Qt import QStandardItem
 from mc.common.globalvars import gVar
 from .LocationCompleterModel import LocationCompleterModel
 from .LocationCompleterRefreshJob import LocationCompleterRefreshJob
+from .LocationCompleterView import LocationCompleterView
 
 class LocationCompleter(QObject):
     _s_view = None  # LocationCompleterView
@@ -20,6 +21,11 @@ class LocationCompleter(QObject):
         self._openSearchEngine = None  # OpenSearchEngine
         self._oldSuggestions = []  # QStringList
         self._suggestionsTerm = ''
+
+        if not self._s_view:
+            self._s_model = LocationCompleterModel()
+            self._s_view = LocationCompleterView()
+            self._s_view.setModel(self._s_model)
 
     def setMainWindow(self, window):
         '''

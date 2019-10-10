@@ -1,6 +1,8 @@
 from PyQt5.Qt import QStandardItemModel
 from PyQt5.Qt import Qt
 from PyQt5.Qt import QPixmap
+from PyQt5.Qt import QImage
+from PyQt5.Qt import QIcon
 from mc.tools.IconProvider import IconProvider
 from mc.common.models import HistoryDbModel
 from mc.common.globalvars import gVar
@@ -21,7 +23,7 @@ class LocationCompleterModel(QStandardItemModel):
         ImageRole,
         VisitSearchItemRole,
         SearchSuggestionRole,
-    ) = range(Qt.UserRole + 1, 13)
+    ) = range(Qt.UserRole + 1, Qt.UserRole + 14)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -38,8 +40,11 @@ class LocationCompleterModel(QStandardItemModel):
         @param: items QList<QStandardItem>
         '''
         for item in items:
-            pixmap = QPixmap.formImage(item.data(self.ImageRole))
-            item.setIcon(pixmap)
+            img = item.data(self.ImageRole)
+            if not img:
+                img = QImage()
+            pixmap = QPixmap.fromImage(img)
+            item.setIcon(QIcon(pixmap))
             self._setTabPosition(item)
             if item.icon().isNull():
                 item.setIcon(IconProvider.emptyWebIcon())
@@ -94,8 +99,8 @@ class LocationCompleterModel(QStandardItemModel):
         withoutWww = text.startswith('w') and not text.startswith('www.')
         qs = HistoryDbModel.select()
         if withoutWww:
-            qs = qs.where(not HistoryDbModel.url.startswith('http://www.') &
-                not HistoryDbModel.url.startswith('https://www.') &
+            qs = qs.where(~HistoryDbModel.url.startswith('http://www.') &
+                ~HistoryDbModel.url.startswith('https://www.') &
                     (HistoryDbModel.url.startswith('http://%s' % text) |
                     HistoryDbModel.url.startswith('https://%s' % text))
             )
