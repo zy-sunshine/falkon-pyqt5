@@ -3,6 +3,8 @@ from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import Qt
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import QStandardItem
+from PyQt5.Qt import QRect
+from PyQt5.Qt import QModelIndex
 from mc.common.globalvars import gVar
 from .LocationCompleterModel import LocationCompleterModel
 from .LocationCompleterRefreshJob import LocationCompleterRefreshJob
@@ -254,7 +256,40 @@ class LocationCompleter(QObject):
         pass
 
     def _showPopup(self):
-        pass
+        assert(self._window)
+        assert(self._locationBar)
+
+        if not self._locationBar.hasFocus() or self._s_model.rowCount() == 0:
+            self._s_view.close()
+            return
+
+        if self._s_view.isVisible():
+            self._adjustPopupSize()
+            return
+
+        popupRect = QRect(self._locationBar.mapToGlobal(self._locationBar.pos()),
+                self._locationBar.size())
+        popupRect.setY(popupRect.bottom())
+
+        self._s_view.setGeometry(popupRect)
+        self._s_view.setFocusProxy(self._locationBar)
+        self._s_view.setCurrentIndex(QModelIndex())
+
+        self._s_view.closed.connect(self._slotPopupClosed)
+        self._s_view.indexActivated.connect(self._indexActivated)
+        self._s_view.indexCtrlActivated.connect(self._indexCtrlActivated)
+        self._s_view.indexShiftActivated.connect(self._indexShiftActivated)
+        self._s_view.indexDeleteRequested.connect(self._indexDeleteRequested)
+        self._s_view.loadRequested.connect(self.loadRequested)
+        self._s_view.searchEnginesDialogRequested.connect(self._openSearchEnginesDialog)
+        self._s_view.selectionModel().currentChanged.connect(self._currentChanged)
+
+        #self._s_view.createWinId()
+        self._s_view.winId()
+        self._s_view.windowHandle().setTransientParent(self._window.windowHandle())
+
+        self._adjustPopupSize()
 
     def _adjustPopupSize(self):
-        pass
+        self._s_view.adjustSize()
+        self._s_view.show()

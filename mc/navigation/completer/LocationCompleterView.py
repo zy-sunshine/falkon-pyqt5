@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import QListView
 from PyQt5.QtWidgets import QAbstractItemView
 from PyQt5.QtWidgets import QLabel
 from mc.webengine.LoadRequest import LoadRequest
-from mc.common import const
 from mc.common.globalvars import gVar
 from mc.tools.ToolButton import ToolButton
 from mc.tools.IconProvider import IconProvider
