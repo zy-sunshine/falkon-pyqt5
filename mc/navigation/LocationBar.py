@@ -1,30 +1,35 @@
 from PyQt5.Qt import QColor
 from PyQt5.Qt import QUrl
-from mc.common.globalvars import gVar
-from mc.bookmarks.BookmarksIcon import BookmarksIcon
-from .GoIcon import GoIcon
-from .SiteIcon import SiteIcon
-from mc.autofill.AutoFillIcon import AutoFillIcon
-from .DownIcon import DownIcon
 from PyQt5.Qt import QStringListModel
 from PyQt5.Qt import QCompleter
 from PyQt5.Qt import QTimer
-from .completer.LocationCompleter import LocationCompleter
 from PyQt5.Qt import QStyle
 from PyQt5.Qt import QStyleOptionFrame
-from mc.tools.Colors import Colors
 from PyQt5.Qt import QPalette
 from PyQt5.Qt import QPainter
 from PyQt5.Qt import QBrush
 from PyQt5.Qt import QPen
 from PyQt5.Qt import QRect
 from PyQt5.Qt import Qt
+from PyQt5.Qt import QTextLayout
+from PyQt5.Qt import QTextCharFormat
+from PyQt5.Qt import QIcon
+from PyQt5.Qt import QFocusEvent
 from mc.webengine.WebPage import WebPage
 from mc.webengine.LoadRequest import LoadRequest
+from mc.webengine.WebView import WebView
 from mc.opensearch.SearchEnginesManager import SearchEngine
 from mc.lib3rd.LineEdit import LineEdit
-from PyQt5.Qt import QIcon
 from mc.tools.IconProvider import IconProvider
+from mc.common.globalvars import gVar
+from mc.bookmarks.BookmarksIcon import BookmarksIcon
+from mc.autofill.AutoFillIcon import AutoFillIcon
+from mc.tools.Colors import Colors
+from mc.app.Settings import Settings
+from .GoIcon import GoIcon
+from .SiteIcon import SiteIcon
+from .DownIcon import DownIcon
+from .completer.LocationCompleter import LocationCompleter
 
 class LocationBar(LineEdit):
 
@@ -180,7 +185,12 @@ class LocationBar(LineEdit):
         '''
         @return: SearchEngine
         '''
-        pass
+        if not gVar.appSettings.searchFromAddressBar:
+            return SearchEngine()
+        elif gVar.appSettings.searchWithDefaultEngine:
+            return gVar.app.searchEnginesManager().defaultEngine()
+        else:
+            return gVar.app.searchEnginesManager().activeEngine()
 
     @classmethod
     def loadAction(cls, text):
@@ -305,7 +315,17 @@ class LocationBar(LineEdit):
 
     # private Q_SLOTS
     def _textEdited(self, text):
-        pass
+        self._oldTextLength = self._currentTextLength
+        self._currentTextLength = len(text)
+
+        if text:
+            self._completer.complete(text)
+            icon = QIcon.fromTheme('edit-find', QIcon(':/icons/menu/search-icon.svg'))
+            self._siteIcon.setIcon(icon)
+        else:
+            self._completer.closePopup()
+
+        self._setGoIconVisible(True)
 
     def _requestLoadUrl(self):
         req = self.loadAction(self.text()).loadRequest
@@ -328,52 +348,108 @@ class LocationBar(LineEdit):
             self._siteIcon.setIcon(icon.pixmap(16))
 
     def _updatePlaceHolderText(self):
-        pass
+        if gVar.appSettings.searchFromAddressBar:
+            self.setPlaceholderText(_('Enter address or search with %s') % self.searchEngine().name)
+        else:
+            self.setPlaceholderText(_('Enter address'))
 
     def _setPrivacyState(self, state):
         '''
         @param: state bool
         '''
-        pass
+        self._siteIcon.setProperty('secured', state)
+        self._siteIcon.style().unpolish(self._siteIcon)
+        self._siteIcon.style().polish(self._siteIcon)
+
+        self.setProperty('secured', state)
+        self.style().unpolish(self)
+        self.style().polish(self)
+
+        self._updateSiteIcon()
 
     def _setGoIconVisible(self, state):
         '''
         @param: state bool
         '''
-        pass
+        if state:
+            self._bookmarkIcon.hide()
+            self._goIcon.show()
+        else:
+            self._bookmarkIcon.show()
+            if not gVar.appSettings.alwaysShowGoIcon:
+                self._goIcon.hide()
+
+        self.updateTextMargins()
 
     def _showCompletion(self, completion, completeDoamin):
         '''
         @param: completion QString
         @param: completeDomain bool
         '''
-        pass
+        super().setText(completion)
+
+        # Move cursor to the end
+        self.end(False)
+
+        if comleteDomain:
+            self.completer().complete()
+
+        self._updateSiteIcon()
 
     def _showDomainCompletion(self, completion):
         '''
         @param: completion QString
         '''
-        pass
+        self._domainCompleterModel.setStringList([completion])
+
+        # We need to manually force the completion because model is updated
+        # asynchronously, But only force completion when theuser actually added
+        # new text
+        if completion and self._oldTextLength < self._currentTextLength:
+            self.completer().complete()
 
     def _clearCompletion(self):
-        pass
+        self._webView.setFocus()
+        self.showUrl(self._webView.url())
 
     def _loadStarted(self):
-        pass
+        self._progressVisible = True
+        self._progressTimer.start()
+        self._autofillIcon.hide()
 
     def __loadProgress(self, progress):
         '''
         @param: progress int
         '''
+        if gVar.appSettings.showLoadingProgress:
+            self._loadProgress = progress
+            self.update()
 
     def _loadFinished(self):
-        pass
+        if gVar.appSettings.showLoadingProgress:
+            self._progressTimer.start()
+
+        page = self._webView.page()
+        if isinstance(page, WebPage) and page.autoFillUsernames():
+            self._autofillIcon.setUsernames(page.autoFillUsernames())
+            self._autofillIcon.show()
 
     def _hideProgress(self):
-        pass
+        if gVar.appSettings.showLoadingProgress:
+            self._progressVisible = False
+            self.update()
 
     def _loadSettings(self):
-        pass
+        settings = Settings()
+        settings.beginGroup('AddressBar')
+        self._progressStyle = settings.value('ProgressStyle', 0)
+        customColor = settings.value('UseCustomProgressColor', False)
+        if customColor:
+            self._progressColor = settings.value('CustomProgressColor',
+                    self.palette().color(QPalette.Highlight))
+        else:
+            self._progressColor = QColor()
+        settings.endGroup()
 
     # private:
     # override
@@ -394,21 +470,49 @@ class LocationBar(LineEdit):
         '''
         @param: event QShowEvent
         '''
-        pass
+        super().showEvent(event)
+
+        self._refreshTextFormat()
 
     # override
     def focusInEvent(self, event):
         '''
         @param: event QFocusEvent
         '''
-        pass
+        if self._webView:
+            stringUrl = self.convertUrlToText(self._webView.url())
+
+            # Text has been edited, let's show go button
+            if stringUrl != self.text():
+                self._setGoIconVisible(True)
+
+        self.clearTextFormat()
+        super().focusInEvent(event)
+
+        if self._window and Settings().value('Browser-View-Settings/instantBookmarksToolbar', type=bool):
+            self._window.bookmarksToolbar().show()
 
     # override
     def focusOutEvent(self, event):
         '''
         @param: event QFocusEvent
         '''
-        pass
+        # Context menu or completer popup were opened
+        # Let's block focusOutEvent to trick QLineEdit and point cursor properly
+        if event.reason() == Qt.PopupFocusReason:  # TODO: ?
+            return
+
+        super().focusOutEvent(event)
+
+        self._setGoIconVisible(False)
+
+        if not self.text().strip():
+            self.clear()
+
+        self._refreshTextFormat()
+
+        if self._window and Settings().value('Browser-View-Settings/instantBookmarksToolbar', type=bool):
+            self._window.bookmarksToolbar().hide()
 
     # override
     def keyPressEvent(self, event):  # noqa C901
@@ -473,7 +577,31 @@ class LocationBar(LineEdit):
         '''
         @param: event QDropEvent
         '''
-        pass
+        if event.mimeData().hasUrls():
+            dropUrl = event.mimeData().urls()[0]
+            if WebView.isUrlValid(dropUrl):
+                self.setText(dropUrl.toString())
+                self.loadRequest(LoadRequest(dropUrl))
+
+                event = QFocusEvent(QFocusEvent.FocusOut)
+                super().focusOutEvent(event)
+                return
+        elif event.mimeData().hasText():
+            dropText = event.mimeData().text().strip()
+            dropUrl = QUrl(dropText)
+            if WebView.isUrlValid(dropUrl):
+                self.setText(dropUrl.toString())
+                self.loadRequest(LoadRequest(dropUrl))
+
+                event = QFocusEvent(QFocusEvent.FocusOut)
+                super().focusOutEvent(event)
+                return
+            else:
+                self.setText(dropText)
+                self.setFocus()
+                return
+
+        super().dropEvent(event)
 
     # override
     def paintEvent(self, event):
@@ -528,4 +656,39 @@ class LocationBar(LineEdit):
                 p.drawRoundedRect(bar, 1, 1)
 
     def _refreshTextFormat(self):
-        pass
+        if not self._webView:
+            return
+
+        textFormat = []  # typedef QList<QTextLayout::FormatRange>
+        if self._webView.url().isEmpty():
+            hostName = QUrl(self.text()).host()
+        else:
+            hostName = self._webView.url().host()
+
+        if hostName:
+            hostPos = self.text().indexOf(hostName)
+            if hostPos > 0:
+                format_ = QTextCharFormat()
+                palette = self.palette()
+                color = Colors.mid(palette.color(QPalette.Base), palette.color(QPalette.Text), 1, 1)
+                format_.setForeground(color)
+
+                schemePart = QTextLayout.FormatRange()
+                schemePart.start = 0
+                schemePart.length = hostPos
+                schemePart.format = format_
+
+                hostPart = QTextLayout.FormatRange()
+                hostPart.start = hostPos
+                hostPart.length = len(hostName)
+
+                remainingPart = QTextLayout.FormatRange()
+                remainingPart.start = hostPos + len(hostName)
+                remainingPart.length = len(self.text()) - remainingPart.start
+                remainingPart.format = format_
+
+                textFormat.append(schemePart)
+                textFormat.append(hostPart)
+                textFormat.append(remainingPart)
+
+        self.setTextFormat(textFormat)
