@@ -5,7 +5,10 @@ from PyQt5.Qt import QTimer
 from PyQt5.Qt import QStandardItem
 from PyQt5.Qt import QRect
 from PyQt5.Qt import QModelIndex
+from PyQt5.Qt import QUrl
+from mc.webengine.LoadRequest import LoadRequest
 from mc.common.globalvars import gVar
+from mc.common import const
 from .LocationCompleterModel import LocationCompleterModel
 from .LocationCompleterRefreshJob import LocationCompleterRefreshJob
 from .LocationCompleterView import LocationCompleterView
@@ -211,25 +214,79 @@ class LocationCompleter(QObject):
         '''
         @param: index QModelIndex
         '''
-        pass
+        assert(index.isValid())
+
+        self.closePopup()
+
+        # Clear locationbar
+        self.clearCompletion.emit()
+
+        tabPos = index.data(LocationCompleterModel.TabPositionTabRole)
+        if tabPos is not None and tabPos > -1:
+            # BrowserWindow
+            window = index.data(LocationCompleterModel.TabPositionWindowRole)
+            assert(window)
+            self._switchToTab(window, tabPos)
+            return
+
+        self._loadRequest(self._createLoadRequest(index))
 
     def _indexCtrlActivated(self, index):
         '''
         @param: index QModelIndex
         '''
-        pass
+        assert(index.isValid())
+        assert(self._window)
+
+        self.closePopup()
+
+        # Clear locationbar
+        self.clearCompletion.emit()
+
+        # Load request in new tab
+        self._window.tabWidget().addView(self._createLoadRequest(index),
+                const.NT_CleanSelectedTab)
 
     def _indexShiftActivated(self, index):
         '''
         @param: index QModelIndex
         '''
-        pass
+        assert(index.isValid())
+
+        self.closePopup()
+
+        # Clear locationbar
+        self.clearCompletion.emit()
+
+        # Load request
+        if index.data(LocationCompleterModel.VisitSearchItemRole):
+            url = QUrl(index.data(LocationCompleterModel.SearchStringRole))
+            req = LoadRequest(url)
+            self._loadRequested(req)
+        else:
+            self._loadRequest(self._createLoadRequest(index))
 
     def _indexDeleteRequested(self, index):
         '''
         @param: index QModelIndex
         '''
-        pass
+        if not index.isValid():
+            return
+
+        if index.data(LocationCompleterModel.BookmarkRole):
+            bookmark = index.data(LocationCompleterModel.BookmarkItemRole)
+            gVar.app.bookmarks().removeBookmark(bookmark)
+        elif index.data(LocationCompleterModel.HistoryRole):
+            id_ = index.data(LocationCompleterModel.IdRole)
+            gVar.app.history().deleteHistoryEntry(id_)
+        else:
+            return
+
+        self._s_view.setUpdatesEnabled(False)
+        self._s_model.removeRow(index.row(), index.parent())
+        self._s_view.setUpdatesEnabled(True)
+
+        self._showPopup()
 
     # private
     def _createLoadRequest(self, index):
@@ -237,23 +294,68 @@ class LocationCompleter(QObject):
         @param: index QModelIndex
         @return: LoadRequest
         '''
-        pass
+        from ..LocationBar import LocationBar
+        request = LoadRequest()
+        bookmark = None
+
+        if index.data(LocationCompleterModel.HistoryRole):
+            request = LoadRequest(index.data(LocationCompleterModel.UrlRole))
+        elif index.data(LocationCompleterModel.BookmarkRole):
+            bookmark = index.data(LocationCompleterModel.BookmarkItemRole)
+        elif index.data(LocationCompleterModel.SearchSuggestionRole):
+            text = index.data(LocationCompleterModel.TitleRole)
+            request = gVar.app.searchEnginesManager().searchResult(LocationBar.searchEngine(), text)
+        elif index.data(LocationCompleterModel.VisitSearchItemRole):
+            action = LocationBar.loadAction(index.data(LocationCompleterModel.SearchStringRole))
+            if action.type in (LocationBar.LoadAction.Url,
+                    LocationBar.LoadAction.Search):
+                request = action.loadRequest
+            elif action.type == LocationBar.LoadAction.Bookmark:
+                bookmark = action.bookmark
+
+        if bookmark:
+            bookmark.updateVisitCount()
+            request = LoadRequest(bookmark.url())
+
+        return request
 
     def _switchToTab(self, window, tab):
         '''
         @param: window BrowserWindow
         @param: tab int
         '''
-        pass
+        assert(window)
+        assert(tab >= 0)
+
+        # TabWidget
+        tabWidget = window.tabWidget()
+
+        if window.isActiveWindow() or tabWidget.currentIndex() != tab:
+            tabWidget.setCurrentIndex(tab)
+            window.show()
+            window.activeWindow()
+            window.raise_()
+        else:
+            tabWidget.webTab().setFocus()
 
     def _loadRequest(self, request):
         '''
         @param: request LoadRequest
         '''
-        pass
+        self.closePopup()
+
+        # Show url in locationbar
+        self.showCompletion.emit(request.url().toString(), False)
+
+        # Load request
+        self.loadRequested.emit(request)
 
     def _openSearchEnginesDialog(self):
-        pass
+        # Clear locationbar
+        self.clearCompletion.emit()
+
+        dialog = SearchEnginesDialog(self._window)
+        dialog.open()
 
     def _showPopup(self):
         assert(self._window)
