@@ -2,6 +2,7 @@ from PyQt5.Qt import QObject
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QStandardItem
 from PyQt5.Qt import QUrl
+from PyQt5.Qt import QDateTime
 from mc.common.globalvars import gVar
 from .LocationCompleterModel import LocationCompleterModel
 from mc.tools.IconProvider import IconProvider
@@ -10,11 +11,10 @@ from mc.common.models import HistoryDbModel
 class LocationCompleterRefreshJob(QObject):
     def __init__(self, searchString):
         super().__init__()
-        self._timestamp = 0  # qint64
-        self._searchString = ''
+        self._timestamp = QDateTime.currentMSecsSinceEpoch()  # qint64
+        self._searchString = searchString
         self._domainCompletion = ''
         self._items = []  # QList<QStandardItem>
-        self._watcher = None  # QFutureWatcher<void>*
         self._jobCancelled = False
 
         def func():
@@ -60,6 +60,7 @@ class LocationCompleterRefreshJob(QObject):
 
     # private Q_SLOTS:
     def _slotFinished(self):
+        print('finished emited')
         self.finished.emit()
 
     def jobCancelled(self):
@@ -122,7 +123,9 @@ class LocationCompleterRefreshJob(QObject):
         # Search in bookmarks
         if showType == self.HistoryAndBookmarks or showType == self.Bookmarks:
             bookmarksLimit = 20
-            bookmarks = gVar.app.bookmarks().searchBookmarks(self._searchString, bookmarksLimit)
+            print('start search bookmarks...')
+            bookmarks = gVar.app.bookmarks().searchBookmarksByString(
+                self._searchString, bookmarksLimit)
 
             for bookmark in bookmarks:
                 assert(bookmark.isUrl())
@@ -132,7 +135,7 @@ class LocationCompleterRefreshJob(QObject):
                     continue
 
                 item = QStandardItem()
-                item.setText(bookmark.url().toEncoded())
+                item.setText(bookmark.url().toEncoded().data().decode())
                 item.setData(-1, LocationCompleterModel.IdRole)
                 item.setData(bookmark.title(), LocationCompleterModel.TitleRole)
                 item.setData(bookmark.url(), LocationCompleterModel.UrlRole)
@@ -145,12 +148,15 @@ class LocationCompleterRefreshJob(QObject):
                 self._items.append(item)
 
         # Sort by count
-        self._items = sorted(self._items, lambda item: item.data(LocationCompleterModel.CountRole), True)
+        print('got items to sort', self._items)
+        self._items.sort(key=lambda item: item.data(LocationCompleterModel.CountRole), reverse=True)
 
         # Search in history
         if showType == self.HistoryAndBookmarks or showType == self.History:
             historyLimit = 20
+            print('create HistoryQuery')
             qs = LocationCompleterModel.createHistoryQuery(self._searchString, historyLimit)
+            print('create HistoryQuery finished')
 
             for history in qs:
                 url = QUrl(history.url)
@@ -159,7 +165,7 @@ class LocationCompleterRefreshJob(QObject):
                     continue
 
                 item = QStandardItem()
-                item.setText(url.toEncoded())
+                item.setText(url.toEncoded().data().decode())
                 item.setData(history.id, LocationCompleterModel.IdRole)
                 item.setData(history.title, LocationCompleterModel.TitleRole)
                 item.setData(url, LocationCompleterModel.UrlRole)
@@ -173,11 +179,11 @@ class LocationCompleterRefreshJob(QObject):
         qs = HistoryDbModel.select().order_by(HistoryDbModel.count.desc()).limit(15)
         for history in qs:
             item = QStandardItem()
-            url = QUrl(item.url)
+            url = QUrl(history.url)
 
-            item.setText(url.toEncoded())
-            item.setData(item.id, LocationCompleterModel.IdRole)
-            item.setData(item.title, LocationCompleterModel.TitleRole)
+            item.setText(url.toEncoded().data().decode())
+            item.setData(history.id, LocationCompleterModel.IdRole)
+            item.setData(history.title, LocationCompleterModel.TitleRole)
             item.setData(url, LocationCompleterModel.UrlRole)
             item.setData(True, LocationCompleterModel.HistoryRole)
 

@@ -52,6 +52,7 @@ class LocationCompleter(QObject):
 
     # public Q_SLOTS:
     def complete(self, string):
+        print('complete')
         trimmedStr = string.strip()
 
         # Indicates that new completion was requested by user
@@ -61,6 +62,7 @@ class LocationCompleter(QObject):
         self.cancelRefreshJob.emit()
 
         job = LocationCompleterRefreshJob(trimmedStr)
+        print('start job')
         job.finished.connect(self._refreshJobFinished)
         self.cancelRefreshJob.connect(job.jobCancelled)
 
@@ -81,6 +83,7 @@ class LocationCompleter(QObject):
         # Add/update search/visit item
         def func():
             index = self._s_model.index(0, 0)
+            print('VisitSearchItemRole', index.data(LocationCompleterModel.VisitSearchItemRole))
             if index.data(LocationCompleterModel.VisitSearchItemRole):
                 self._s_model.setData(index, trimmedStr, Qt.DisplayRole)
                 self._s_model.setData(index, trimmedStr, LocationCompleterModel.UrlRole)
@@ -102,6 +105,7 @@ class LocationCompleter(QObject):
 
     def showMostVisited(self):
         self._locationBar.setFocus()
+        print('showMostVisited')
         self.complete('')
 
     # Q_SIGNALS:
@@ -117,6 +121,7 @@ class LocationCompleter(QObject):
 
     # private Q_SLOTS
     def _refreshJobFinished(self):
+        print('_refreshJobFinished')
         job = self.sender()
         assert(isinstance(job, LocationCompleterRefreshJob))
 
@@ -124,6 +129,7 @@ class LocationCompleter(QObject):
         # Also don't open the popup again when it was already closed
         if not job.isCanceled() and job.timestamp() > self._lastRefreshTimestamp and \
                 not self._popupClosed:
+            print('---vv--> job completions', job.completions())
             self._s_model.setCompletions(job.completions())
             self._addSuggestions(self._oldSuggestions)
             self._showPopup()
@@ -196,7 +202,7 @@ class LocationCompleter(QObject):
         completion = index.data()
 
         # Bool
-        completeDomain = index.data(LocationCompleterModel.VisitSearchItemRole)
+        completeDomain = bool(index.data(LocationCompleterModel.VisitSearchItemRole))
 
         originalText = self._s_model.index(0, 0).data(LocationCompleterModel.SearchStringRole)
 
@@ -330,10 +336,10 @@ class LocationCompleter(QObject):
         # TabWidget
         tabWidget = window.tabWidget()
 
-        if window.isActiveWindow() or tabWidget.currentIndex() != tab:
+        if not window.isActiveWindow() or tabWidget.currentIndex() != tab:
             tabWidget.setCurrentIndex(tab)
             window.show()
-            window.activeWindow()
+            window.activateWindow()
             window.raise_()
         else:
             tabWidget.webTab().setFocus()

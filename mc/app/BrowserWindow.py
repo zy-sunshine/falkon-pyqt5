@@ -50,14 +50,13 @@ class BrowserWindow(QMainWindow):
             '''
             @param: window BrowserWindow
             '''
-            if not window:
-                self.windowState = QByteArray()
-                self.windowGeometry = QByteArray()
-                self.windowUiState = {}  # QString -> QVariant
-                self.virtualDesktop = -1
-                self.currentTab = -1
-                self.tabs = []  # WebTab.SavedTab
-            else:
+            self.windowState = QByteArray()
+            self.windowGeometry = QByteArray()
+            self.windowUiState = {}  # QString -> QVariant
+            self.virtualDesktop = -1
+            self.currentTab = -1
+            self.tabs = []  # WebTab.SavedTab
+            if window:
                 self.init(window)
 
         def init(self, window):

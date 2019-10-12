@@ -256,7 +256,7 @@ class LineEdit(QLineEdit):
 
         for fr in format_:
             type_ = QInputMethodEvent.TextFormat
-            start = fr.start - self.currentPosition()
+            start = fr.start - self.cursorPosition()
             length = fr.length
             value = fr.format
             attributes.append(QInputMethodEvent.Attribute(type_, start, length, value))

@@ -418,7 +418,7 @@ class Bookmarks(QObject):
         @param: limit int
         @param: sensitive Qt.CaseSensitive
         '''
-        assert(items)
+        assert(items is not None)
         assert(parent)
 
         type_ = parent.type()

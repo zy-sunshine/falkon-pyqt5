@@ -339,7 +339,8 @@ class LocationBar(LineEdit):
 
     def _updateSiteIcon(self):
         if self._completer.isVisible():
-            self._siteIcon.setIcon(QIcon.fromTheme('edit-find'), QIcon(':/icons/menu/search-icon.svg'))
+            self._siteIcon.setIcon(QIcon.fromTheme('edit-find',
+                QIcon(':/icons/menu/search-icon.svg')))
         else:
             icon = IconProvider.emptyWebIcon()
             secured = self.property('secured')
@@ -381,7 +382,7 @@ class LocationBar(LineEdit):
 
         self.updateTextMargins()
 
-    def _showCompletion(self, completion, completeDoamin):
+    def _showCompletion(self, completion, completeDomain):
         '''
         @param: completion QString
         @param: completeDomain bool
@@ -391,7 +392,7 @@ class LocationBar(LineEdit):
         # Move cursor to the end
         self.end(False)
 
-        if comleteDomain:
+        if completeDomain:
             self.completer().complete()
 
         self._updateSiteIcon()
@@ -666,7 +667,7 @@ class LocationBar(LineEdit):
             hostName = self._webView.url().host()
 
         if hostName:
-            hostPos = self.text().indexOf(hostName)
+            hostPos = self.text().find(hostName)
             if hostPos > 0:
                 format_ = QTextCharFormat()
                 palette = self.palette()

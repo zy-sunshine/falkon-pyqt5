@@ -298,7 +298,7 @@ class LocationCompleterView(QWidget):
             return True
 
         elif evtType == QEvent.KeyRelease:
-            if evtKey == Qt.Key_Shift:
+            if event.key() == Qt.Key_Shift:
                 self._delegate.setForceVisitItem(False)
                 self._view.viewport().update()
                 return True

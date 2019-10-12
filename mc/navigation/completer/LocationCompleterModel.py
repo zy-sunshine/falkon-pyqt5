@@ -61,7 +61,8 @@ class LocationCompleterModel(QStandardItemModel):
                 items.append(item)
         return items
 
-    def createHistoryQuery(self, searchString, limit, exactMatch=False):
+    @classmethod
+    def createHistoryQuery(cls, searchString, limit, exactMatch=False):
         '''
         @param: searchString QString
         @param: limit int
@@ -76,7 +77,7 @@ class LocationCompleterModel(QStandardItemModel):
             searchList = [ item.strip() for item in searchString.split(' ') ]
             searchList = [ item for item in searchList if item ]
             conds = []
-            for item in len(searchList):
+            for item in searchList:
                 conds.append(
                     (HistoryDbModel.title.contains(item) |
                     HistoryDbModel.url.contains(item))
@@ -89,7 +90,8 @@ class LocationCompleterModel(QStandardItemModel):
 
         return qs
 
-    def createDomainQuery(self, text):
+    @classmethod
+    def createDomainQuery(cls, text):
         '''
         @param: text QString
         '''
