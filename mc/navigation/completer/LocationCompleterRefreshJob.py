@@ -60,7 +60,6 @@ class LocationCompleterRefreshJob(QObject):
 
     # private Q_SLOTS:
     def _slotFinished(self):
-        print('finished emited')
         self.finished.emit()
 
     def jobCancelled(self):
@@ -123,7 +122,6 @@ class LocationCompleterRefreshJob(QObject):
         # Search in bookmarks
         if showType == self.HistoryAndBookmarks or showType == self.Bookmarks:
             bookmarksLimit = 20
-            print('start search bookmarks...')
             bookmarks = gVar.app.bookmarks().searchBookmarksByString(
                 self._searchString, bookmarksLimit)
 
@@ -148,15 +146,12 @@ class LocationCompleterRefreshJob(QObject):
                 self._items.append(item)
 
         # Sort by count
-        print('got items to sort', self._items)
         self._items.sort(key=lambda item: item.data(LocationCompleterModel.CountRole), reverse=True)
 
         # Search in history
         if showType == self.HistoryAndBookmarks or showType == self.History:
             historyLimit = 20
-            print('create HistoryQuery')
             qs = LocationCompleterModel.createHistoryQuery(self._searchString, historyLimit)
-            print('create HistoryQuery finished')
 
             for history in qs:
                 url = QUrl(history.url)

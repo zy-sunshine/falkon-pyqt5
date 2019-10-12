@@ -96,7 +96,7 @@ class LocationCompleterModel(QStandardItemModel):
         @param: text QString
         '''
         if not text or text == 'www.':
-            return HistoryDbModel.select()
+            return HistoryDbModel.select().where(HistoryDbModel.id == 0)
 
         withoutWww = text.startswith('w') and not text.startswith('www.')
         qs = HistoryDbModel.select()

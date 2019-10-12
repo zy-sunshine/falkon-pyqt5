@@ -62,7 +62,6 @@ class LocationCompleter(QObject):
         self.cancelRefreshJob.emit()
 
         job = LocationCompleterRefreshJob(trimmedStr)
-        print('start job')
         job.finished.connect(self._refreshJobFinished)
         self.cancelRefreshJob.connect(job.jobCancelled)
 
@@ -83,7 +82,6 @@ class LocationCompleter(QObject):
         # Add/update search/visit item
         def func():
             index = self._s_model.index(0, 0)
-            print('VisitSearchItemRole', index.data(LocationCompleterModel.VisitSearchItemRole))
             if index.data(LocationCompleterModel.VisitSearchItemRole):
                 self._s_model.setData(index, trimmedStr, Qt.DisplayRole)
                 self._s_model.setData(index, trimmedStr, LocationCompleterModel.UrlRole)
@@ -129,7 +127,6 @@ class LocationCompleter(QObject):
         # Also don't open the popup again when it was already closed
         if not job.isCanceled() and job.timestamp() > self._lastRefreshTimestamp and \
                 not self._popupClosed:
-            print('---vv--> job completions', job.completions())
             self._s_model.setCompletions(job.completions())
             self._addSuggestions(self._oldSuggestions)
             self._showPopup()
