@@ -143,7 +143,7 @@ class TabWidget(TabStackedWidget):
 
         # ListTabs button is showed only when tabbar overflows
         self._buttonListTabs = ToolButton(self._tabBar)
-        self._buttonListTabs.setObjectName('tabwidet-button-opentabs')
+        self._buttonListTabs.setObjectName('tabwidget-button-opentabs')
         self._buttonListTabs.setMenu(self._menuTabs)
         self._buttonListTabs.setPopupMode(QToolButton.InstantPopup)
         self._buttonListTabs.setToolTip('List of tabs')
@@ -695,6 +695,7 @@ class TabWidget(TabStackedWidget):
         self._buttonAddTab.move(posX, posY)
 
     def tabBarOverFlowChanged(self, overflowed):
+        print('tabBarOverFlowChanged', overflowed)
         # Show buttons inside tabbar
         self._buttonAddTab.setVisible(not overflowed)
 

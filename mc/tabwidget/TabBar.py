@@ -208,7 +208,6 @@ class TabBar(ComboTabBar):
         # Make sure close buttons on inactive tabs are hidden
         # This is needed for when leaving fullscreen from non-overflowed to
         # overflowed state
-        import ipdb; ipdb.set_trace()
         if overflowed and self._showCloseOnInactive != 1:
             self.setTabsCloseable(False)
             self._showCloseButton(self.currentIndex())
@@ -412,7 +411,7 @@ class TabBar(ComboTabBar):
         c = tabRect.center()
         # QSize
         csize = QSize(tabRect.width() * 0.7, tabRect.height() * 0.7)
-        center = QRect(c.x() - csize.width() / 2, c.y() - csize.height() / 2, csize.width(), csize.height())
+        center = QRect(c.x() - csize.width() // 2, c.y() - csize.height() // 2, csize.width(), csize.height())
 
         if allowSelect and center.contains(pos):
             return cls._SelectTab
@@ -547,25 +546,22 @@ class TabBar(ComboTabBar):
             return QSize(-1, -1)
 
         pinnedTabWidth = self._comboTabBarPixelMetric(ComboTabBar.PinnedTabWidth)
-        minTabWith = self._comboTabBarPixelMetric(ComboTabBar.NormalTabMinimumWidth)
+        minTabWidth = self._comboTabBarPixelMetric(ComboTabBar.NormalTabMinimumWidth)
 
         size = super().tabSizeHint(index)
 
         # The overflowed tabs have same size and we can use this fast method
         if fast:
             if index >= self.pinnedTabsCount():
-                size.setWidth(minTabWith)
+                size.setWidth(minTabWidth)
             else:
                 size.setWidth(pinnedTabWidth)
             return size
 
-        # TODO: WebTab* webTab =
-        # qobject_cast<WebTab*>(m_tabWidget->widget(index));
         webTab = self._tabWidget.widget(index)
-        # TODO: TabBar* tabBar = const_cast <TabBar*>(this);
         tabBar = self
 
-        if webTab and webTab.isPinned():
+        if isinstance(webTab, WebTab) and webTab.isPinned():
             size.setWidth(pinnedTabWidth)
         else:
             availableWidth = self._mainTabBarWidth() - self._comboTabBarPixelMetric(self.ExtraReservedWidth)
@@ -581,22 +577,18 @@ class TabBar(ComboTabBar):
             elif normalTabsCount > 0:
                 minActiveTabWidth = self._comboTabBarPixelMetric(ComboTabBar.ActiveTabMinimumWidth)
 
-                maxWidthForTab = availableWidth / normalTabsCount
-                realTabWidth = maxWidthForTab
-                adjustingActiveTab = False
+                maxWidthForTab = availableWidth // normalTabsCount
 
-                if realTabWidth < minActiveTabWidth:
+                if maxWidthForTab < minActiveTabWidth:
                     if normalTabsCount > 1:
-                        maxWidthForTab = (availableWidth - minActiveTabWidth) / (normalTabsCount - 1)
+                        maxWidthForTab = (availableWidth - minActiveTabWidth) // (normalTabsCount - 1)
                     else:
                         maxWidthForTab = 0
-                    realTabWidth = minActiveTabWidth
-                    adjustingActiveTab = True
 
-                tryAdjusting = availableWidth >= minTabWith * normalTabsCount
+                tryAdjusting = availableWidth >= (minTabWidth * normalTabsCount)
 
                 if self._showCloseOnInactive != 1 and self.tabsCloseable() and \
-                        availableWidth < (minTabWith + 25) * normalTabsCount:
+                        availableWidth < (minTabWidth + 25) * normalTabsCount:
                     # Hiding close buttons to save some space
                     tabBar.setTabsCloseable(False)
                     tabBar._showCloseButton(self.currentIndex())
@@ -610,12 +602,7 @@ class TabBar(ComboTabBar):
 
                     # Fill any empty space (we've got from rounding) with active tab
                     if index == self.mainTabBarCurrentIndex():
-                        if adjustingActiveTab:
-                            self._activeTabWidth = (availableWidth - minActiveTabWidth -
-                                    maxWidthForTab * (normalTabsCount - 1)) + realTabWidth
-                        else:
-                            self._activeTabWidth = (availableWidth -
-                                    maxWidthForTab * normalTabsCount) + maxWidthForTab
+                        self._activeTabWidth = availableWidth - maxWidthForTab * (normalTabsCount - 1)
                         size.setWidth(self._activeTabWidth)
                     else:
                         size.setWidth(self._normalTabWidth)
@@ -623,7 +610,7 @@ class TabBar(ComboTabBar):
             # Restore close buttons according to preferences
 
             if self._showCloseOnInactive != 2 and not self.tabsCloseable() and \
-                    availableWidth >= (minTabWith + 25) * normalTabsCount:
+                    availableWidth >= (minTabWidth + 25) * normalTabsCount:
                 tabBar.setTabsCloseable(True)
 
                 # Hide close buttons on pinned tabs
@@ -631,12 +618,13 @@ class TabBar(ComboTabBar):
                     tabBar._updatePinnedTabCloseButton(idx)
 
         if index == self.count() - 1:
-            # TODO: WebTab* lastMainActiveTab = qobject_cast<WebTab*>(m_tabWidget->widget(mainTabBarCurrentIndex()));
             lastMainActiveTab = self._tabWidget.widget(self.mainTabBarCurrentIndex())
-            xForAddTabButton = self.cornerWidth(Qt.TopLeftCorner) + pinnedTabWidth + \
-                self.normalTabsCount() + self._normalTabWidth
+            cornerWidth = self.cornerWidth(Qt.TopLeftCorner)
+            pinTabBarWidth = self._pinTabBarWidth()
+            xForAddTabButton = cornerWidth + pinTabBarWidth + \
+                self.normalTabsCount() * self._normalTabWidth
 
-            if lastMainActiveTab and self._activeTabWidth > self._normalTabWidth:
+            if isinstance(lastMainActiveTab, WebTab) and self._activeTabWidth > self._normalTabWidth:
                 xForAddTabButton += self._activeTabWidth - self._normalTabWidth
 
             if QApplication.layoutDirection() == Qt.RightToLeft:

@@ -890,7 +890,6 @@ class ComboTabBar(QWidget):
         self._rightLayout.setContentsMargins(0, 0, 0, 0)
         self._rightContainer = QWidget(self)
         self._rightContainer.setLayout(self._rightLayout)
-        self._rightContainer.setStyleSheet('background-color: red')
 
         self._mainLayout = QHBoxLayout()
         self._mainLayout.setSpacing(0)
@@ -935,14 +934,13 @@ class ComboTabBar(QWidget):
         else:
             index = self._mainTabBar.insertTab(index - self.pinnedTabsCount(), icon, text)
 
-            # TODO: enbale close button later
-            #if self.tabsCloseable():
-            #    closeButton = self._mainTabBar.tabButton(index, self.closeButtonPosition())
-            #    if closeButton and closeButton.objectName() != 'combotabbar_tabs_close_button':
-            #        # insert our close button
-            #        self.insertCloseButton(index+self.pinnedTabsCount())
-            #        if closeButton:
-            #            closeButton.deleteLater()
+            if self.tabsCloseable():
+                closeButton = self._mainTabBar.tabButton(index, self.closeButtonPosition())
+                if closeButton and closeButton.objectName() != 'combotabbar_tabs_close_button':
+                    # insert our close button
+                    self.insertCloseButton(index+self.pinnedTabsCount())
+                    if closeButton:
+                        closeButton.deleteLater()
 
             index += self.pinnedTabsCount()
 
@@ -1394,7 +1392,7 @@ class ComboTabBar(QWidget):
 
     # private Q_SLOTS:
     def _setMinimumWidths(self):
-        if self.isVisible() or self._comboTabBarPixelMetric(self.PinnedTabWidth) < 0:
+        if not self.isVisible() or self._comboTabBarPixelMetric(self.PinnedTabWidth) < 0:
             return
 
         tabBarsSpacing = 3  # to distinguish tabbars
@@ -1423,7 +1421,7 @@ class ComboTabBar(QWidget):
             self._mainTabBar.useFastTabSizeHint(False)
             self._mainTabBar.setMinimumWidth(mainTabBarWidth)
         else:
-            if self._mainBarOverFlowed:
+            if not self._mainBarOverFlowed:
                 self._mainBarOverFlowed = True
                 QTimer.singleShot(0, self._emitOverFlowChanged)
 
@@ -1624,10 +1622,14 @@ class ComboTabBar(QWidget):
         )
 
     def _tabInserted(self, index):
-        pass
+        '''
+        @breif: should be override to implement
+        '''
 
     def _tabRemoved(self, index):
-        pass
+        '''
+        @breif: should be override to implement
+        '''
 
     def mainTabBar(self):
         return self._mainTabBar
