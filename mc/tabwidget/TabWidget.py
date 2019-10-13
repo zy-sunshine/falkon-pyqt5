@@ -22,7 +22,7 @@ from PyQt5.Qt import QAction
 
 class AddTabButton(ToolButton):
     def __init__(self, tabWidget, tabBar):
-        super(AddTabButton, self).__init__(tabWidget)
+        super(AddTabButton, self).__init__(tabBar)
         self._tabBar = tabBar  # TabBar
         self._tabWidget = tabWidget  # TabWidget
         self.setObjectName('tabwidget-button-addtab')
