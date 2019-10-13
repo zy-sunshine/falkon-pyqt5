@@ -17,12 +17,7 @@ class LocationCompleterRefreshJob(QObject):
         self._items = []  # QList<QStandardItem>
         self._jobCancelled = False
 
-        def func():
-            try:
-                self._runJob()
-            finally:
-                self._slotFinished()
-        gVar.executor.submit(func)
+        gVar.executor.submit(self._runJobWrap)
 
     def timestamp(self):
         '''
@@ -71,6 +66,12 @@ class LocationCompleterRefreshJob(QObject):
     History = 1
     Bookmarks = 2
     Nothing = 4
+
+    def _runJobWrap(self):
+        try:
+            self._runJob()
+        finally:
+            self._slotFinished()
 
     def _runJob(self):
         if self._jobCancelled or gVar.app.isClosing():

@@ -119,9 +119,17 @@ class LocationCompleter(QObject):
 
     # private Q_SLOTS
     def _refreshJobFinished(self):
-        print('_refreshJobFinished')
         job = self.sender()
-        assert(isinstance(job, LocationCompleterRefreshJob))
+        # NOTE: here has a strange bug, if input location bar speed too fast,
+        # will lost some RefreshJob, and got some QObject of sender here,
+        # these strange senders do not assosiate with any RefreshObj created before.
+        # but the count are matched (the RefreshJob finish signal count equal with
+        # the number of _refreshJobFinished call count)
+        # these strange sender maybe like <PyQt5.QtCore.QObject object at 0x0CE92F80>
+        # so here we just omit these sender's call
+        #assert(isinstance(job, LocationCompleterRefreshJob))
+        if not isinstance(job, LocationCompleterRefreshJob):
+            return
 
         # Don't show results of older jobs
         # Also don't open the popup again when it was already closed
@@ -247,7 +255,7 @@ class LocationCompleter(QObject):
         self.clearCompletion.emit()
 
         # Load request in new tab
-        self._window.tabWidget().addView(self._createLoadRequest(index),
+        self._window.tabWidget().addViewByReq(self._createLoadRequest(index),
                 const.NT_CleanSelectedTab)
 
     def _indexShiftActivated(self, index):

@@ -56,8 +56,7 @@ class LocationCompleterView(QWidget):
         gVar.app.installEventFilter(self)
 
         self._delegate = LocationCompleterDelegate(self)
-        # TODO:
-        #self._view.setItemDelegate(self._delegate)
+        self._view.setItemDelegate(self._delegate)
 
         searchFrame = QFrame(self)
         searchFrame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
@@ -361,6 +360,3 @@ class LocationCompleterView(QWidget):
                 self.loadRequested.emit(gVar.app.searchEngineManager().searchResult(engine, text))
             button.clicked.connect(func)
             self._searchEnginesLayout.addWidget(button)
-
-    #def _openSearchEnginesDialog(self):
-    #    pass

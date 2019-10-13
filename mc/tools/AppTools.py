@@ -2,11 +2,8 @@ from os.path import isfile, isdir, dirname, basename, abspath
 from os.path import join as pathjoin, exists as pathexists
 from PyQt5.Qt import QFileDialog
 from PyQt5.Qt import QKeySequence
-from mc.app.Settings import Settings
-from mc.common.designutil import Singleton
 from PyQt5.Qt import QPalette
 from PyQt5.Qt import QStylePainter
-from PyQt5.QtWidgets import QApplication
 from PyQt5.Qt import QFile
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QFileInfo
@@ -14,6 +11,19 @@ from PyQt5.Qt import QByteArray
 from PyQt5.Qt import QIODevice
 from PyQt5.Qt import QBuffer
 from PyQt5.Qt import QPixmap
+from PyQt5.Qt import QIcon
+from PyQt5.Qt import QFileIconProvider
+from PyQt5.Qt import QRegion
+from PyQt5.Qt import QRect
+from PyQt5.Qt import QSize
+from PyQt5.Qt import QProcess
+from PyQt5.Qt import QPoint
+from PyQt5.Qt import QSysInfo
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QMessageBox
+from mc.app.Settings import Settings
+from mc.common.designutil import Singleton
+from mc.app.DataPaths import DataPaths
 
 class AppTools(Singleton):
 
@@ -79,10 +89,27 @@ class AppTools(Singleton):
         return b''
 
     def centerWidgetOnScreen(self, widget):
-        pass
+        # QRect
+        screen = QApplication.desktop().screenGeometry(widget)
+        size = widget.geometry()
+        widget.move((screen.width() - size.width()) / 2,
+                (screen.height() - size.height()) / 2)
 
     def centerWidgetToParent(self, widget, parent):
-        pass
+        '''
+        @brief: Very, very, very simplified QDialog.adjustPosition from qdialog.cpp
+        '''
+        if not parent or not widget:
+            return
+
+        p = QPoint()
+        parent = parent.window()
+        # QPoint
+        pp = parent.mapToGlobal(QPoint(0, 0))
+        p = QPoint(pp.x() + parent.width() / 2, pp.y() + parent.height() / 2)
+        p = QPoint(p.x() - widget.width() / 2, p.y() - widget.height() / 2 - 20)
+
+        widget.move(p)
 
     def removeRecursively(self, filePath):
         pass
@@ -156,13 +183,26 @@ class AppTools(Singleton):
         return value
 
     def lastPathForFileDialog(self, dialogName, fallbackPath):
-        pass
+        settings = Settings()
+        settings.beginGroup('LastFileDialogsPaths')
+        path = settings.value('FileDialogs/' + dialogName)
+        settings.endGroup()
+
+        if not path:
+            return fallbackPath
+        return path
 
     def saveLastPathForFileDialog(self, dialogName, path):
         '''
         @params: QString
         '''
-        pass
+        if not path:
+            return
+
+        settings = Settings()
+        settings.beginGroup('LastFileDialogsPaths')
+        settings.setValue('FileDialogs/' + dialogName, path)
+        settings.endGroup()
 
     def alignTextToWidth(self, string, text, metrics, width):
         '''
@@ -255,7 +295,17 @@ class AppTools(Singleton):
         @param: args QString
         @return: bool
         '''
-        pass
+        arguments = self.splitCommandArguments(args)
+
+        success = QProcess.startDetached(executable, arguments)
+
+        if not success:
+            info = '<ul><li><b>%s</b>%s</li><li><b>%s</b>%s</li></ul>' % \
+                (_('Executable: '), executable, _('Arguments:'), ' '.join(arguments))
+            QMessageBox.critical(None, _('Cannot start external program'),
+                    _('Cannot start external program! %s') % info)
+
+        return success
 
     def roundedRect(self, rect, radius):
         '''
@@ -263,27 +313,68 @@ class AppTools(Singleton):
         @param: radius int
         @return: QRegion
         '''
-        pass
+        region = QRegion()
 
+        # middle and borders
+        region += rect.adjusted(radius, 0, -radius, 0)
+        region += rect.adjusted(0, radius, 0, -radius)
+
+        # top left
+        corner = QRect(rect.topLeft(), QSize(radius * 2, radius * 2))
+        region += QRegion(corner, QRegion.Ellipse)
+
+        # top right
+        corner.moveTopRight(rect.topRight())
+        region += QRegion(corner, QRegion.Ellipse)
+
+        # bottom left
+        corner.moveBottomLeft(rect.bottomLeft())
+        region += QRegion(corner, QRegion.Ellipse)
+
+        # bottom right
+        corner.moveBottomRight(rect.bottomRight())
+        region += QRegion(corner, QRegion.Ellipse)
+
+        return region
+
+    _s_iconCache = {}
     def iconFromFileName(self, fileName):
         '''
         @param: fileName QString
         @return: QIcon
         '''
-        pass
+        tempInfo = QFileInfo(fileName)
+        suffix = tempInfo.suffix()
+        if suffix in self._s_iconCache:
+            return self._s_iconCache[suffix]
+
+        iconProvider = QFileIconProvider()
+        tempFile = DataPaths.path(DataPaths.Temp) + '/XXXXXX.' + suffix
+        tempFile.open()
+        tempInfo.setFile(tempFile.fileName())
+
+        icon = QIcon(iconProvider.icon(tempInfo))
+        self._s_iconCache[suffix] = icon
 
     def isUtf8(self, string):
         '''
         @param: string const char* (bytes)
         @return: bool
         '''
-        pass
+        if isinstance(string, QByteArray):
+            string = string.data()
+        assert(isinstance(string, bytes))
+        try:
+            string.decode('utf8')
+            return True
+        except UnicodeDecodeError:
+            return False
 
     def containsSpace(self, str0):
         '''
         @return: bool
         '''
-        pass
+        return len(str0.split()) > 1
 
     # QFileDialog static functions that members last used directory
     def getExistingDirectory(self, name, parent=None, caption='', dir_='',
@@ -445,7 +536,7 @@ class AppTools(Singleton):
         '''
         @return: QString
         '''
-        pass
+        return QSysInfo.currentCpuArchitecture()
 
     def operatingSystemLong(self):
         '''

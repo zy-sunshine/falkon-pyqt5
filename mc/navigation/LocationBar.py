@@ -250,7 +250,7 @@ class LocationBar(LineEdit):
         if guessedUrl.isValid():
             # Always allow javascript: to be loaded
             forceLoad = guessedUrl.scheme() == 'javascript'
-            # Onlyu allow spaces in query
+            # Only allow spaces in query
             urlRaw = guessedUrl.toString(QUrl.RemoveQuery)
             if forceLoad or not gVar.appTools.containsSpace(t) or \
                     not gVar.appTools.contiansSpace(urlRaw):
