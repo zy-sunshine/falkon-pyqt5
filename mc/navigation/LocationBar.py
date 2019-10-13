@@ -621,8 +621,8 @@ class LocationBar(LineEdit):
             contentsRect = self.style().subElementRect(QStyle.SE_LineEditContents, option, self)
             contentsRect.adjust(lm, tm, -rm, -bm)
 
-            bg = self._progressColor
-            if bg.isValid() or bg.alpha() == 0:
+            bg = QColor(self._progressColor)
+            if not bg.isValid() or bg.alpha() == 0:
                 pal = self.palette()
                 bg = Colors.mid(pal.color(QPalette.Base), pal.color(QPalette.Text),
                         self._progressStyle > 0 and 4 or 8, 1)

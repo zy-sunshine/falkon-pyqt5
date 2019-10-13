@@ -252,7 +252,7 @@ class Preferences(QDialog):
         pbColor = settings.value("CustomProgressColor", self.palette().color(QPalette.Highlight), type=QColor)
         self._setProgressBarColorIcon(pbColor)
         self._ui.customColorToolButton.clicked.connect(self._selectCustomProgressBarColor)
-        self._ui.resetProgressBarcolor.clicked.connect(self._setProgressBarColorIcon)
+        self._ui.resetProgressBarcolor.clicked.connect(lambda: self._setProgressBarColorIcon())
         settings.endGroup()
 
         settings.beginGroup("SearchEngines")
@@ -939,8 +939,10 @@ class Preferences(QDialog):
         self._ui.customColorToolButton.setProperty('ProgressColor', color)
 
     def _selectCustomProgressBarColor(self):
-        newColor = QColorDialog.getColor(self._ui.customColorToolButton.property('ProgressBar'),
-                self, _('Select Color'))
+        color = self._ui.customColorToolButton.property('ProgressBar')
+        if not color:
+            color = QColor()
+        newColor = QColorDialog.getColor(color, self, _('Select Color'))
         if newColor.isValid():
             self._setProgressBarColorIcon(newColor)
 

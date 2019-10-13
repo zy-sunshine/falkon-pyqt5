@@ -52,7 +52,6 @@ class LocationCompleter(QObject):
 
     # public Q_SLOTS:
     def complete(self, string):
-        print('complete')
         trimmedStr = string.strip()
 
         # Indicates that new completion was requested by user
@@ -103,7 +102,6 @@ class LocationCompleter(QObject):
 
     def showMostVisited(self):
         self._locationBar.setFocus()
-        print('showMostVisited')
         self.complete('')
 
     # Q_SIGNALS:
