@@ -22,7 +22,7 @@ class AppSettings:
 
         # Web-Browser-Settings
         self.defaultZoomLevel = 0
-        self.loadtabsOnActivation = False
+        self.loadTabsOnActivation = False
 
         self.autoOpenProtocols = []  # QStringList
         self.blockedProtocols = []  # QStringList

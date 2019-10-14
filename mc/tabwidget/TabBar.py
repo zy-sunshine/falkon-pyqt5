@@ -425,7 +425,6 @@ class TabBar(ComboTabBar):
         '''
         @param: event QDragEnterEvent
         '''
-        print('dragEnterEvent')
         # QMimeData
         mime = event.mimeData()
 
@@ -440,7 +439,6 @@ class TabBar(ComboTabBar):
         '''
         @param: event QDragMoveEvent
         '''
-        print('dragMoveEvent')
         index = self.tabAt(event.pos())
         mime = event.mimeData()
 
@@ -461,7 +459,6 @@ class TabBar(ComboTabBar):
         '''
         @param: event QDragLeaveEvent
         '''
-        print('dragLeaveEvent')
         self.clearDropIndicator()
 
         super().dragLeaveEvent(event)
@@ -471,7 +468,6 @@ class TabBar(ComboTabBar):
         '''
         @param: event QDropEvent
         '''
-        print('dropEvent')
         self.clearDropIndicator()
 
         mime = event.mimeData()

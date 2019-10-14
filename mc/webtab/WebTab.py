@@ -18,6 +18,8 @@ from mc.webengine.WebPage import WebPage
 from mc.webengine.WebInspector import WebInspector
 from mc.navigation.LocationBar import LocationBar
 from mc.tabwidget.TabIcon import TabIcon
+from mc.tools.IconProvider import IconProvider
+from mc.common.globalvars import gVar
 from .SearchToolBar import SearchToolBar
 
 class WebTab(QWidget):
@@ -252,9 +254,7 @@ class WebTab(QWidget):
             return self._webView.icon(allowNull)
         if allowNull or not self._savedTab.icon.isNull():
             return self._savedTab.icon
-        # TODO:
-        #return IconProvider.emptyWebIcon()
-        return None
+        return IconProvider.emptyWebIcon()
 
     def history(self):
         '''
@@ -378,7 +378,7 @@ class WebTab(QWidget):
         self._webView.page().setAudioMuted(muted)
 
     def toggleMuted(self):
-        self.setMuted(not self.muted())
+        self.setMuted(not self.isMuted())
 
     def backgroundActivity(self):
         return self._webView.backgroundActivity()
@@ -451,11 +451,11 @@ class WebTab(QWidget):
         self.setPinned(tab.isPinned())
         self._sessionData = tab._sessionData
 
-        # TODO:
-        if self.isPinned(): # and qzSettings->loadTabsOnActivation:
+        if self.isPinned() and gVar.appSettings.loadTabsOnActivation:
             self._savedTab = tab
             self.restoredChanged.emit(self.isRestored())
             index = self.tabIndex()
+
             self._tabBar.setTabText(index, tab.title)
             self._locationBar.showUrl(tab.url)
             self._tabIcon.updateIcon()

@@ -137,7 +137,7 @@ class TabStackedWidget(QWidget):
         toolTip = self.tabToolTip(index)
 
         self._tabBar._blockCurrentChangedSignal = True
-        self._tabBar.setTabButton(index, self._tabBar.iconButtonPosition(), 0)
+        self._tabBar.setTabButton(index, self._tabBar.iconButtonPosition(), None)
 
         self._stack.removeWidget(widget)
         if makePinned:

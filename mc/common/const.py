@@ -111,3 +111,5 @@ else:
     DEFAULT_DOWNLOAD_USE_NATIVE_DIALOG = True
 
 MAIN_PATH = pathjoin(BASE_DIR, 'mc', 'main', 'main.py')
+
+APP_SCHEME = 'app'

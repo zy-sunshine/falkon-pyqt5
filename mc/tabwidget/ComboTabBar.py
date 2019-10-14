@@ -36,7 +36,7 @@ from .TabIcon import TabIcon
 
 class TabBarHelper(QTabBar):
     def __init__(self, isPinnedTabBar, comboTabBar):
-        super(TabBarHelper, self).__init__(comboTabBar)
+        super().__init__(comboTabBar)
         self._comboTabBar = comboTabBar
         self._scrollArea = None  # QScrollArea
         self._tabPadding = -1
@@ -73,7 +73,7 @@ class TabBarHelper(QTabBar):
         @param: position QTabBar::ButtonPosition
         @param: widget QWidget
         '''
-        super(TabBarHelper, self).setTabButton(index, position, widget)
+        super().setTabButton(index, position, widget)
 
     # override
     def tabSizeHint(self, index):
@@ -89,7 +89,7 @@ class TabBarHelper(QTabBar):
         '''
         @return: QSize
         '''
-        return super(TabBarHelper, self).tabSizeHint(index)
+        return super().tabSizeHint(index)
 
     def draggedTabRect(self):
         '''
@@ -173,7 +173,7 @@ class TabBarHelper(QTabBar):
         '''
         self._comboTabBar._blockCurrentChangedSignal = True
 
-        super(TabBarHelper, self).removeTab(index)
+        super().removeTab(index)
 
         self._comboTabBar._blockCurrentChangedSignal = False
 
@@ -246,7 +246,7 @@ class TabBarHelper(QTabBar):
         if index == self.currentIndex() and not self._activeTabBar:
             self.currentChanged.emit(self.currentIndex())
 
-        super(TabBarHelper, self).setCurrentIndex(index)
+        super().setCurrentIndex(index)
 
     # private:
     # override
@@ -258,13 +258,15 @@ class TabBarHelper(QTabBar):
             event.ignore()
             return False
 
-        super(TabBarHelper, self).event(event)
+        super().event(event)
         event.ignore()
         return False
 
     # override
     def paintEvent(self, event):  # noqa C901
         '''
+        @note: Adapted from qtabbar.cpp
+            doesn't support vertical tabs
         @param: event QPaintEvent
         '''
         optTabBase = QStyleOptionTabBarBase()
@@ -349,6 +351,7 @@ class TabBarHelper(QTabBar):
             if not self._movingTab or not self._movingTab.isVisible():
                 p.drawControl(QStyle.CE_TabBarTab, tab)
             else:
+                # int
                 taboverlap = self.style().pixelMetric(QStyle.PM_TabBarTabOverlap, None, self)
                 self._movingTab.setGeometry(tab.rect.adjusted(-taboverlap, 0, taboverlap, 0))
 
@@ -358,6 +361,7 @@ class TabBarHelper(QTabBar):
                 grabImage.setDevicePixelRatio(self.devicePixelRatioF())
                 grabImage.fill(Qt.transparent)
                 p = QStylePainter(grabImage, self)
+                # NOTE: this api is not in qt doc and also not in PyQt5
                 # p.initFrom(self)
                 if tabDragOffset != 0:
                     tab.position = QStyleOptionTab.OnlyOneTab
@@ -373,9 +377,12 @@ class TabBarHelper(QTabBar):
             if self._dropIndicatorPosition == ComboTabBar.BeforTab:
                 r = QRect(max(0, tr.left() - 1), tr.top(), 3, tr.height())
             else:
-                rightOffset = self._dropIndicatorIndex == self.count() - 1
+                if self._dropIndicatorIndex == self.count() - 1:
+                    rightOffset = -2
+                else:
+                    rightOffset = 0
                 r = QRect(tr.right() + rightOffset, tr.top(), 3, tr.height())
-                gVar.appTools.paintDropIndicator(self, r)
+            gVar.appTools.paintDropIndicator(self, r)
 
     # override
     def mousePressEvent(self, event):
@@ -389,9 +396,9 @@ class TabBarHelper(QTabBar):
                 self._dragStartPosition = event.pos()
                 # virtualize selecting tab by click
                 if self._pressedIndex == self.currentIndex() and not self._activeTabBar:
-                    self.emit(self.currentIndex())
+                    self.currentChanged.emit(self.currentIndex())
 
-        super(TabBarHelper, self).mousePressEvent(event)
+        super().mousePressEvent(event)
 
     # override
     def mouseMoveEvent(self, event):
@@ -402,7 +409,7 @@ class TabBarHelper(QTabBar):
             if (event.pos() - self._dragStartPosition).manhattanLength() > QApplication.startDragDistance():
                 self._dragInProgress = True
 
-        super(TabBarHelper, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
 
         # Hack to find QMovableTabWidget
         if self._dragInProgress and not self._movingTab:
@@ -411,10 +418,8 @@ class TabBarHelper(QTabBar):
             grabRect = self.tabRect(self.currentIndex())
             grabRect.adjust(-taboverlap, 0, taboverlap, 0)
             for obj in objects:
-                # TODO: QWidget *widget = qobject_cast<QWidget*>(object);
                 widget = obj
-                if widget and widget.geometry() == grabRect:
-                    # m_movingTab = static_cast<QMovableTabWidget*>(widget)
+                if isinstance(widget, QWidget) and widget.geometry() == grabRect:
                     self._movingTab = widget
                     break
 
@@ -438,7 +443,7 @@ class TabBarHelper(QTabBar):
                 pos.setX(pos.x() - diff)
                 ev = QMouseEvent(event.type(), pos, event.button(),
                     event.buttons(), event.modifiers())
-                super(TabBarHelper, self).mouseMoveEvent(ev)
+                super().mouseMoveEvent(ev)
 
     # override
     def mouseReleaseEvent(self, event):
@@ -452,7 +457,7 @@ class TabBarHelper(QTabBar):
             self._dragInProgress = False
             self._dragStartPosition = QPoint()
 
-        super(TabBarHelper, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
 
         self.update()
 
@@ -477,19 +482,22 @@ class TabBarHelper(QTabBar):
         @param: option QStyleOptionTab
         @param: tabIndex int
         '''
-        super(TabBarHelper, self).initStyleOption(option, tabIndex)
+        super().initStyleOption(option, tabIndex)
 
         # Workaround zero padding when tabs are styled using style sheets
         if self._tabPadding:
+            # QRect
             textRect = self.style().subElementRect(QStyle.SE_TabBarTabText, option, self)
             width = textRect.width() - 2 * self._tabPadding
-            option.text = option.fontMetrics.elidedText(
-                self.tabText(tabIndex), self.elideMode(), width, Qt.TextShowMnemonic,
+            text = self.tabText(tabIndex)
+            elidedText = option.fontMetrics.elidedText(
+                text, self.elideMode(), width, Qt.TextShowMnemonic,
             )
+            option.text = elidedText
 
 class TabScrollBar(QScrollBar):
     def __init__(self, parent=None):
-        super(TabScrollBar, self).__init__(parent)
+        super().__init__(parent)
         self._animation = QPropertyAnimation(self, b'value', self)  # QPropertyAnimation
 
     def isScrolling(self):
@@ -516,7 +524,7 @@ class TabBarScrollWidget(QWidget):
         '''
         @param: tabBar QTabBar
         '''
-        super(TabBarScrollWidget, self).__init__(parent)
+        super().__init__(parent)
         self._tabBar = tabBar
         self._usesScrollButtons = False
         self._totalDeltas = 0
@@ -649,7 +657,6 @@ class TabBarScrollWidget(QWidget):
             self._tabBar.setElideMode(self._tabBar.elideMode())
 
     def isOverflowed(self):
-        # TODO: ?
         return self._tabBar.count() > 0 and \
             self._scrollBar.minimum() != self._scrollBar.maximum()
 
@@ -746,7 +753,7 @@ class TabBarScrollWidget(QWidget):
         '''
         @param: event QResizeEvent
         '''
-        super(TabBarScrollWidget, self).resizeEvent(event)
+        super().resizeEvent(event)
 
         self._updateScrollButtonsState()
 
@@ -757,7 +764,7 @@ class CloseButton(QAbstractButton):
         * taken from qtabbar.cpp
     '''
     def __init__(self, parent=None):
-        super(CloseButton, self).__init__(parent)
+        super().__init__(parent)
         self.setObjectName('combotabbar_tabs_close_button')
         self.setFocusPolicy(Qt.NoFocus)
         self.setCursor(Qt.ArrowCursor)
@@ -780,7 +787,7 @@ class CloseButton(QAbstractButton):
         '''
         if self.isEnabled():
             self.update()
-        super(CloseButton, self).enterEvent(event)
+        super().enterEvent(event)
 
     # override
     def leaveEvent(self, event):
@@ -790,7 +797,7 @@ class CloseButton(QAbstractButton):
         if self.isEnabled():
             self.update()
 
-        super(CloseButton, self).leaveEvent(event)
+        super().leaveEvent(event)
 
     # override
     def paintEvent(self, event):
@@ -837,7 +844,7 @@ class ComboTabBar(QWidget):
     AfterTab = 1
 
     def __init__(self, parent=None):
-        super(ComboTabBar, self).__init__(parent)
+        super().__init__(parent)
         self._mainLayout = None
         self._leftLayout = None
         self._rightLayout = None
@@ -859,7 +866,7 @@ class ComboTabBar(QWidget):
         self._wheelHelper = WheelHelper()
 
         # init
-        super(ComboTabBar, self).setObjectName('tabbarwidget')
+        super().setObjectName('tabbarwidget')
 
         self._mainTabBar = TabBarHelper(isPinnedTabBar=False, comboTabBar=self)
         self._pinnedTabBar = TabBarHelper(isPinnedTabBar=True, comboTabBar=self)
@@ -1188,7 +1195,7 @@ class ComboTabBar(QWidget):
         '''
         @param: policy Qt::FocusPolicy
         '''
-        super(ComboTabBar, self).setFocusPolicy(policy)
+        super().setFocusPolicy(policy)
         self._mainTabBar.setFocusPolicy(policy)
         self._pinnedTabBar.setFocusPolicy(policy)
 
@@ -1208,7 +1215,7 @@ class ComboTabBar(QWidget):
         self._pinnedTabBarWidget.setMouseTracking(enable)
         self._pinnedTabBar.setMouseTracking(enable)
 
-        super(ComboTabBar, self).setMouseTracking(enable)
+        super().setMouseTracking(enable)
 
     def insertCloseButton(self, index):
         index -= self.pinnedTabsCount()
@@ -1237,10 +1244,10 @@ class ComboTabBar(QWidget):
         '''
         @return: QTabBar::ButtonPosition
         '''
+        # QTabBar::ButtonPosition
         result = self.style().styleHint(
             QStyle.SH_TabBar_CloseButtonPosition,
             None, self._mainTabBar)
-        # TODO: convert result to QTabBar::ButtonPosition
         return result
 
     def iconButtonSize(self):
@@ -1468,7 +1475,7 @@ class ComboTabBar(QWidget):
                 to_+self.pinnedTabsCount())
 
     def _closeTabFromButton(self):
-        # TODO: QWidget* button = qobject_cast<QWidget*>(sender());
+        # QWidget
         button = self.sender()
 
         tabToClose = -1
@@ -1507,7 +1514,7 @@ class ComboTabBar(QWidget):
         @return: bool
         '''
         # bool
-        res = super(ComboTabBar, self).event(event)
+        res = super().event(event)
 
         evType = event.type()
         if evType == QEvent.ToolTip:
@@ -1567,18 +1574,18 @@ class ComboTabBar(QWidget):
         @param: ev QEvent
         '''
         if obj == self._mainTabBar and ev.type() == QEvent.Resize:
-            # TODO: static_cast<QResizeEvent>(ev)
+            # QResizeEvent
             event = ev
             if event.oldSize().height() != event.size().height():
                 self.setUpLayout()
 
         # Hanlde wheel events exclusively in ComboTabBar
         if ev.type() == QEvent.Wheel:
-            # TODO: static_cast<QWheelEvent>
+            # QWheelEvent
             self.wheelEvent(ev)
             return True
 
-        return super(ComboTabBar, self).eventFilter(obj, ev)
+        return super().eventFilter(obj, ev)
 
     # override
     def paintEvent(self, ev):
