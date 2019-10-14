@@ -33,11 +33,11 @@ class TabBarTabMetrics(QWidget):
     def init(self):
         if self._metrics:
             return
-        self._metrics[0] = 250
-        self._metrics[1] = 100
-        self._metrics[2] = 100
-        self._metrics[3] = 100
-        self._metrics[4] = -1  # Will be initialized from TabBar
+        self._metrics[0] = 250  # normalMaxWidth
+        self._metrics[1] = 100  # normalMinWidth
+        self._metrics[2] = 100  # activeMinWidth
+        self._metrics[3] = 100  # overflowedWidth
+        self._metrics[4] = -1  # pinnedWidth Will be initialized from TabBar
 
     def _normalMaxWidth(self):
         return self._metrics[0]
@@ -604,7 +604,6 @@ class TabBar(ComboTabBar):
                         size.setWidth(self._normalTabWidth)
 
             # Restore close buttons according to preferences
-
             if self._showCloseOnInactive != 2 and not self.tabsCloseable() and \
                     availableWidth >= (minTabWidth + 25) * normalTabsCount:
                 tabBar.setTabsCloseable(True)
@@ -630,7 +629,7 @@ class TabBar(ComboTabBar):
 
         return size
 
-    def comboTabBarPixelMetric(self, sizeType):
+    def _comboTabBarPixelMetric(self, sizeType):
         '''
         @param: sizeType ComboTabBar::SizeType
         '''

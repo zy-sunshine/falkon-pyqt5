@@ -233,7 +233,7 @@ class TabWidget(TabStackedWidget):
         return self._tabBar.pinnedTabsCount()
 
     def extraReservedWidth(self):
-        self._buttonAddTab.width()
+        return self._buttonAddTab.width()
 
     def webTab(self, index=-1):
         '''
