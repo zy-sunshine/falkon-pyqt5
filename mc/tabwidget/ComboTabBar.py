@@ -890,7 +890,6 @@ class ComboTabBar(QWidget):
         self._leftLayout.setContentsMargins(0, 0, 0, 0)
         self._leftContainer = QWidget(self)
         self._leftContainer.setLayout(self._leftLayout)
-        self._leftContainer.setStyleSheet('background-color: blue')
 
         self._rightLayout = QHBoxLayout()
         self._rightLayout.setSpacing(0)

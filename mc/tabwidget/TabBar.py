@@ -135,9 +135,9 @@ class TabBar(ComboTabBar):
     def loadSettings(self):
         settings = Settings()
         settings.beginGroup('Browser-Tabs-Settings')
-        self._hideTabBarWithOneTab = settings.value('hideTabsWithOneTab', False, type=bool)
-        activateLastTab = settings.value('ActivateLastTabWhenCloseActual', False, type=bool)
-        self._showCloseOnInactive = settings.value('showCloseOnInactiveTabs', 0, type=int)
+        self._hideTabBarWithOneTab = settings.value('hideTabsWithOneTab', False)
+        activateLastTab = settings.value('ActivateLastTabWhenCloseActual', False)
+        self._showCloseOnInactive = settings.value('showCloseOnInactiveTabs', 0)
         settings.endGroup()
 
         self.setSelectionBehaviorOnRemove(
