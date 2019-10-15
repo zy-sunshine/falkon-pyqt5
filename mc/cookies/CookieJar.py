@@ -3,6 +3,7 @@ from PyQt5.Qt import QNetworkCookie
 from PyQt5.Qt import pyqtSignal
 from mc.common.globalvars import gVar
 from mc.app.Settings import Settings
+from mc.common import const
 
 class CookieJar(QObject):
     DEBUG = True
@@ -22,13 +23,16 @@ class CookieJar(QObject):
         self.loadSettings()
         self._client.loadAllCookies()
 
-        self._client.setCookieFilter(self._cookieFilter)
+        if const.QTWEBENGINEWIDGETS_VERSION >= const.QT_VERSION_CHECK(5, 11, 0):
+            # TODO: check
+            self._client.setCookieFilter(self._cookieFilter)
 
         self._client.cookieAdded.connect(self._slotCookieAdded)
         self._client.cookieRemoved.connect(self._slotCookieRemoved)
 
     def __del__(self):
-        self._client.setCookieFilter(None)
+        if const.QTWEBENGINEWIDGETS_VERSION >= const.QT_VERSION_CHECK(5, 11, 0):
+            self._client.setCookieFilter(None)
 
     def loadSettings(self):
         settings = Settings()
@@ -63,7 +67,7 @@ class CookieJar(QObject):
         # QNetworkCookie cookie
         for cookie in self._cookies:
             if not self._listMatchesDomain(self._whitelist, cookie.domain()):
-                self._client.delete(cookie)
+                self._client.deleteCookie(cookie)
 
     # Q_SIGNALS
     cookieAdded = pyqtSignal(QNetworkCookie)  # cookie
@@ -72,10 +76,10 @@ class CookieJar(QObject):
     # protected:
     def _matchDomain(self, cookieDomain, siteDomain):
         '''
-        @note: According to RFC 6265
         @param: cookieDomain QString
         @param: siteDomain QString
         '''
+        # According to RFC 6265
         # Remove leading dot
         cookieDomain = cookieDomain.lstrip('.')
         siteDomain = siteDomain.lstrip('.')
@@ -102,7 +106,8 @@ class CookieJar(QObject):
             self._client.deleteCookie(cookie)
             return
 
-        self._cookies.append(QNetworkCookie(cookie))
+        cookie = QNetworkCookie(cookie)
+        self._cookies.append(cookie)
         self.cookieAdded.emit(cookie)
 
     def _slotCookieRemoved(self, cookie):
@@ -119,6 +124,7 @@ class CookieJar(QObject):
         '''
         @param: request QWebEngineCookieStore
         '''
+        import ipdb; ipdb.set_trace()
         if not self._allowCookies:
             result = self._listMatchesDomain(self._whitelist, request.origin.host())
             if not result:
@@ -136,14 +142,13 @@ class CookieJar(QObject):
 
         return True
 
-    def _acceptCookie(self, firstPartyUrl, cookieLine, cookieSource):
-        '''
-        @param: firstPartyUrl QUrl
-        @param: cookieLine QByteArray
-        @param: cookieSource QUrl
-        '''
-        # TODO: not implement in falkon
-        pass
+    #def _acceptCookie(self, firstPartyUrl, cookieLine, cookieSource):
+    #    '''
+    #    @param: firstPartyUrl QUrl
+    #    @param: cookieLine QByteArray
+    #    @param: cookieSource QUrl
+    #    '''
+    #    # TODO: not implement in falkon
 
     def _rejectCookie(self, domain, cookie, cookieDomain):
         '''
@@ -151,7 +156,6 @@ class CookieJar(QObject):
         @param: cookie QNetworkCookie
         @param: cookieDomain QString
         '''
-        # UNUSED(domain)
         if not self._allowCookies:
             result = self._listMatchesDomain(self._whitelist, cookieDomain)
             if not result:

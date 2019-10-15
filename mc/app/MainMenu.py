@@ -16,6 +16,7 @@ from mc.bookmarks.BookmarksMenu import BookmarksMenu
 from mc.other.SiteInfo import SiteInfo
 from mc.other.AboutDialog import AboutDialog
 from mc.preferences.Preferences import Preferences
+from mc.cookies.CookieManager import CookieManager
 
 class MainMenu(QMenu):
     def __init__(self, window, parent=None):
