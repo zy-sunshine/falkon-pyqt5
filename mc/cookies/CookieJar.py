@@ -51,7 +51,7 @@ class CookieJar(QObject):
         self._allowCookies = allow
 
     def deleteCookie(self, cookie):
-        self._client.deleteCoolie(cookie)
+        self._client.deleteCookie(cookie)
 
     def getAllCookies(self):
         '''
@@ -124,7 +124,6 @@ class CookieJar(QObject):
         '''
         @param: request QWebEngineCookieStore
         '''
-        import ipdb; ipdb.set_trace()
         if not self._allowCookies:
             result = self._listMatchesDomain(self._whitelist, request.origin.host())
             if not result:
@@ -175,7 +174,7 @@ class CookieJar(QObject):
         #        return True
         # endif
 
-        if self._filterTrackingCookie and cookie.name().startswith('__utm'):
+        if self._filterTrackingCookie and cookie.name().startsWith(b'__utm'):
             self._debug('DEBUG: purged as tracking', cookie)
             return True
 

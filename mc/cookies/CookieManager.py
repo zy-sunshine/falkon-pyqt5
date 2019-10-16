@@ -15,6 +15,10 @@ from mc.common import const
 from mc.tools.TreeWidget import TreeWidget
 from mc.tools.IconProvider import IconProvider
 
+class HashableTreeWidgetItem(QTreeWidgetItem):
+    def __hash__(self):
+        return id(self)
+
 class CookieManager(QDialog):
     def __init__(self, parent=None):
         '''
@@ -41,9 +45,9 @@ class CookieManager(QDialog):
         self._ui.cookieTree.currentItemChanged.connect(self._currentItemChanged)
         self._ui.removeAll.clicked.connect(self._removeAll)
         self._ui.removeOne.clicked.connect(self._remove)
-        self._ui.close.clicked.connect(lambda: self.close())
-        self._ui.close2.clicked.connect(lambda: self.close())
-        self._ui.close3.clicked.connect(lambda: self.close())
+        self._ui.close.clicked.connect(lambda: self._close())
+        self._ui.close2.clicked.connect(lambda: self._close())
+        self._ui.close3.clicked.connect(lambda: self._close())
         self._ui.search.textChanged.connect(self._filterString)
 
         # Cookie Filtering
@@ -89,6 +93,9 @@ class CookieManager(QDialog):
 
         gVar.appTools.setWmClass('Cookies', self)
 
+    def _close(self):
+        super().close()
+
     # private Q_SLOTS:
     def _currentItemChanged(self, current, parent):
         '''
@@ -111,9 +118,9 @@ class CookieManager(QDialog):
 
         cookie = current.data(0, Qt.UserRole + 10)
         self._ui.name.setText(cookie.name().data().decode())
-        self._ui.value.setText(cookie.value())
-        self._ui.server.setText(self.domain())
-        self._ui.path.setText(self.path())
+        self._ui.value.setText(cookie.value().data().decode())
+        self._ui.server.setText(cookie.domain())
+        self._ui.path.setText(cookie.path())
         if cookie.isSecure():
             self._ui.secure.setText(_('Secure only'))
         else:
@@ -162,7 +169,7 @@ class CookieManager(QDialog):
         self._ui.cookieTree.clear()
 
     def _addWhitelist(self):
-        server = QInputDialog.getText(self, _('Add to whitelist'),
+        server, ok = QInputDialog.getText(self, _('Add to whitelist'),
                 _('Server:'))
         if not server:
             return
@@ -176,19 +183,21 @@ class CookieManager(QDialog):
             self._ui.whiteList.addItem(server)
 
     def _removeWhitelist(self):
-        self._ui.whiteList.currentItem().deleteLater()
+        item = self._ui.whiteList.currentItem()
+        self._removeTreeItem(self._ui.whiteList, item)
 
     def _addBlacklist(self):
-        server = QInputDialog.getText(self, _('Add to blacklist'),
+        server, ok = QInputDialog.getText(self, _('Add to blacklist'),
                 _('Server:'))
         self._addBlacklistByServer(server)
 
     def _removeBlacklist(self):
-        self._ui.blackList.currentItem().deleteLater()
+        item = self._ui.blackList.currentItem()
+        self._removeTreeItem(self._ui.blackList, item)
 
     def _deletePressed(self):
         if self._ui.cookieTree.hasFocus():
-            self.remove()
+            self._remove()
         elif self._ui.whiteList.hasFocus():
             self._removeWhitelist()
         elif self._ui.blackList.hasFocus():
@@ -198,10 +207,11 @@ class CookieManager(QDialog):
         '''
         @param: string QString
         '''
+        print('=====>', string)
         if not string:
             for idx in range(self._ui.cookieTree.topLevelItemCount()):
                 item = self._ui.cookieTree.topLevelItem(idx)
-                item.setHidden(True)
+                item.setHidden(False)
                 item.setExpanded(self._ui.cookieTree.defaultItemShowMode() == TreeWidget.ItemsExpanded)
         else:
             strLower = string.lower()
@@ -220,16 +230,16 @@ class CookieManager(QDialog):
 
         findParent = self._domainHash.get(domain)
         if findParent:
-            item = QTreeWidgetItem(findParent)
+            item = HashableTreeWidgetItem(findParent)
         else:
-            newParent = QTreeWidgetItem(self._ui.cookieTree)
+            newParent = HashableTreeWidgetItem(self._ui.cookieTree)
             newParent.setText(0, domain)
             newParent.setIcon(0, IconProvider.standardIcon(QStyle.SP_DirIcon))
             newParent.setData(0, Qt.UserRole + 10, cookie.domain())
             self._ui.cookieTree.addTopLevelItem(newParent)
             self._domainHash[domain] = newParent
 
-            item = QTreeWidgetItem(newParent)
+            item = HashableTreeWidgetItem(newParent)
 
         cookie = QNetworkCookie(cookie)
         item.setText(0, '.' + domain)
@@ -237,7 +247,6 @@ class CookieManager(QDialog):
         item.setData(0, Qt.UserRole + 10, cookie)
         self._ui.cookieTree.addTopLevelItem(item)
 
-        import ipdb; ipdb.set_trace()
         self._itemHash[item] = cookie
 
     def _removeCookie(self, cookie):
@@ -251,13 +260,18 @@ class CookieManager(QDialog):
 
         self._itemHash.pop(item, None)
 
-        if item.parent() and item.parent().childCount() == 1:
+        itemParent = item.parent()
+        if itemParent and itemParent.childCount() == 1:
             self._domainHash.pop(self._cookieDomain(cookie), None)
-            item.parent().deleteLater()
+            self._removeTreeItem(self._ui.cookieTree, itemParent)
             item = None
 
         if item:
-            item.deleteLater()
+            self._removeTreeItem(self._ui.cookieTree, item)
+
+    def _removeTreeItem(self, tree, item):
+        if not item: return
+        (item.parent() or tree.invisibleRootItem()).removeChild(item)
 
     # private:
     # override
@@ -272,7 +286,7 @@ class CookieManager(QDialog):
             item = self._ui.whiteList.item(idx)
             whitelist.append(item.text())
 
-        for idx in range(self._ui.blacklist.count()):
+        for idx in range(self._ui.blackList.count()):
             item = self._ui.blackList.item(idx)
             blacklist.append(item.text())
 
@@ -296,7 +310,7 @@ class CookieManager(QDialog):
         @param event QKeyEvent
         '''
         if event.key() == Qt.Key_Escape:
-            self.close()
+            self._close()
 
         super().keyPressEvent(event)
 
