@@ -6,11 +6,11 @@ from PyQt5.Qt import QUrl
 #sys.argv.append("--disable-web-security")
 app = QApplication(sys.argv)
 
-with open(sys.argv[1], 'rt') as fp:
-    raw_html = fp.read()
+#with open(sys.argv[1], 'rt') as fp:
+#    raw_html = fp.read()
+#view.setHtml(raw_html)
 
 view = QWebEngineView()
-view.setHtml(raw_html)
 url = QUrl.fromUserInput(sys.argv[1])
 print(url)
 view.load(url)
