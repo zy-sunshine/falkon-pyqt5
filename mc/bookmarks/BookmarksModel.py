@@ -33,6 +33,9 @@ class BookmarksModel(QAbstractItemModel):
         self._root = root  # BookmarkItem
         self._bookmarks = bookmarks  # Bookmarks
 
+        if self._bookmarks:
+            self._bookmarks.bookmarkChanged.connect(self._bookmarkChanged)
+
     def addBookmark(self, parent, row, item):
         '''
         @param: parent BookmarkItem

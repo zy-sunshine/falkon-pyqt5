@@ -22,8 +22,10 @@ class History(QObject):
             self.title = ''
 
         def fillDbobj(self, dbobj):
-            for field in ('id', 'count', 'date', 'url', 'urlString', 'title'):
+            for field in ('id', 'count', 'urlString', 'title'):
                 setattr(dbobj, field, getattr(self, field))
+            dbobj.date = self.date.toMSecsSinceEpoch()
+            dbobj.url = self.url.toString()
 
         @classmethod
         def CreateFromDbobj(cls, dbobj):

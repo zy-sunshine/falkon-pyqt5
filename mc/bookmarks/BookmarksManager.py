@@ -10,6 +10,7 @@ from PyQt5.Qt import QTextCursor
 from PyQt5.Qt import QTimer
 from mc.common.globalvars import gVar
 from PyQt5.Qt import Qt
+from .BookmarksTreeView import BookmarksTreeView
 
 class BookmarksManager(QWidget):
     def __init__(self, window, parent=None):
@@ -18,13 +19,28 @@ class BookmarksManager(QWidget):
         @param: parent QWidget
         '''
         super().__init__(parent)
-        self._ui = uic.loadUi('mc/bookmarks/BookmarksManager.ui')
+        self._ui = uic.loadUi('mc/bookmarks/BookmarksManager.ui', self)
         self._window = window  # QPointer<BrowserWindow>
 
-        self._bookmarks = None  # Bookmarks
+        self._bookmarks = gVar.app.bookmarks()  # Bookmarks
         self._selectedBookmark = None  # BookmarkItem
         self._blockDescriptionChangedSignal = False
-        self._adjustHeaderSizesOnShow = False
+        self._adjustHeaderSizesOnShow = True
+
+        self._ui.tree.setViewType(BookmarksTreeView.BookmarksManagerViewType)
+
+        self._ui.tree.bookmarkActivated.connect(self._bookmarkActivated)
+        self._ui.tree.bookmarkCtrlActivated.connect(self._bookmarkCtrlActivated)
+        self._ui.tree.bookmarkShiftActivated.connect(self._bookmarkShiftActivated)
+        self._ui.tree.bookmarksSelected.connect(self._bookmarksSelected)
+        self._ui.tree.contextMenuRequested.connect(self._createContextMenu)
+
+        # Box for editing bookmarks
+        self._updateEditBox(None)
+        self._ui.title.textEdited.connect(self._bookmarkEdited)
+        self._ui.address.textEdited.connect(self._bookmarkEdited)
+        self._ui.keyword.textEdited.connect(self._bookmarkEdited)
+        self._ui.description.textChanged.connect(self._descriptionEdited)
 
     def setMainWindow(self, window):
         '''
@@ -166,8 +182,8 @@ class BookmarksManager(QWidget):
 
         item = self._ui.tree.selectedBookmarks()[0]
         item.setTitle(self._ui.title.text())
-        item.setUrl(QUrl.fromEncoded(self._ui.address.text()))
-        item.setKeyword(self._ui.keyword().text())
+        item.setUrl(QUrl.fromEncoded(self._ui.address.text().encode()))
+        item.setKeyword(self._ui.keyword.text())
         item.setDescription(self._ui.description.toPlainText())
 
         self._bookmarks.changeBookmark(item)
@@ -190,7 +206,7 @@ class BookmarksManager(QWidget):
         self._blockDescriptionChangedSignal = True
 
         editable = self._bookmarkEditable(item)
-        showAddressAndKeyword = item and item.isUrl()
+        showAddressAndKeyword = bool(item and item.isUrl())
 
         if not item:
             self._ui.title.clear()
@@ -199,7 +215,7 @@ class BookmarksManager(QWidget):
             self._ui.description.clear()
         else:
             self._ui.title.setText(item.title())
-            self._ui.address.setText(item.url().toEncoded())
+            self._ui.address.setText(item.url().toEncoded().data().decode())
             self._ui.keyword.setText(item.keyword())
             self._ui.description.setPlainText(item.description())
 
@@ -225,7 +241,7 @@ class BookmarksManager(QWidget):
         if showAddressAndKeyword:
             # Show Address + Keyword
             layout.insertRow(1, self._ui.labelAddress, self._ui.address)
-            layout.insertRow(2, self._ui.labelkeyword, self._ui.keyword)
+            layout.insertRow(2, self._ui.labelKeyword, self._ui.keyword)
         else:
             # Hide Address + Keyword
             layout.removeWidget(self._ui.labelAddress)

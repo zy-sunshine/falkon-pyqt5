@@ -128,7 +128,7 @@ class BookmarksTreeView(QTreeView):
         item = self._model.item(self._filter.mapToSource(parent))
 
         if self._type == self.BookmarksManagerViewType:
-            item.setExtpanded(True)
+            item.setExpanded(True)
         elif self._type == self.BookmarksSidebarViewType:
             item.setSidebarExpanded(True)
 
@@ -139,7 +139,7 @@ class BookmarksTreeView(QTreeView):
         item = self._model.item(self._filter.mapToSource(parent))
 
         if self._type == self.BookmarksManagerViewType:
-            item.setExtpanded(False)
+            item.setExpanded(False)
         elif self._type == self.BookmarksSidebarViewType:
             item.setSidebarExpanded(False)
 
