@@ -11,6 +11,7 @@ from mc.bookmarks.bookmarksimport.BookmarksImportDialog import BookmarksImportDi
 from mc.bookmarks.bookmarksexport.BookmarksExportDialog import BookmarksExportDialog
 from mc.history.HistoryManager import HistoryManager
 from mc.bookmarks.BookmarksManager import BookmarksManager
+from mc.lib3rd.FancyTabWidget import FancyTabWidget
 
 class BrowsingLibrary(QWidget):
     def __init__(self, window, parent=None):
@@ -41,6 +42,7 @@ class BrowsingLibrary(QWidget):
 
         self._ui.tabs.AddTab(self._historyManager, historyIcon, _('History'))
         self._ui.tabs.AddTab(self._bookmarksManager, bookmarksIcon, _('Bookmarks'))
+        self._ui.tabs.SetMode(FancyTabWidget.Mode_LargeSidebar)
         self._ui.tabs.setFocus()
 
         m = QMenu()

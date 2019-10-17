@@ -9,6 +9,7 @@ from PyQt5.Qt import QPainter
 from PyQt5.Qt import QRect
 from PyQt5.Qt import QSize
 from PyQt5.Qt import QImage
+from PyQt5 import sip
 
 from mc.common import const
 from mc.common.globalvars import gVar
@@ -74,6 +75,7 @@ class StyleHelper(object):
         else:
             result.setHsv(result.hue(), clamp(result.saturation()),
                     clamp(result.value() * 1.06))
+        return result
 
     def shadowColor(self, lightColored=False):
         '''
@@ -161,8 +163,8 @@ class StyleHelper(object):
                 spanRect.width(), spanRect.height(), clipRect.width(),
                 clipRect.height(), keyColor.rgb())
 
-            pixmap = QPixmap()
-            if not QPixmapCache.find(key, pixmap):
+            pixmap = QPixmapCache.find(key)
+            if not pixmap:
                 pixmap = QPixmap(clipRect.size())
                 p = QPainter(pixmap)
                 rect = QRect(0, 0, clipRect.width(), clipRect.height())
@@ -192,7 +194,8 @@ class StyleHelper(object):
         cache = QPixmap()
         pixmapName = 'icon %s %s %s' % (icon.cacheKey(), iconMode, rect.height())
 
-        if not QPixmapCache.find(pixmapName, cache):
+        cache = QPixmapCache.find(pixmapName)
+        if not cache:
             px = icon.pixmap(rect.size(), iconMode)
             px.setDevicePixelRatio(gVar.app.devicePixelRatio())
             cache = QPixmap(px.size() + QSize(radius * 2, radius * 2))
@@ -242,8 +245,14 @@ class StyleHelper(object):
             if self.usePixmapCache():
                 QPixmapCache.insert(pixmapName, cache)
 
-        targetRect = cache.rect()
+            sip.delete(cachePainter)
+            sip.delete(tmpPainter)
+            sip.delete(blurPainter)
+
+        targetRect = QRect(cache.rect())
         targetRect.setWidth(cache.rect().width() / cache.devicePixelRatioF())
         targetRect.setHeight(cache.rect().height() / cache.devicePixelRatioF())
         targetRect.moveCenter(rect.center())
         painter.drawPixmap(targetRect.topLeft() - offset, cache)
+
+styleHelper = StyleHelper()

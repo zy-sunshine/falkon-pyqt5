@@ -34,6 +34,7 @@ class BookmarksMenu(Menu):
             BookmarksTools.bookmarkAllTabsDialog(self._window, self._window.tabWidget())
 
     def _showBookmarksManager(self):
+        print('-----> here', self._window)
         if self._window:
             gVar.app.browsingLibrary().showBookmarks(self._window)
 
@@ -128,7 +129,7 @@ class BookmarksMenu(Menu):
         self.addAction('Bookmark &All Tabs', self._bookmarkAllTabs)
         act = self.addAction(QIcon.fromTheme('bookmarks-organize'),
             'Organize &Bookmarks', self._showBookmarksManager)
-        act.setShortcut(QKeySequence('Ctrl+Shift+O'))
+        #act.setShortcut(QKeySequence('Ctrl+Shift+O'))
         self.addSeparator()
 
         self.aboutToShow.connect(self._aboutToShow)
