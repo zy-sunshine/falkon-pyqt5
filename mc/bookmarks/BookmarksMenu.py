@@ -128,8 +128,12 @@ class BookmarksMenu(Menu):
         act.setShortcut(QKeySequence('Ctrl+D'))
         self.addAction('Bookmark &All Tabs', self._bookmarkAllTabs)
         act = self.addAction(QIcon.fromTheme('bookmarks-organize'),
-            'Organize &Bookmarks', self._showBookmarksManager)
-        #act.setShortcut(QKeySequence('Ctrl+Shift+O'))
+            'Organize &Bookmarks')
+        # NOTE: if use self.addAction(icon, label, self._showBookmarksManager)
+        # will cause connection random invalid, so here connect triggered
+        # separately.
+        act.triggered.connect(self._showBookmarksManager)
+        act.setShortcut(QKeySequence('Ctrl+Shift+O'))
         self.addSeparator()
 
         self.aboutToShow.connect(self._aboutToShow)
@@ -137,7 +141,7 @@ class BookmarksMenu(Menu):
         self.menuMiddleClicked.connect(self._menuMiddleClicked)
 
     def _refresh(self):
-        while len(self.actions()) != 4:
+        while len(self.actions()) > 4:
             act = self.actions()[4]
             if act.menu():
                 act.menu().clear()
