@@ -289,7 +289,7 @@ class IconProvider(QWidget):
         date = QDateTime.currentDateTime().addMonths(-6)
 
         urls = HistoryDbModel.select().where(HistoryDbModel.date < date.toMSecsSinceEpoch())
-        IconsDbModel.delete().where(IconsDbModel.url.in_(urls))
+        IconsDbModel.delete().where(IconsDbModel.url.in_(urls)).execute()
 
     # private:
     def _iconFromImage(self, image):

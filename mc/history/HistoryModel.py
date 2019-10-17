@@ -7,6 +7,8 @@ from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QApplication
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import QIcon
+from PyQt5.Qt import QDateTime
+from PyQt5.Qt import QDate
 from datetime import datetime, date
 from datetime import timedelta
 from datetime import time as dttime
@@ -30,9 +32,9 @@ class HistoryModel(QAbstractItemModel):
     def _s_dateTimeToString(cls, dt):
         current = datetime.now()
         if current.date() == dt.date():
-            return dt.strftime('%H:%M')
+            return dt.toString('h:mm')
 
-        return dt.strftime('%Y-%d-%m %H:%M')
+        return dt.toString('yyyy.M.d h:mm')
 
     def __init__(self, history):
         '''
@@ -316,7 +318,7 @@ class HistoryModel(QAbstractItemModel):
 
             self.beginRemoveRows(QModelIndex(), row, row)
             # TODO: delete item
-            self.removeRow(item)
+            item.delete()
             self.endRemoveRows()
 
             if item == self._todayItem:
@@ -339,20 +341,52 @@ class HistoryModel(QAbstractItemModel):
         '''
         @param: entry HistoryEntry
         '''
-        pass
+        if not self._todayItem:
+            self.beginInsertRows(QModelIndex(), None, None)
+
+            self._todayItem = HistoryItem(None)
+            self._todayItem.setStartTimestamp(-1)
+            self._todayItem.setEndTimestamp(QDateTime(QDate.currentDate()).toMSecsSinceEpoch())
+            self._todayItem.title = _('Today')
+
+            self._rootItem.prependChild(self._todayItem)
+
+            self.endInsertRows()
+
+        self.beginInsertRows(self.createIndex(0, 0, self._todayItem), 0, 0)
+
+        item = HistoryItem()
+        item.historyEntry = entry
+
+        self._todayItem.prependChild(item)
+
+        self.endInsertRows()
 
     def historyEntryDeleted(self, entry):
         '''
         @param: entry HistoryEntry
         '''
-        pass
+        item = self._findHistoryItem(entry)
+        if not item:
+            return
+
+        parentItem = item.parent()
+        row = item.row()
+
+        self.beginRemoveRows(self.createIndex(parentItem.row(), 0, parentItem),
+                row, row)
+        item.delete()
+        self.endRemoveRows()
+
+        self._checkEmptyParentItem(parentItem)
 
     def historyEntryEdited(self, before, after):
         '''
         @param: before HistoryEntry
         @param: after HistoryEntry
         '''
-        pass
+        self.historyEntryDeleted(before)
+        self.historyEntryAdded(after)
 
     # private
     def _findHistoryItem(self, entry):
@@ -360,13 +394,42 @@ class HistoryModel(QAbstractItemModel):
         @param: entry HistoryEntry
         @return: HistoryItem
         '''
-        pass
+        # HistoryItem
+        parentItem = None
+        # qint64
+        timestamp = entry.date.toMSecsSinceEpoch()
+
+        for idx in range(self._rootItem.childCount()):
+            # HistoryItem
+            item = self._rootItem.child(idx)
+
+            if item.endTimestamp() < timestamp:
+                parentItem = item
+                break
+
+        if not parentItem:
+            return None
+
+        for idx in range(parentItem.childCount()):
+            item = parentItem.child(idx)
+            if item.historyEntry.id == entry.id:
+                return item
+
+        return None
 
     def _checkEmptyParentItem(self, item):
         '''
         @param: item HistoryItem
         '''
-        pass
+        if item.childCount() == 0 and item.isTopLevel():
+            row = item.row()
+
+            self.beginRemoveRows(QModelIndex(), row, row)
+            item.delete()
+            self.endRemoveRows()
+
+            if item == self._todayItem:
+                self._todayItem = None
 
     def _init(self):
         from .History import History

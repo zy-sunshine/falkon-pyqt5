@@ -133,7 +133,7 @@ class HistoryManager(QWidget):
         @param: QKeyEvent
         '''
         if event.key() == Qt.Key_Delete:
-            self._ui.historyTree.removeSelectedItem()
+            self._ui.historyTree.removeSelectedItems()
 
         super().keyPressEvent(event)
 

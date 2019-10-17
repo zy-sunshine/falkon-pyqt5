@@ -30,7 +30,7 @@ class History(QObject):
             entry = cls()
             entry.id = dbobj.id
             entry.count = dbobj.id
-            entry.date = datetime.fromtimestamp(dbobj.date)
+            entry.date = QDateTime.fromMSecsSinceEpoch(dbobj.date)
             entry.url = QUrl(dbobj.url)
             entry.urlString = entry.url.toEncoded().data().decode()
             entry.title = dbobj.title
@@ -94,14 +94,14 @@ class History(QObject):
                 before = self.HistoryEntry()
                 before.id = dbobj.id
                 before.count = dbobj.count
-                before.date = datetime.fromtimestamp(dbobj.date)
+                before.date = QDateTime.fromMSecsSinceEpoch(dbobj.date)
                 before.url = url
                 before.urlString = before.url.toEncoded().data().decode()
                 before.title = dbobj.title
 
                 after = self.HistoryEntry()
                 after.count = dbobj.count + 1
-                after.date = int(datetime.now().timestamp())
+                after.date = QDateTime.currentDateTime()
                 after.title = title
                 after.url = url
                 after.urlString = after.url.toEncoded().data().decode()
@@ -122,28 +122,30 @@ class History(QObject):
 
         gVar.executor.submit(addEntryFunc)
 
-    def deleteHistoryEntryByIndex(self, index):
+    def deleteHistoryEntry(self, indexOrList):
         '''
-        @param: index int
+        @param: indexOrList int/list/tuple
         '''
-        list_ = []
-        list_.append(index)
+        if not isinstance(indexOrList, (list, tuple)):
+            list_ = []
+            list_.append(indexOrList)
+        else:
+            list_ = indexOrList
 
-        self.deleteHistoryEntryByIndexList(list_)
+        self._deleteHistoryEntryByIndexList(list_)
 
-    def deleteHistoryEntryByIndexList(self, list_):
+    def _deleteHistoryEntryByIndexList(self, list_):
         '''
         @param: list_ QList<int>
         '''
 
-        def delFunc():
-            dbobjs = HistoryDbModel.select().where(HistoryDbModel.url.in_(list_))
-            for dbobj in dbobjs:
-                entry = self.HistoryEntry.CreateFromDbobj(dbobj)
-                self.historyEntryDeleted.emit(entry)
-            HistoryDbModel.delete().where(HistoryDbModel.id.in_([obj.id for obj in list_]))
-            IconsDbModel.delete().where(IconsDbModel.url.in_(list_))
-        gVar.executor.submit(delFunc)
+        dbobjs = list(HistoryDbModel.select().where(HistoryDbModel.id.in_(list_)))
+        HistoryDbModel.delete().where(HistoryDbModel.id.in_(list_)).execute()
+        urls = [ QUrl(obj.url).toEncoded(QUrl.RemoveFragment) for obj in dbobjs ]
+        IconsDbModel.delete().where(IconsDbModel.url.in_(urls)).execute()
+        for dbobj in dbobjs:
+            entry = self.HistoryEntry.CreateFromDbobj(dbobj)
+            self.historyEntryDeleted.emit(entry)
 
     def deleteHistoryEntryByUrl(self, url):
         '''
@@ -152,7 +154,7 @@ class History(QObject):
         items = HistoryDbModel.select(columns=['id']).where(HistoryDbModel.url == url).dicts()
         import ipdb; ipdb.set_trace()
         ids = [ item['id'] for item in dicts ]
-        self.deleteHistoryEntryByIndexList(ids)
+        self._deleteHistoryEntryByIndexList(ids)
 
     def deleteHistoryEntryByUrlAndTitle(self, url, title):
         '''
@@ -163,7 +165,7 @@ class History(QObject):
                 HistoryDbModel.title == title).dicts()
         import ipdb; ipdb.set_trace()
         ids = [ item['id'] for item in dicts ]
-        self.deleteHistoryEntryByIndexList(ids)
+        self._deleteHistoryEntryByIndexList(ids)
 
     def indexesFromTimeRange(self, start, end):
         '''
@@ -182,7 +184,7 @@ class History(QObject):
         for dbobj in HistoryDbModel.select().order_by(HistoryDbModel.count.desc()).limit(count):
             entry = self.HistoryEntry()
             entry.count = dbobj.count
-            entry.date = dbobj.date
+            entry.date = QDateTime.fromMSecsSinceEpoch(dbobj.date)
             entry.id = dbobj.id
             entry.title = dbobj.title
             entry.url = QUrl(dbobj.url)
