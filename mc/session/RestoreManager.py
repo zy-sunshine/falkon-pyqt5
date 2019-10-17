@@ -41,13 +41,17 @@ class RestoreManager(object):
         '''
         pass
 
-    @staticmethod
+    @classmethod
     def validateFile(cls, fpath):
+        '''
+        @param: fpath QString
+        '''
         pass
 
-    @staticmethod
-    def createFromFile(self, fpaht, data):
+    @classmethod
+    def createFromFile(cls, fpath, data):
         '''
+        @param: fpath QString
         @param: data RestoreData
         '''
         pass

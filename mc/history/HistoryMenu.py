@@ -160,7 +160,8 @@ class HistoryMenu(Menu):
         act.setShortcut(QKeySequence(Qt.ALT + Qt.Key_Home))
 
         icon = QIcon.fromTheme('deep-history', QIcon(':/icons/menu/history.svg'))
-        act = self.addAction(icon, 'Show &All History', self._showHistoryManager)
+        act = self.addAction(icon, 'Show &All History')
+        act.triggered.connect(self._showHistoryManager)
         act.setShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_H))
 
         self.addSeparator()
