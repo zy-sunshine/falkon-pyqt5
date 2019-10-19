@@ -1,6 +1,7 @@
 from PyQt5 import uic
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
 from PyQt5.QtWebEngineWidgets import QWebEngineScript
+from PyQt5.QtWebEngineWidgets import QWebEngineSettings
 from PyQt5.QtWebEngineCore import QWebEngineRegisterProtocolHandlerRequest
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QUrl
@@ -102,33 +103,33 @@ class WebPage(QWebEnginePage):
         # Workaround for broken load started/finished signals in QWebEngine 5.10 5.11
         # NOTE: if open this revise, will cause page and view loadFinished emit
         # multi time
-        #def loadProgressFunc(progress):
-        #    '''
-        #    @param: progress int
-        #    '''
-        #    if progress == 100:
-        #        self.loadFinished.emit(True)
-        #self.loadProgress.connect(loadProgressFunc)
+        def loadProgressFunc(progress):
+            '''
+            @param: progress int
+            '''
+            if progress == 100:
+                self.loadFinished.emit(True)
+        self.loadProgress.connect(loadProgressFunc)
 
-        # if QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-        def registerProtocolHandlerFunc(request):
-            '''
-            @param: request QWebEngineRegisterProtocolHandlerRequest
-            '''
-            del self._registerProtocolHandlerRequest
-            self._registerProtocolHandlerRequest = QWebEngineRegisterProtocolHandlerRequest(request)
-        self.registerProtocolHandlerRequested.connect(registerProtocolHandlerFunc)
+        if const.QTWEBENGINEWIDGETS_VERSION >= const.QT_VERSION_CHECK(5, 11, 0):
+            def registerProtocolHandlerFunc(request):
+                '''
+                @param: request QWebEngineRegisterProtocolHandlerRequest
+                '''
+                del self._registerProtocolHandlerRequest
+                self._registerProtocolHandlerRequest = QWebEngineRegisterProtocolHandlerRequest(request)
+            self.registerProtocolHandlerRequested.connect(registerProtocolHandlerFunc)
 
-        # QTWEBENGINEWIDGETS_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-        super().printRequested.connect(self.printRequested)
+        if const.QTWEBENGINEWIDGETS_VERSION >= const.QT_VERSION_CHECK(5, 12, 0):
+            super().printRequested.connect(self.printRequested)
 
-        def selectClientCertFunc(selection):
-            '''
-            @param: selection QWebEngineClientCertificateSelection
-            '''
-            # TODO: It should prompt user, and Falkon does not support yet.
-            selection.select(selection.certificates()[0])
-        self.selectClientCertificate.connect(selectClientCertFunc)
+            def selectClientCertFunc(selection):
+                '''
+                @param: selection QWebEngineClientCertificateSelection
+                '''
+                # TODO: It should prompt user, and Falkon does not support yet.
+                selection.select(selection.certificates()[0])
+            self.selectClientCertificate.connect(selectClientCertFunc)
 
     def view(self):
         '''
@@ -546,18 +547,21 @@ class WebPage(QWebEnginePage):
                 query = QUrlQuery(url)
                 gVar.app.searchEnginesManager().addEngine(query.queryItemValue('url'))
                 return False
-            # if QTWEBENGINEWIDGETS_VERSION < QT_VERSION_CHECK(5, 12, 0)
-            # elif url.path() == 'PrintPage':
-            #   self.printRequested.emit()
-            #   return False
+            if const.QTWEBENGINEWIDGETS_VERSION < const.QT_VERSION_CHECK(5, 12, 0):
+                if url.path() == 'PrintPage':
+                    self.printRequested.emit()
+                    return False
 
         result = super().acceptNavigationRequest(url, type_, isMainFrame)
         if result:
-            # TODO:
-            #if isMainFrame:
-            #    isWeb = url.scheme() in ('http', 'https', 'file')
-            #    globalJsEnabled = gVar.app.webSettings().testAttribute(QWebEngineSettings.JavascriptEnabled)
-            #    self.settings().setAttribute(QWebEngineSettings.JavascriptEnabled, isWeb and globalJsEnabled or True)
+            if isMainFrame:
+                isWeb = url.scheme() in ('http', 'https', 'file')
+                globalJsEnabled = gVar.app.webSettings().testAttribute(QWebEngineSettings.JavascriptEnabled)
+                if isWeb:
+                    enable = globalJsEnabled
+                else:
+                    enable = True
+                self.settings().setAttribute(QWebEngineSettings.JavascriptEnabled, enable)
 
             self.navigationRequestAccepted.emit(url, type_, isMainFrame)
         return result

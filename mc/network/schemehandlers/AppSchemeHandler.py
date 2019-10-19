@@ -116,7 +116,9 @@ class AppSchemeReply(QIODevice):
                 <a href="#" href="appxx:testxx"/>appxx protocol</a><br/>
                 <a href="#" onclick="javascript: document.documentElement.webkitRequestFullscreen()"/>
                     enter fullscreen</a><br/>
-                <a href="#" onclick="javascript: document.webkitExitFullscreen()"/>exit fullscreen</a><br/>
+                <a href="#testFragment">test fragment</a><br/>
+                <a href="#" onclick="javascript: document.webkitExitFullscreen()"/>
+                    exit fullscreen</a><br/>
             '''}
 
         with self._mutex:

@@ -76,14 +76,14 @@ class WebTab(QWidget):
 
         def clear(self):
             self.title = ''
-            self.url.clear()
+            self.url = QUrl()
             self.icon = QIcon()
-            self.history.clear()
+            self.history = QByteArray()
             self.isPinned = False
             self.zoomLevel = 1
             self.parentTab = -1
-            self.childTabs.clear()
-            self.sessionData.clear()
+            self.childTabs = []
+            self.sessionData = {}
 
     # type AddChildBehavior
     AppendChild = 0
@@ -343,6 +343,8 @@ class WebTab(QWidget):
             history = self._webView.history()
             stream << history
             return historyArray
+        else:
+            return self._savedTab.history
 
     def stop(self):
         self._webView.stop()

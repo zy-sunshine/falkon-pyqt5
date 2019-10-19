@@ -374,7 +374,7 @@ class NavigationBar(QWidget):
         view.back()
 
     def goBackInNewTab(self):
-        history = self._window.weView().page().histor()
+        history = self._window.weView().page().history()
 
         if not history.canGoBack():
             return

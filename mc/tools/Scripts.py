@@ -327,9 +327,9 @@ return res;
     def scrollToAnchor(cls, anchor):
         source = '''
 (function() {
-var e = document.getElementById("{0}");
+var e = document.getElementById("%(anchor)s");
 if (!e) {
-    var els = document.querySelectorAll("[name='{0}']");
+    var els = document.querySelectorAll("[name='%(anchor)s']");
     if (els.length)
         e = els[0];
 }
@@ -337,4 +337,4 @@ if (e)
     e.scrollIntoView();
 })()
 '''
-        return source.format(anchor)
+        return source % {'anchor': anchor}
