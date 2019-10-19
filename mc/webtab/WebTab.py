@@ -26,18 +26,36 @@ class WebTab(QWidget):
 
     class SavedTab(object):
         def __init__(self, webTab=None):
+            self.title = ''
+            self.url = QUrl()
+            self.icon = QIcon()
+            self.history = QByteArray()
+            self.isPinned = False
+            self.zoomLevel = 1
+            self.parentTab = -1
+            self.childTabs = []
+            self.sessionData = {}
             if webTab:
                 self.setWebTab(webTab)
-            else:
-                self.title = ''
-                self.url = QUrl()
-                self.icon = QIcon()
-                self.history = QByteArray()
-                self.isPinned = False
-                self.zoomLevel = False
-                self.parentTab = -1
-                self.childTabs = []
-                self.sessionData = {}
+
+        def __getstate__(self):
+            result = dict(self.__dict__)
+            result['url'] = result['url'].toEncoded()
+            data = QByteArray()
+            ds = QDataStream(data, QIODevice.WriteOnly)
+            ds.writeQVariant(self.icon)
+            result['icon'] = data.data()
+            return result
+
+        def __setstate__(self, state):
+            for key, val in state.items():
+                if key == 'url':
+                    self.__dict__[key] = QUrl.fromEncoded(val)
+                elif key == 'icon':
+                    ds = QDataStream(QByteArray(val))
+                    self.__dict__[key] = ds.readQVariant()
+                else:
+                    self.__dict__[key] = val
 
         def setWebTab(self, webTab):
             self.title = webTab.title()
@@ -57,7 +75,7 @@ class WebTab(QWidget):
             return not self.url.isEmpty() or not self.history.isEmpty()
 
         def clear(self):
-            self.title.clear()
+            self.title = ''
             self.url.clear()
             self.icon = QIcon()
             self.history.clear()
@@ -448,10 +466,10 @@ class WebTab(QWidget):
         @param: tab SavedTab
         '''
         assert(self._tabBar)
-        self.setPinned(tab.isPinned())
-        self._sessionData = tab._sessionData
+        self.setPinned(tab.isPinned)
+        self._sessionData = tab.sessionData
 
-        if self.isPinned() and gVar.appSettings.loadTabsOnActivation:
+        if not self.isPinned() and gVar.appSettings.loadTabsOnActivation:
             self._savedTab = tab
             self.restoredChanged.emit(self.isRestored())
             index = self.tabIndex()
@@ -463,13 +481,13 @@ class WebTab(QWidget):
             # This is called only on restore session and restoring tabs
             # immediately crashes QtWebEngine, waiting after initialization is
             # complete fixes it
-            QTimer.singleShot(1000, self, lambda: self.p_restoreTab(tab))
+            QTimer.singleShot(1000, lambda: self.p_restoreTab(tab))
 
     def p_restoreTab(self, tab):
         '''
         @param: tab SavedTab
         '''
-        self._p_restoreTabByUrl(tab.url, tab.history, tab.zoomLevel)
+        self.p_restoreTabByUrl(tab.url, tab.history, tab.zoomLevel)
 
     def p_restoreTabByUrl(self, url, history, zoomLevel):
         self._webView.load(url)
@@ -493,9 +511,9 @@ class WebTab(QWidget):
                 return
             self.p_restoreTab(self._savedTab)
             self._savedTab.clear()
-            self.restoreChanged.emit(self.isRestored())
+            self.restoredChanged.emit(self.isRestored())
 
-        QTimer.singleShot(0, self, _onTabActivated)
+        QTimer.singleShot(0, _onTabActivated)
 
     def addChildBehavior(self):
         '''

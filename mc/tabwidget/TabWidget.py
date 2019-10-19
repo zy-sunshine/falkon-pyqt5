@@ -649,9 +649,8 @@ class TabWidget(TabStackedWidget):
 
         tab = ClosedTabsManager.Tab()
 
-        # TODO: QAction* action = qobject_cast<QAction*>(obj);
         action = obj
-        if action and action.data().toInt() != 0:
+        if isinstance(action, QAction) and action.data().toInt() != 0:
             tab = self._closedTabsManager.takeTabAt(action.data().toInt())
         else:
             tab = self._closedTabsManager.takeLastClosedTab()
@@ -691,11 +690,9 @@ class TabWidget(TabStackedWidget):
         else:
             posX = min(posX, self._tabBar.width() - self._buttonAddTab.width())
 
-        print('moved to %s %s' % (posX, posY))
         self._buttonAddTab.move(posX, posY)
 
     def tabBarOverFlowChanged(self, overflowed):
-        print('tabBarOverFlowChanged', overflowed)
         # Show buttons inside tabbar
         self._buttonAddTab.setVisible(not overflowed)
 

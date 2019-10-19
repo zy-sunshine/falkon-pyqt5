@@ -1,4 +1,5 @@
 import re
+import pickle
 from os import environ
 from sys import stderr
 from os import remove
@@ -122,12 +123,13 @@ class MainApplication(QtSingleApp):
                     ' Please install it and restart the application.')
             self._isClosing = True
             return
-        # TODO: Q_OS_WIN
-        fontId = QFontDatabase.addApplicationFont('font.ttf')
-        if fontId != -1:
-            families = QFontDatabase.applicationFontFamilies(fontId)
-            if not families.empty():
-                self.setFont(QFont(families.at(0)))
+        if const.OS_WIN:
+            # Set default app font (needed for N'ko)
+            fontId = QFontDatabase.addApplicationFont('font.ttf')
+            if fontId != -1:
+                families = QFontDatabase.applicationFontFamilies(fontId)
+                if not families.empty():
+                    self.setFont(QFont(families.at(0)))
 
         startUrl = QUrl()
         startProfile = ''
@@ -217,10 +219,14 @@ class MainApplication(QtSingleApp):
                 self.sendMessage(message)
             return
 
-        # TODO: Q_OS_MACOS
-        #setQuitOnLastWindowClosed(False)
-        #disableWindowTabbing()
-        self.setQuitOnLastWindowClosed(True)
+        if const.OS_MACOS:
+            self.setQuitOnLastWindowClosed(False)
+            # TODO:
+            # disable tabbing issue #2261
+            # extern void disableWindowTabbing();
+            # self.disableWindowTabbing()
+        else:
+            self.setQuitOnLastWindowClosed(True)
 
         QSettings.setDefaultFormat(QSettings.IniFormat)
         QDesktopServices.setUrlHandler('http', self.addNewTab)
@@ -250,7 +256,7 @@ class MainApplication(QtSingleApp):
             self._autoSaver = AutoSaver(self)
             self._autoSaver.save.connect(self._sessionManager.autoSaveLastSession)
 
-            settings = QSettings()
+            settings = Settings()
             settings.beginGroup('SessionRestore')
             wasRunning = settings.value('isRunning', False)
             wasRestoring = settings.value('isRestoring', False)
@@ -259,7 +265,7 @@ class MainApplication(QtSingleApp):
             settings.endGroup()
             settings.sync()
 
-            self._isStartingAfterCrash = wasRunning and wasRestoring
+            self._isStartingAfterCrash = bool(wasRunning and wasRestoring)
 
             if wasRunning:
                 QTimer.singleShot(60 * 1000, lambda: Settings().setValue('SessionRestore/isRestoring', False))
@@ -381,19 +387,19 @@ class MainApplication(QtSingleApp):
         '''
         self.setOverrideCursor(Qt.BusyCursor)
         if not window:
-            window = self.createWindow(None, const.BW_OtherRestoredWindow)
+            window = self.createWindow(const.BW_OtherRestoredWindow)
         if window.tabCount() != 0:
             # This can only happend when recovering crashed session!
             # Don't restore tabs in current window as user already opened some
             # new tabs
-            window = self.createWindow(None, const.BW_OtherRestoredWindow) \
-                .restoreWindow(restoreData.windows.takeAt(0))
+            window = self.createWindow(const.BW_OtherRestoredWindow) \
+                .restoreWindow(restoreData.windows.pop(0))
         else:
-            window.restoreWindow(restoreData.windows.takeAt(0))
+            window.restoreWindow(restoreData.windows.pop(0))
 
         # data -> BrowserWindow::SavedWindow
         for data in restoreData.windows:
-            window = self.createWindow(None, const.BW_OtherRestoredWindow)
+            window = self.createWindow(const.BW_OtherRestoredWindow)
             window.restoreWindow(data)
         self._closedWindowsManager.restoreState(restoreData.closedWindows)
         self.restoreOverrideCursor()
@@ -596,13 +602,14 @@ class MainApplication(QtSingleApp):
         for window in self._windows:
             restoreData.windows.append(BrowserWindow.SavedWindow(window))
         if self._restoreManager and self._restoreManager.isValid():
-            stream = QDataStream(restoreData.creashedSession, QIODevice.WriteOnly)
-            stream.read(self._restoreManager.restoreData())
+            stream = QDataStream(restoreData.crashedSession, QIODevice.WriteOnly)
+            stream.writeQVariant(self._restoreManager.restoreData())
         restoreData.closedWindows = self._closedWindowsManager.saveState()
         data = QByteArray()
         stream = QDataStream(data, QIODevice.WriteOnly)
-        stream.read(const.sessionVersion)
-        stream.read(restoreData)
+
+        stream.writeInt(const.sessionVersion)
+        stream.writeBytes(pickle.dumps(restoreData))
         return data
 
     def saveSettings(self):
@@ -612,7 +619,8 @@ class MainApplication(QtSingleApp):
         settings = Settings()
         settings.beginGroup('SessionRestore')
         settings.setValue('isRunning', False)
-        settings.setValue('sRestoring', False)
+        settings.setValue('isRestoring', False)
+        settings.endGroup()
 
         settings.beginGroup('Web-Browser-Settings')
         deleteCache = settings.value('deleteCacheOnClose', False)
@@ -686,9 +694,8 @@ class MainApplication(QtSingleApp):
         actWin.activateWindow()
         actWin.setFocus()
 
-        # TODO: convert actWin to BrowserWindow
         win = actWin
-        if win and not actWin.isEmpty:
+        if isinstance(win, BrowserWindow) and not actWin.isEmpty():
             win.loadAddress(actUrl)
 
     def windowDestroyed(self, window):
@@ -701,7 +708,7 @@ class MainApplication(QtSingleApp):
 
     def onFocusChanged(self):
         activeBrowserWindow = self.activeWindow()
-        if activeBrowserWindow:
+        if isinstance(activeBrowserWindow, BrowserWindow):
             self._lastActiveWindow = activeBrowserWindow
             self.activeWindowChanged.emit(self._lastActiveWindow)
 

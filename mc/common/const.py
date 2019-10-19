@@ -11,7 +11,7 @@ WWWADDRESS = 'www.autowin.org'
 BUGSADDRESS = 'bugs.autowin.org'
 WIKIADDRESS = 'wiki.autowin.org'
 
-sessionVersion = '1.0'
+sessionVersion = 0x0004
 
 from PyQt5 import QtCore
 QT_VERSION = QtCore.QT_VERSION

@@ -186,7 +186,7 @@ class BrowserWindow(QMainWindow):
         self.restoreState(window.windowState)
         self.restoreGeometry(window.windowGeometry)
         self._restoreUiState(window.windowUiState)
-        if not self.gVar.app.isTestModeEnabled():
+        if not gVar.app.isTestModeEnabled():
             self.show()  # Window has to be visible before adding QWebEngineView's
         self._tabWidget.restoreState(window.tabs, window.currentTab)
         self._updateStartupFocus()

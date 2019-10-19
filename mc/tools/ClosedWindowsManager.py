@@ -1,11 +1,12 @@
 from PyQt5.Qt import QObject
 from PyQt5.Qt import QIcon
-from mc.common.globalvars import gVar
-from mc.app.BrowserWindow import BrowserWindow
 from PyQt5.Qt import QByteArray
 from PyQt5.Qt import QDataStream
-from mc.common import const
 from PyQt5.Qt import QAction
+from PyQt5.Qt import QIODevice
+from mc.common.globalvars import gVar
+from mc.app.BrowserWindow import BrowserWindow
+from mc.common import const
 
 class ClosedWindowsManager(QObject):
     _s_closedWindowsVersion = 1
@@ -25,7 +26,7 @@ class ClosedWindowsManager(QObject):
         self._closedWindows = []  # QVector<Window>
 
     def isClosedWindowAvailable(self):
-        return not not self._closedWindows
+        return bool(self._closedWindows)
 
     def closedWindows(self):
         '''
@@ -71,7 +72,7 @@ class ClosedWindowsManager(QObject):
         @return: QByteArray
         '''
         data = QByteArray()
-        stream = QDataStream()
+        stream = QDataStream(data, QIODevice.WriteOnly)
 
         stream.writeInt(self._s_closedWindowsVersion)
 
@@ -79,7 +80,7 @@ class ClosedWindowsManager(QObject):
         windowCount = min(max(0, len(self._closedWindows)), 3)
         stream.writeInt(windowCount)
 
-        for window in self.closedWindows[:windowCount]:
+        for window in self._closedWindows[:windowCount]:
             stream.writeQVariant(window.windowState)
 
         return data
@@ -101,9 +102,7 @@ class ClosedWindowsManager(QObject):
 
         for idx in range(windowCount):
             window = self.Window()
-            # TODO: check windowState struct
             window.windowState = stream.readQVariant()
-            import ipdb; ipdb.set_trace()
             if not window.isValid():
                 continue
             window.icon = window.windowState.tabs[0].icon
