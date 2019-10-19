@@ -1,6 +1,7 @@
 from PyQt5.Qt import QObject
 from PyQt5.Qt import pyqtProperty
 from PyQt5.Qt import pyqtSlot
+from PyQt5.Qt import QUrl
 from mc.tools.IconProvider import IconProvider
 from mc.common.globalvars import gVar
 from mc.webtab.TabbedWebView import TabbedWebView
@@ -53,10 +54,11 @@ class RecoveryJsObject(QObject):
     # public Q_SLOTS:
     @pyqtSlot()
     def startNewSession(self):
-        self._closeTab()
-
         gVar.app.restoreManager().clearRestoreData()
         gVar.app.destroyRestoreManager()
+
+        view = self._page.view()
+        view.loadByUrl(QUrl('app:start'))
 
     @pyqtSlot(list, list)
     def restoreSession(self, excludeWin, excludeTab):
