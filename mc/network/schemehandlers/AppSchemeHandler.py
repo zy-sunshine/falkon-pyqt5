@@ -1,13 +1,15 @@
+from threading import Lock
+from io import BytesIO
+from base64 import b64encode
 from PyQt5.QtWebEngineCore import QWebEngineUrlSchemeHandler
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestJob
 from PyQt5.Qt import QIODevice
 from PyQt5.Qt import QUrlQuery, QUrl
-from threading import Lock
-from io import BytesIO
-from base64 import b64encode
+from PyQt5.Qt import QStyle
 from mc.common import const
 from mc.common.globalvars import gVar
 from mc.common.designutil import cached_property
+from mc.tools.IconProvider import IconProvider
 
 class AppSchemeHandler(QWebEngineUrlSchemeHandler):
     def __init__(self, parent=None):
@@ -114,6 +116,7 @@ class AppSchemeReply(QIODevice):
                     enter fullscreen</a><br/>
                 <a href="#" onclick="javascript: document.webkitExitFullscreen()"/>exit fullscreen</a><br/>
             '''}
+            contents = self._restorePage
 
         with self._mutex:
             self._buffer = BytesIO(contents.encode('utf8'))
@@ -187,8 +190,27 @@ class AppSchemeReply(QIODevice):
 
         return page
 
+    @cached_property
     def _restorePage(self):
-        pass
+        rPage = ''
+        rPage += gVar.appTools.readAllFileContents(":html/restore.html")
+        rPage = rPage.replace("%IMAGE%", gVar.appTools.pixmapToDataUrl(
+            IconProvider.standardIcon(QStyle.SP_MessageBoxWarning).pixmap(45)).toString())
+        rPage = rPage.replace("%TITLE%", _("Restore Session"))
+        rPage = rPage.replace("%OOPS%", _("Oops, Falkon crashed."))
+        rPage = rPage.replace("%APOLOGIZE%",
+                _("We apologize for this. Would you like to restore the last saved state?"))
+        rPage = rPage.replace("%TRY-REMOVING%",
+                _("Try removing one or more tabs that you think cause troubles"))
+        rPage = rPage.replace("%START-NEW%", _("Or you can start completely new session"))
+        rPage = rPage.replace("%WINDOW%", _("Window"))
+        rPage = rPage.replace("%WINDOWS-AND-TABS%", _("Windows and Tabs"))
+        rPage = rPage.replace("%BUTTON-START-NEW%", _("Start New Session"))
+        rPage = rPage.replace("%BUTTON-RESTORE%", _("Restore"))
+        rPage = rPage.replace("%JAVASCRIPT-DISABLED%", _("Requires enabled JavaScript."))
+        rPage = gVar.appTools.applyDirectionToPage(rPage)
+
+        return rPage
 
     def _configPage(self):
         pass
