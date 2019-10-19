@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QDialogButtonBox
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QMenu
 from mc.app.DataPaths import DataPaths
 from mc.common.globalvars import gVar
 from mc.app.Settings import Settings
@@ -160,6 +161,7 @@ class SessionManager(QObject):
     # private Q_SLOTS:
     def _aboutToShowSessionsMenu(self):
         menu = self.sender()
+        assert(isinstance(menu, QMenu))
         menu.clear()
 
         # QActionGroup
@@ -175,7 +177,7 @@ class SessionManager(QObject):
 
             def func():
                 self._switchToSession(metaData.filePath)
-            action.triggerd.connect(func)
+            action.triggered.connect(func)
 
     def _sessionsDirectoryChanged(self):
         self._sessionsMetaDataList.clear()
@@ -192,7 +194,7 @@ class SessionManager(QObject):
             return
 
         sessionData = RestoreData()
-        RestoreManager.createFromFile(sessionFilePath, sessionData)
+        sessionData = RestoreManager.createFromFile(sessionFilePath)
 
         if not sessionData.isValid():
             return
@@ -202,7 +204,7 @@ class SessionManager(QObject):
         if flags & self.SwitchSession:
             self.writeCurrentSession(self._lastActiveSessionPath)
 
-            gVar.app.createWindow(const.BW_OtherRestoredWindow)
+            window = gVar.app.createWindow(const.BW_OtherRestoredWindow)
             for win in gVar.app.windows():
                 if win != window:
                     win.close()
@@ -222,7 +224,7 @@ class SessionManager(QObject):
             sessionFilePath = action.data()
 
         suggestedName = QFileInfo(sessionFilePath).completeBaseName() + \
-            (flags & self._cloneSession) and _('_cloned') or _('_renamed')
+            (flags & self.CloneSession) and _('_cloned') or _('_renamed')
 
         newName, ok = QInputDialog.getText(gVar.app.activeWindow(),
             (flags & self.CloneSession) and _('Clone Session') or _('Rename Session'),
@@ -248,11 +250,14 @@ class SessionManager(QObject):
                 QMessageBox.information(gVar.app.activeWindow(), _('Error!'),
                     _('An error occurred when renaming session file.'))
                 return
-            if not self._isActive(sessionFilePath):
+            if self._isActive(sessionFilePath):
                 self._lastActiveSessionPath = newSessionPath
                 self._sessionsMetaDataList.clear()
 
     def _saveSession(self):
+        '''
+        @note: not used yet
+        '''
         sessionName, ok = QInputDialog.getText(gVar.app.getWindow(), _('Save Session'),
             _('Please enter a name to save session:'), QLineEdit.Normal,
             _('Saved Session (%s)') % QDateTime.currentDateTime().toString('yyyy MM dd HH-mm-ss'))
@@ -280,7 +285,7 @@ class SessionManager(QObject):
         self._openSession(filePath, self.SwitchSession)
 
     def _cloneSession(self, filePath):
-        self._openSession(filePath, self.CloneSession)
+        self._renameSession(filePath, self.CloneSession)
 
     def _deleteSession(self, filePath):
         result = QMessageBox.information(gVar.app.activeWindow(), _('Delete Session'),
@@ -317,11 +322,12 @@ class SessionManager(QObject):
 
     def _sessionMetaData(self, withBackups=True):
         '''
+        @brief: return all session meta info list with backup sessions.
         @return: QList<SessionMetaData>
         '''
         self._fillSessionsMetaDataListIfNeeded()
 
-        out = self._sessionsMetaDataList
+        out = self._sessionsMetaDataList[:]
 
         if withBackups and QFile.exists(self._firstBackupSession):
             data = self.SessionMetaData()
@@ -352,6 +358,9 @@ class SessionManager(QObject):
         return fileInfo == QFileInfo(self._lastActiveSessionPath)
 
     def _fillSessionsMetaDataListIfNeeded(self):
+        '''
+        @brief: load all session meta info from sessions directory include default session file
+        '''
         if self._sessionsMetaDataList:
             return
 
