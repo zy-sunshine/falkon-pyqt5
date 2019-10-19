@@ -561,8 +561,12 @@ class NavigationBar(QWidget):
 
         settings = Settings()
         settings.beginGroup('NavigationBar')
-        self._layoutIds = settings.value('Layout', defaultIds, type=list)
+        self._layoutIds = []
+        for item in settings.value('Layout', defaultIds, type=list):
+            if item not in self._layoutIds and item:
+                self._layoutIds.append(item)
         self._searchLine.setVisible(settings.value('ShowSearchBar', True, type=bool))
+        settings.endGroup()
 
         if 'locationbar' not in self._layoutIds:
             self._layoutIds.append('locationbar')
