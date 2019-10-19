@@ -24,7 +24,7 @@ class AppSchemeHandler(QWebEngineUrlSchemeHandler):
         if self._handleRequest(job):
             return
 
-        knownPages = ['about', 'start', 'speeddial', 'config', 'restore']
+        knownPages = ['about', 'start', 'speeddial', 'config', 'restore', 'test']
 
         if job.requestUrl().path() in knownPages:
             job.reply(b'text/html', AppSchemeReply(job, job))
@@ -105,6 +105,8 @@ class AppSchemeReply(QIODevice):
         elif self._pageName == 'config':
             contents = tpl % {'title': 'config', 'content': 'Config Page'}
         elif self._pageName == 'restore':
+            contents = self._restorePage
+        elif self._pageName == 'test':
             contents = tpl % {'title': 'restore', 'content': '''Restore Page<br/>
                 <a href="#" onclick="javascript: alert('test')">alert</a><br/>
                 <a href="#" onclick="javascript: confirm('confirm test')">confirm</a><br/>
@@ -116,7 +118,6 @@ class AppSchemeReply(QIODevice):
                     enter fullscreen</a><br/>
                 <a href="#" onclick="javascript: document.webkitExitFullscreen()"/>exit fullscreen</a><br/>
             '''}
-            contents = self._restorePage
 
         with self._mutex:
             self._buffer = BytesIO(contents.encode('utf8'))
