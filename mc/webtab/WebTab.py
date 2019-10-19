@@ -68,7 +68,7 @@ class WebTab(QWidget):
                 self.parentTab = webTab.parentTab().tabIndex()
             else:
                 self.parentTab = -1
-            self.childTabs = webTab.childTabs()[:]
+            self.childTabs = [ tab.tabIndex() for tab in webTab.childTabs() ]
             self.sessionData = webTab.sessionData()
 
         def isValid(self):
