@@ -249,17 +249,7 @@ class MainMenu(QMenu):
     # Help menu
     def _aboutQt(self):
         #import ipdb; ipdb.set_trace()
-        #QApplication.aboutQt()
-        data = gVar.app.saveState()
-        from PyQt5.Qt import QFile
-        from PyQt5.Qt import QDataStream
-        import pickle
-
-        stream = QDataStream(data)
-        version = stream.readInt()
-        data = stream.readBytes()
-        obj = pickle.loads(data)
-        print(obj)
+        QApplication.aboutQt()
 
     def _showInfoAboutApp(self):
         if self._window:

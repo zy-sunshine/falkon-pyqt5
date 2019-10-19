@@ -650,15 +650,16 @@ class TabWidget(TabStackedWidget):
         tab = ClosedTabsManager.Tab()
 
         action = obj
-        if isinstance(action, QAction) and action.data().toInt() != 0:
-            tab = self._closedTabsManager.takeTabAt(action.data().toInt())
+        if isinstance(action, QAction) and action.data():
+            tab = self._closedTabsManager.takeTabAt(action.data())
         else:
             tab = self._closedTabsManager.takeLastClosedTab()
 
         if tab.position < 0:
             return
 
-        index = self.addViewByUrl(QUrl(), tab.tabState.title, const.NT_CleanSelectedTab, False, tab.position)
+        index = self.addViewByUrlTitle(QUrl(), tab.tabState.title,
+            const.NT_CleanSelectedTab, False, tab.position)
         webTab = self._weTab(index)
         webTab.setParentTab(tab.parentTab)
         webTab.p_restoreTab(tab.tabState)
