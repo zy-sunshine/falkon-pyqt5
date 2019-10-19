@@ -98,7 +98,7 @@ class AppSchemeReply(QIODevice):
         if self._pageName == 'about':
             contents = tpl % {'title': 'about', 'content': 'About Page'}
         elif self._pageName == 'start':
-            contents = tpl % {'title': 'start', 'content': 'Start Page'}
+            contents = self._startPage
         elif self._pageName == 'speeddial':
             #contents = tpl % {'title': 'speeddial', 'content': 'Speeddial Page'}
             contents = self._speeddialPage()
@@ -107,7 +107,7 @@ class AppSchemeReply(QIODevice):
         elif self._pageName == 'restore':
             contents = self._restorePage
         elif self._pageName == 'test':
-            contents = tpl % {'title': 'restore', 'content': '''Restore Page<br/>
+            contents = tpl % {'title': 'test', 'content': '''Test Page<br/>
                 <a href="#" onclick="javascript: alert('test')">alert</a><br/>
                 <a href="#" onclick="javascript: confirm('confirm test')">confirm</a><br/>
                 <a href="#" onclick="javascript: prompt('prompt test', 'prompt content')">prompt</a><br/>
@@ -128,8 +128,23 @@ class AppSchemeReply(QIODevice):
     def _aboutPage(self):
         pass
 
+    @cached_property
     def _startPage(self):
-        pass
+        sPage = ''
+
+        sPage += gVar.appTools.readAllFileContents(":html/start.html")
+        sPage = sPage.replace("%ABOUT-IMG%", "qrc:icons/other/startpage.svg")
+
+        sPage = sPage.replace("%TITLE%", _("Start Page"))
+        sPage = sPage.replace("%BUTTON-LABEL%", _("Search on Web"))
+        sPage = sPage.replace("%SEARCH-BY%", _("Search results provided by DuckDuckGo"))
+        sPage = sPage.replace("%WWW%", const.WIKIADDRESS)
+        sPage = sPage.replace("%ABOUT-APP%", _("About App"))
+        sPage = sPage.replace("%PRIVATE-BROWSING%",
+            gVar.app.isPrivate() and _("<h1>Private Browsing</h1>") or '')
+        sPage = sPage = gVar.appTools.applyDirectionToPage(sPage)
+
+        return sPage
 
     @cached_property
     def _speeddialPageBaseContent(self):
