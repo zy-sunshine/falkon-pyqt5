@@ -631,6 +631,8 @@ class MainApplication(QtSingleApp):
         settings.beginGroup('Cookies-Settings')
         deleteCookies = settings.value('deleteCookiesOnClose', False)
         settings.endGroup()
+        settings.sync()
+        del settings
 
         if deleteHistory:
             self._history.clearHistory()
