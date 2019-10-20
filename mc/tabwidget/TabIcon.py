@@ -54,7 +54,8 @@ class TabIcon(QWidget):
         self._tab = tab
 
         self._tab.webView().loadStarted.connect(self._showLoadingAnimation)
-        self._tab.webView().loadFinished.connect(self._hideLoadingAnimation)
+        #self._tab.webView().loadFinished.connect(self._hideLoadingAnimation)
+        self._tab.webView().loadProgress.connect(self._hideLoadingAnimation)
         self._tab.webView().iconChanged.connect(self.updateIcon)
         self._tab.webView().backgroundActivityChanged.connect(lambda: self.update())
 
@@ -105,10 +106,11 @@ class TabIcon(QWidget):
         self._updateAnimationFrame()
         self._show()
 
-    def _hideLoadingAnimation(self):
-        self._animationRunning = False
-        self._updateTimer.stop()
-        self.updateIcon()
+    def _hideLoadingAnimation(self, progress):
+        if progress == 100:
+            self._animationRunning = False
+            self._updateTimer.stop()
+            self.updateIcon()
 
     def _updateAudioIcon(self, recentlyAudible):
         if self._tab.isMuted() or recentlyAudible:

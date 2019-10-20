@@ -261,8 +261,6 @@ class WebView(QWebEngineView):
         @param: obj QObject
         @param: event QEvent
         '''
-        # TODO: debug code
-        return super().eventFilter(obj, event)
         evtype = event.type()
         # Keyboard events are sent to parent widget
         if obj == self and evtype == QEvent.ParentChange and self.parentWidget():

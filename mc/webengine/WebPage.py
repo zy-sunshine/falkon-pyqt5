@@ -103,13 +103,13 @@ class WebPage(QWebEnginePage):
         # Workaround for broken load started/finished signals in QWebEngine 5.10 5.11
         # NOTE: if open this revise, will cause page and view loadFinished emit
         # multi time
-        def loadProgressFunc(progress):
-            '''
-            @param: progress int
-            '''
-            if progress == 100:
-                self.loadFinished.emit(True)
-        self.loadProgress.connect(loadProgressFunc)
+        #def loadProgressFunc(progress):
+        #    '''
+        #    @param: progress int
+        #    '''
+        #    if progress == 100:
+        #        self.loadFinished.emit(True)
+        #self.loadProgress.connect(loadProgressFunc)
 
         if const.QTWEBENGINEWIDGETS_VERSION >= const.QT_VERSION_CHECK(5, 11, 0):
             def registerProtocolHandlerFunc(request):
