@@ -36,6 +36,8 @@ from mc.notifications.DesktopNotificationsFactory import DesktopNotificationsFac
 from .ThemeManager import ThemeManager
 from .PluginsManager import PluginsManager
 from .AutoFillManager import AutoFillManager
+from mc.tools.html5permissions.HTML5PermissionsDialog import HTML5PermissionsDialog
+from mc.cookies.CookieManager import CookieManager
 
 def createLanguageItem(self, lang):
     '''

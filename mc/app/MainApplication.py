@@ -91,7 +91,7 @@ class MainApplication(QtSingleApp):
         self._searchEnginesManager = None
         self._closedWindowsManager = None
         self._protocolHandlerManager = None
-        self._html5PermissionManager = None
+        self._html5PermissionsManager = None
         self._desktopNotifications = None  # DesktopNotificationsFactory
         self._webProfile = None  # QWebEngineProfile
 
@@ -502,7 +502,7 @@ class MainApplication(QtSingleApp):
 
     def html5PermissionsManager(self):
         if not self._html5PermissionsManager:
-            self._html5PermissionsManager = HTML5PermissionsManager()
+            self._html5PermissionsManager = HTML5PermissionsManager(self)
         return self._html5PermissionsManager
 
     def desktopNotifications(self):
