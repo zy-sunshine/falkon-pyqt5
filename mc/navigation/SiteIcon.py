@@ -8,9 +8,12 @@ from mc.other.SiteInfoWidget import SiteInfoWidget
 
 class SiteIcon(ToolButton):
     def __init__(self, parent):
+        '''
+        @param: parent LocationBar
+        '''
         super().__init__(parent)
         self._window = None  # BrowserWindow
-        self._locationBar = None  # LocationBar
+        self._locationBar = parent  # LocationBar
         self._view = None  # WebView
         self._updateTimer = None  # QTimer
 
@@ -99,6 +102,7 @@ class SiteIcon(ToolButton):
             self.setDown(False)
             self.setUpdatesEnabled(True)
 
+    # override
     def mouseMoveEvent(self, event):
         '''
         @param: event QMouseEvent
@@ -123,10 +127,10 @@ class SiteIcon(ToolButton):
         mime = QMimeData()
         mime.setUrls([url])
         mime.setText(title)
-        mime.setImageData(self.icon().pixmap(16).toImage())
+        mime.setImageData(self.icon.pixmap(16).toImage())
 
         drag.setMimeData(mime)
-        drag.setPixmap(gVar.appTools.createPixmapForSite(self.icon(), title, url.toString()))
+        drag.setPixmap(gVar.appTools.createPixmapForSite(self.icon, title, url.toString()))
         drag.exec_()
 
         # Restore Down State

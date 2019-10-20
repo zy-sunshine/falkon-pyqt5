@@ -1,3 +1,4 @@
+from os import readlink
 from os.path import isfile, isdir, dirname, basename, abspath
 from os.path import join as pathjoin, exists as pathexists
 from PyQt5.Qt import QFileDialog
@@ -15,15 +16,23 @@ from PyQt5.Qt import QIcon
 from PyQt5.Qt import QFileIconProvider
 from PyQt5.Qt import QRegion
 from PyQt5.Qt import QRect
+from PyQt5.Qt import QRectF
 from PyQt5.Qt import QSize
 from PyQt5.Qt import QProcess
 from PyQt5.Qt import QPoint
 from PyQt5.Qt import QSysInfo
+from PyQt5.Qt import QDir
+from PyQt5.Qt import Qt
+from PyQt5.Qt import QPainter
+from PyQt5.Qt import QPen
+from PyQt5.Qt import QPainterPath
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMessageBox
 from mc.app.Settings import Settings
 from mc.common.designutil import Singleton
 from mc.app.DataPaths import DataPaths
+from mc.common import const
+from mc.common.globalvars import gVar
 
 class AppTools(Singleton):
 
@@ -66,7 +75,10 @@ class AppTools(Singleton):
         @param: path QString
         @return: QPixmap
         '''
-        pass
+        icon = QIcon(path)
+        if not icon.availableSizes():
+            return QPixmap(path)
+        return icon.pixmap(icon.availableSizes()[0])
 
     def readAllFileContents(self, filename):
         '''
@@ -112,18 +124,67 @@ class AppTools(Singleton):
         widget.move(p)
 
     def removeRecursively(self, filePath):
-        pass
+        '''
+        @param: filePath QString
+        '''
+        fileInfo = QFileInfo(filePath)
+        if not fileInfo.exists() and not fileInfo.isSymLink():
+            return
+        if fileInfo.isDir() and not fileInfo.isSymLink():
+            dir_ = QDir(filePath)
+            dir_ = dir_.canonicalPath()
+            if dir_.isRoot() or dir_.path() == QDir.home().canonicalPath():
+                print('CRITICAL: Attempt to remove root/home directory', dir_)
+                return False
+            fileNames = dir_.entryList(QDir.Files | QDir.Dirs | QDir.NoDotAndDotDot |
+                    QDir.Hidden | QDir.System)
+            for fileName in fileNames:
+                if not self.removeRecursively(filePath + '/' + fileName):
+                    return False
+            if not QDir.root().rmdir(dir_.path()):
+                return False
+        elif not QFile.remove(filePath):
+            return False
+        return True
 
     def copyRecursively(self, sourcePath, targetPath):
-        pass
+        srcFileInfo = QFileInfo(sourcePath)
+        if srcFileInfo.isDir() and not srcFileInfo.isSymLink():
+            targetDir = QDir(targetPath)
+            targetDir.cdUp()
+            if not targetDir.mkdir(QFileInfo(targetPath).fileName()):
+                return False
+            fileNames = QDir(sourcePath).entryList(QDir.Files | QDir.Dirs | QDir.NoDotAndDotDot |
+                    QDir.Hidden | QDir.System)
+            for fileName in fileNames:
+                newSourcePath = sourcePath + '/' + fileName
+                newTargetPath = targetPath + '/' + fileName
+                if not self.copyRecursively(newSourcePath, newTargetPath):
+                    return False
+        elif not const.OS_WIN and srcFileInfo.isSymLink():
+            linkPath = readlink(sourcePath)
+            return QFile.link(linkPath, targetPath)
+        elif not QFile.copy(sourcePath, targetPath):
+            return False
+        return True
 
     def samePartOfStrings(self, one, other):
         '''
+        @brief: Finds same part of @one in @other from the beginning
         @param: one QString
         @param: other QString
         @return: QString
         '''
-        pass
+        maxSize = min(len(one), len(other))
+        if maxSize <= 0:
+            return ''
+
+        idx = 0
+        while one[idx] == other[idx]:
+            idx += 1
+            if idx == maxSize:
+                break
+        return one[:idx]
 
     def urlEncodeQueryString(self, url):
         '''
@@ -143,7 +204,12 @@ class AppTools(Singleton):
         @param: str0 QString
         @return: QString
         '''
-        pass
+        if not str0.startswith('xn--'):
+            return str0
+
+        # QUrl::fromAce will only decode domains from idn whitelist
+        decoded = QUrl.fromAce(str0.encode() + b'.org')
+        return decoded[:len(decoded) - 4]
 
     def escapeSqlGlobString(self, urlString):
         '''
@@ -158,7 +224,30 @@ class AppTools(Singleton):
         return urlString
 
     def ensureUniqueFilename(self, name, appendFormat="(%s)"):
-        pass
+        assert('%s' in appendFormat)
+
+        info = QFileInfo(name)
+        if not info.exists():
+            return name
+
+        # QDir
+        dir_ = info.absoluteDir()
+        # QString
+        fileName = info.fileName()
+
+        idx = 1
+        while info.exists():
+            file_ = fileName
+            index = file_.rfind('.')
+            appendString = appendFormat % idx
+            if index == -1:
+                file_ += appendString
+            else:
+                file_ = file_[:index] + appendString + file_[index:]
+            info.setFile(dir_, file_)
+            idx += 1
+
+        return info.absoluteFilePath()
 
     def getFileNameFromUrl(self, url):
         '''
@@ -206,13 +295,33 @@ class AppTools(Singleton):
 
     def alignTextToWidth(self, string, text, metrics, width):
         '''
+        @brief: fill repeat string with text seperator to width size according metrics
         @param: string QString
         @param: text QString
         @param: metrics QFontMetrics
         @param: width int
         @return: QString
         '''
-        pass
+        pos = 0
+        returnString = ''
+
+        while pos <= len(string):
+            part = string[pos:]
+            elidedLine = metrics.elidedText(part, Qt.ElideRight, width)
+
+            if not elidedLine:
+                break
+
+            if len(elidedLine) != len(part):
+                elidedLine = eliededLine[:len(elidedLine) - 3]
+
+            if returnString:
+                returnString += text
+
+            returnString += elidedLine
+            pos += len(elidedLine)
+
+        return returnString
 
     def fileSizeToString(self, size):
         '''
@@ -243,7 +352,47 @@ class AppTools(Singleton):
         @param: url QString
         @return: QPixmap
         '''
-        pass
+        fontMetrics = QApplication.fontMetrics()
+        padding = 4
+        text = len(title) > len(url) and title or url
+        maxWidth = fontMetrics.width(text) + 3 * padding + 16
+        width = min(maxWidth, 150)
+        height = fontMetrics.height() * 2 + fontMetrics.leading() + 2 * padding
+
+        pixelRatio = gVar.app.devicePixelRatio()
+        pixmap = QPixmap(width * pixelRatio, height * pixelRatio)
+        pixmap.setDevicePixelRatio(pixelRatio)
+
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw background
+        pen = QPen(Qt.black)
+        pen.setWidth(1)
+        painter.setPen(pen)
+
+        path = QPainterPath()
+        path.addRect(QRectF(0, 0, width, height))
+
+        painter.fillPath(path, Qt.white)
+        painter.drawPath(path)
+
+        # Draw icon
+        iconRect = QRect(padding, 0, 16, height)
+        icon.paint(painter, iconRect)
+
+        # Draw title
+        titleRect = QRectF(iconRect.right() + padding, padding,
+                width - padding - iconRect.right(), fontMetrics.height())
+        painter.drawText(titleRect, fontMetrics.elidedText(title, Qt.ElideRight, titleRect.width()))
+
+        # Draw url
+        urlRect = QRectF(titleRect.x(), titleRect.bottom() + fontMetrics.leading(),
+                titleRect.width(), titleRect.height())
+        painter.setPen(QApplication.palette().color(QPalette.Link))
+        painter.drawText(urlRect, fontMetrics.elidedText(url, Qt.ElideRight, urlRect.width()))
+
+        return pixmap
 
     def applyDirectionToPage(self, pageContents):
         '''
