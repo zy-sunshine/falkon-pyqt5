@@ -63,9 +63,9 @@ class HistorySideBar(QWidget):
         menu.addSeparator()
         actDelete = menu.addAction(QIcon.fromTheme('edit-delete'), _('Delete'))
 
-        actNewTab.triggered.connect(self._openUrlInNewTab)
-        actNewWindow.triggered.connect(self._openUrlInNewWindow)
-        actNewPrivateWindow.triggered.connect(self._openUrlInNewPrivateWindow)
+        actNewTab.triggered.connect(lambda x: self._openUrlInNewTab())
+        actNewWindow.triggered.connect(lambda x: self._openUrlInNewWindow())
+        actNewPrivateWindow.triggered.connect(lambda x: self._openUrlInNewPrivateWindow())
         actDelete.triggered.connect(self.ui.historyTree.removeSelectedItems)
 
         if self.ui.historyTree.selectedUrl().isEmpty():

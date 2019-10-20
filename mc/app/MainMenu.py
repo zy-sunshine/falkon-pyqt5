@@ -1,22 +1,23 @@
 from PyQt5.QtWidgets import QMenu
-from mc.common.globalvars import gVar
 from PyQt5.Qt import QKeySequence
 from PyQt5.Qt import QAction
 from PyQt5.Qt import QIcon
-from mc.tools.IconProvider import IconProvider
 from PyQt5.Qt import Qt
-from mc.webengine.WebInspector import WebInspector
-from mc.common import const
 from PyQt5.Qt import QUrl
 from PyQt5.Qt import QDesktopServices
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWebEngineWidgets import QWebEnginePage
+from mc.common.globalvars import gVar
+from mc.tools.IconProvider import IconProvider
+from mc.webengine.WebInspector import WebInspector
+from mc.common import const
 from mc.history.HistoryMenu import HistoryMenu
 from mc.bookmarks.BookmarksMenu import BookmarksMenu
 from mc.other.SiteInfo import SiteInfo
 from mc.other.AboutDialog import AboutDialog
 from mc.preferences.Preferences import Preferences
 from mc.cookies.CookieManager import CookieManager
+from mc.other.ClearPrivateData import ClearPrivateData
 
 class MainMenu(QMenu):
     def __init__(self, window, parent=None):

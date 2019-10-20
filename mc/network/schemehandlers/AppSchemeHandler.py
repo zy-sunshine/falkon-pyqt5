@@ -119,6 +119,18 @@ class AppSchemeReply(QIODevice):
                 <a href="#testFragment">test fragment</a><br/>
                 <a href="#" onclick="javascript: document.webkitExitFullscreen()"/>
                     exit fullscreen</a><br/>
+                <a href="#" onclick="javascript: testHtml5Perm()"/>test html5 permission</a><br/>
+                <script>
+                function testHtml5Perm() {
+                    Notification.requestPermission().then(function(permission) {
+                        if(permission === 'granted'){
+                            console.log('User granted');
+                        }else if(permission === 'denied'){
+                            console.log('User denied');
+                        }
+                    });
+                }
+                </script>
             '''}
 
         with self._mutex:
