@@ -42,8 +42,8 @@ function configureSpeedDial()
     if ($('#SdSizeToggle').prop('checked') != true)
         $('#SdSizeStateColor').css('color', 'rgba(0,0,0, 0.0)');
     // ======================== SHOW DIALOG ======================== //
-    $('#fadeOverlay2').css({'filter' : 'alpha(opacity=100)'}).fadeIn();
-    $('#fadeOverlay2').click(function() { $(this).fadeOut('slow'); });
+    $('#fadeOverlay2').css({'filter' : 'alpha(opacity=100)'}).show();
+    $('#fadeOverlay2').click(function() { $(this).hide(); });
     $('#settingsBox').click(function(event) { event.stopPropagation(); });
 }
 function escapeTitle(title) {
@@ -75,7 +75,8 @@ function onFetchTitleClick(checkbox) {
 }
 
 function hideEditBox() {
-    $('#fadeOverlay').fadeOut("slow", function() {$("#fadeOverlay").remove();});
+    $('#fadeOverlay').hide();
+    $("#fadeOverlay").remove();
 }
 
 function onEditClick(box) {
@@ -109,7 +110,7 @@ function onEditClick(box) {
 
     $('#acceptEditBox').click(boxEdited);
 
-    $('#fadeOverlay').css({'filter' : 'alpha(opacity=100)'}).fadeIn();
+    $('#fadeOverlay').css({'filter' : 'alpha(opacity=100)'}).show();
     $('#fadeOverlay').click(function() {hideEditBox()});
     $('#overlay-edit').click(function(event) { event.stopPropagation(); });
 
@@ -147,9 +148,8 @@ function boxEdited() {
             var img = box.getElementsByTagName('img')[0];
             img.setAttribute('src', scriptData.loadingImage);
 
-            $('#fadeOverlay').fadeOut("slow", function() {
-                $("#fadeOverlay").remove();
-            });
+            $('#fadeOverlay').hide();
+            $("#fadeOverlay").remove();
             external.speedDial.loadThumbnail(a.getAttribute('href'), fetchTitleChecked);
         } else {
             hideEditBox();
@@ -426,12 +426,12 @@ function init() {
     };
     document.getElementById("BgImgSelSiz").onchange = bgImgUpdate;
     document.getElementById("button-cancel").onclick = function() {
-        $('#fadeOverlay2').fadeOut('slow');
+        $('#fadeOverlay2').hide();
         location.reload();
     };
     document.getElementById("button-apply").onclick = function() {
         saveSettings();
-        $('#fadeOverlay2').fadeOut('slow');
+        $('#fadeOverlay2').hide();
         location.reload();
     };
 
