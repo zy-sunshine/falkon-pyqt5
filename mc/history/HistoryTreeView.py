@@ -70,7 +70,10 @@ class HistoryTreeView(QTreeView):
             return QUrl()
 
         # TopLevelItems have invalid (empty) UrlRole data
-        return indexes[0].data(HistoryModel.UrlRole).toUrl()
+        result = indexes[0].data(HistoryModel.UrlRole)
+        if not result:
+            result = QUrl()
+        return result
 
     def header(self):
         '''

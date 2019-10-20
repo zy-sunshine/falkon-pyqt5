@@ -1,6 +1,6 @@
 from PyQt5.Qt import QIcon
+from PyQt5.Qt import QDateTime
 from mc.common.globalvars import gVar
-from datetime import datetime
 
 class HistoryItem(object):
     def __init__(self, parent=None):
@@ -155,7 +155,7 @@ class HistoryItem(object):
         @param: qint64
         '''
         if self._startTimestamp == -1:
-            return int(datetime.now().timestamp())
+            return QDateTime.currentDateTime().toMSecsSinceEpoch()
         return self._startTimestamp
 
     def setEndTimestamp(self, end):

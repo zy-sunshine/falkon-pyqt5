@@ -1,7 +1,7 @@
 import peewee
+from threading import Lock
 from PyQt5.Qt import QAbstractItemModel
 from PyQt5.Qt import Qt
-from .HistoryItem import HistoryItem
 from PyQt5.Qt import QSortFilterProxyModel
 from PyQt5.Qt import pyqtSignal
 from PyQt5.Qt import QApplication
@@ -9,12 +9,11 @@ from PyQt5.Qt import QTimer
 from PyQt5.Qt import QIcon
 from PyQt5.Qt import QDateTime
 from PyQt5.Qt import QDate
-from datetime import datetime, date
-from datetime import timedelta
-from datetime import time as dttime
+from PyQt5.Qt import QTime
 from PyQt5.Qt import QModelIndex
 from mc.tools.IconProvider import IconProvider
 from mc.common.models import HistoryDbModel
+from .HistoryItem import HistoryItem
 
 class HistoryModel(QAbstractItemModel):
     # enum Roles
@@ -30,9 +29,9 @@ class HistoryModel(QAbstractItemModel):
 
     @classmethod
     def _s_dateTimeToString(cls, dt):
-        current = datetime.now()
+        current = QDateTime.currentDateTime()
         if current.date() == dt.date():
-            return dt.toString('h:mm')
+            return dt.time().toString('h:mm')
 
         return dt.toString('yyyy.M.d h:mm')
 
@@ -44,6 +43,7 @@ class HistoryModel(QAbstractItemModel):
         self._rootItem = HistoryItem(None)  # HistoryItem
         self._todayItem = None  # HistoryItem
         self._history = history  # History
+        self._lock = Lock()
 
         self._init()
 
@@ -255,6 +255,7 @@ class HistoryModel(QAbstractItemModel):
             idList.append(parentItem.child(idx).historyEntry.id)
 
         list_ = []  # QVector<HistoryEntry>
+
         dbobjs = HistoryDbModel.select().where(HistoryDbModel.date.between(
             parentItem.endTimestamp(), parentItem.startTimestamp()))
         for dbobj in dbobjs:
@@ -265,7 +266,6 @@ class HistoryModel(QAbstractItemModel):
         if not list_:
             return
 
-        # TODO: prepend or append for new row positions?
         self.beginInsertRows(parent, 0, len(list_) - 1)
 
         for entry in list_:
@@ -331,7 +331,7 @@ class HistoryModel(QAbstractItemModel):
         # TODO: delete m_rootItem
         del self._rootItem
         self._todayItem = None
-        self._rootItem = HistoryItem(0)
+        self._rootItem = HistoryItem(None)
 
         self._init()
 
@@ -342,9 +342,10 @@ class HistoryModel(QAbstractItemModel):
         @param: entry HistoryEntry
         '''
         if not self._todayItem:
-            self.beginInsertRows(QModelIndex(), None, None)
+            self.beginInsertRows(QModelIndex(), 0, 0)
 
             self._todayItem = HistoryItem(None)
+            self._todayItem.canFetchMore = True
             self._todayItem.setStartTimestamp(-1)
             self._todayItem.setEndTimestamp(QDateTime(QDate.currentDate()).toMSecsSinceEpoch())
             self._todayItem.title = _('Today')
@@ -385,8 +386,9 @@ class HistoryModel(QAbstractItemModel):
         @param: before HistoryEntry
         @param: after HistoryEntry
         '''
-        self.historyEntryDeleted(before)
-        self.historyEntryAdded(after)
+        with self._lock:
+            self.historyEntryDeleted(before)
+            self.historyEntryAdded(after)
 
     # private
     def _findHistoryItem(self, entry):
@@ -437,40 +439,33 @@ class HistoryModel(QAbstractItemModel):
         if minTs <= 0:
             return
 
-        today = datetime.now()
-        currentTs = int(today.timestamp())
-        todayDate = today.date()
-        today = datetime.combine(todayDate, dttime(0, 0, 0))
-        week = today - timedelta(days=today.weekday())
-        month = datetime(today.year, today.month, 1)
-        monthDate = month.date()
-
-        weekDate = week.date()
+        today = QDate.currentDate()
+        week = today.addDays(1 - today.dayOfWeek())
+        month = QDate(today.year(), today.month(), 1)
+        currentTs = QDateTime.currentMSecsSinceEpoch()
 
         ts = currentTs
         while ts > minTs:
-            tsDate = datetime.fromtimestamp(ts).date()
+            tsDate = QDateTime.fromMSecsSinceEpoch(ts).date()
             endTs = 0
             itemName = ''
 
-            if tsDate == todayDate:
-                endTs = int(today.timestamp())
+            if tsDate == today:
+                endTs = QDateTime(today).toMSecsSinceEpoch()
                 itemName = _('Today')
-            elif tsDate >= weekDate:
-                endTs = int(week.timestamp())
+            elif tsDate >= week:
+                endTs = QDateTime(week).toMSecsSinceEpoch()
                 itemName = _('This Week')
-            elif tsDate.month == monthDate.month and tsDate.year == monthDate.year:
-                endTs = int(month.timestamp())
+            elif tsDate.month() == month.month() and tsDate.year() == month.year():
+                endTs = QDateTime(month).toMSecsSinceEpoch()
                 itemName = _('This Month')
             else:
-                startDate = date(tsDate.year, tsDate.month, tsDate.day)
-                endDate = date(startDate.year, startDate.month, 1)
+                startDate = QDate(tsDate.year(), tsDate.month(), tsDate.daysInMonth())
+                endDate = QDate(startDate.year(), startDate.month(), 1)
 
-                ts = datetime.combine(startDate, dttime(23, 59, 59)).timestamp()
-                ts = int(ts)
-                endTs = datetime.combine(endDate, dttime(0, 0, 0)).timestamp()
-                endTs = int(endTs)
-                itemName = '%s %s' % (tsDate.year, History.titleCaseLocalizedMonth(tsDate.month))
+                ts = QDateTime(startDate, QTime(23, 59, 59)).toMSecsSinceEpoch()
+                endTs = QDateTime(endDate).toMSecsSinceEpoch()
+                itemName = '%s %s' % (tsDate.year(), History.titleCaseLocalizedMonth(tsDate.month()))
             dbobj = HistoryDbModel.select().where(HistoryDbModel.date.between(endTs, ts)).first()
             if dbobj:
                 item = HistoryItem(self._rootItem)

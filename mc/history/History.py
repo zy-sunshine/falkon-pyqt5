@@ -8,7 +8,6 @@ from .HistoryModel import HistoryModel
 from mc.common.models import HistoryDbModel
 from mc.common.models import IconsDbModel
 from mc.common.globalvars import gVar
-from datetime import datetime
 
 class History(QObject):
 
@@ -102,11 +101,12 @@ class History(QObject):
                 before.title = dbobj.title
 
                 after = self.HistoryEntry()
+                after.id = dbobj.id
                 after.count = dbobj.count + 1
                 after.date = QDateTime.currentDateTime()
-                after.title = title
                 after.url = url
                 after.urlString = after.url.toEncoded().data().decode()
+                after.title = title
                 after.fillDbobj(dbobj)
                 dbobj.save()
 
@@ -115,7 +115,7 @@ class History(QObject):
                 # insert
                 dbobj = HistoryDbModel.create(**{
                     'count': 1,
-                    'date': int(datetime.now().timestamp()),
+                    'date': QDateTime.currentMSecsSinceEpoch(),
                     'url': url.toString(),
                     'title': title,
                 })
@@ -175,7 +175,14 @@ class History(QObject):
         @param: end qint64
         @return: QList<int>
         '''
-        pass
+        list_ = []  # QList<int>
+
+        if start < 0 or end < 0:
+            return list_
+
+        ids = HistoryDbModel.select(HistoryDbModel.id, ).where(HistoryDbModel.date.between(end, start))
+        list_ = [ item for item in ids ]
+        return list_
 
     def mostVisited(self, count):
         '''
@@ -194,19 +201,24 @@ class History(QObject):
         return result
 
     def clearHistory(self):
-        pass
+        HistoryDbModel.delete().execute()
+        HistoryDbModel.raw('VACUUM').execute()
+
+        gVar.app.webProfile().clearAllVisitedLinks()
+
+        self.resetHistory.emit()
 
     def isSaving(self):
         '''
         @return: bool
         '''
-        pass
+        return self._isSaving
 
     def setSaving(self, state):
         '''
         @param: state bool
         '''
-        pass
+        self._isSaving = state
 
     def loadSettings(self):
         settings = Settings()
@@ -218,13 +230,32 @@ class History(QObject):
         '''
         @param: text QString
         '''
-        pass
+        list_ = []  # QList<HistoryEntry>
+        qs = HistoryDbModel.select().where(HistoryDbModel.title.contains(text) |
+                HistoryDbModel.url.contains(text)).limit(50)
+        for item in qs:
+            entry = self.HistoryEntry()
+            entry.count = item.count
+            entry.date = QDateTime.fromMSecsSinceEpoch(item.date)
+            entry.id = item.id
+            entry.title = item.title
+            entry.url = QUrl(item.url)
+            list_.append(entry)
+        return list_
 
     def getHistoryEntry(self, text):
         '''
         @param: text QString
         '''
-        pass
+        dbobj = HistoryDbModel.select().where(HistoryDbModel.url == text).first()
+        entry = self.HistoryEntry()
+        if dbobj:
+            entry.count = dbobj.count
+            entry.date = QDateTime.fromMSecsSinceEpoch(entry.date)
+            entry.id = dbobj.id
+            entry.title = dbobj.title
+            entry.url = QUrl(dbobj.url)
+        return entry
 
     # Q_SIGNALS
     historyEntryAdded = pyqtSignal(HistoryEntry)  # entry
