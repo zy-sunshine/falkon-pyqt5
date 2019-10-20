@@ -86,9 +86,9 @@ if platform.startswith('linux'): # Linux
 elif platform.startswith('win'):  # Windows
     OS_WIN = True
     if modplatform.machine().endswith('64'):
-        OS_WIN_WIN64 = True
+        OS_WIN64 = True
     else:
-        OS_WIN_WIN32 = True
+        OS_WIN32 = True
 elif platform.startswith('darwin'):  # MAC
     OS_MAC = True
     OS_MACOS = True
@@ -113,3 +113,5 @@ else:
 MAIN_PATH = pathjoin(BASE_DIR, 'mc', 'main', 'main.py')
 
 APP_SCHEME = 'app'
+
+APP_WS_X11 = False

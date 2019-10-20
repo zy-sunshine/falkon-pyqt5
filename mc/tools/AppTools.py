@@ -1,4 +1,6 @@
+from os import environ
 from os import readlink
+from os.path import pathsep
 from os.path import isfile, isdir, dirname, basename, abspath
 from os.path import join as pathjoin, exists as pathexists
 from PyQt5.Qt import QFileDialog
@@ -26,6 +28,7 @@ from PyQt5.Qt import Qt
 from PyQt5.Qt import QPainter
 from PyQt5.Qt import QPen
 from PyQt5.Qt import QPainterPath
+from PyQt5.Qt import QGuiApplication
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMessageBox
 from mc.app.Settings import Settings
@@ -313,7 +316,7 @@ class AppTools(Singleton):
                 break
 
             if len(elidedLine) != len(part):
-                elidedLine = eliededLine[:len(elidedLine) - 3]
+                elidedLine = elidedLine[:len(elidedLine) - 3]
 
             if returnString:
                 returnString += text
@@ -429,14 +432,92 @@ class AppTools(Singleton):
         @param: name QString
         @return: QString
         '''
-        pass
+        path = environ['PATH'].strip()
 
-    def splitCommandArguments(self, command):
+        if not path:
+            return ''
+
+        for item in path.split(pathsep):
+            item = item.strip()
+            if not item: continue
+            d = QDir(item)
+            if d.exists(name):
+                return d.absoluteFilePath(name)
+
+        return ''
+
+    def _s_isQuote(self, c):
+        return c == '"' or c == '\''
+
+    def splitCommandArguments(self, command):  # noqa C901
         '''
+        @note: Function splits command line into arguments
+            eg. /usr/bin/foo -o test -b "bar bar" -s="sed sed"
+            => '/usr/bin/foo' '-o' 'test' '-b' 'bar bar' '-s=sed sed'
         @param: command QString
         @return: QStringList
         '''
-        pass
+        line = command.strip()
+
+        if not line:
+            return []
+
+        SPACE = ' '
+        EQUAL = '='
+        BSLASH = '\\'
+        QUOTE = '"'
+        r = []
+
+        equalPos = -1  # Position of = in opt="value"
+        startPos = self._s_isQuote(line[0]) and 1 or 0
+        inWord = not self._s_isQuote(line[0])
+        inQuote = not inWord
+
+        if inQuote:
+            QUOTE = line[0]
+
+        strlen = len(line)
+        for idx in range(strlen):
+            c = line[idx]
+
+            if inQuote and c == QUOTE and idx > 0 and line[idx - 1] != BSLASH:
+                str_ = line[startPos: idx-startPos]
+                if equalPos > -1:
+                    pos = equalPos-startPos+1
+                    str_ = str_[:pos] + str_[pos+1:]
+
+                inQuote = False
+                if str_:
+                    r += str_
+                continue
+            elif not inQuote and self._s_isQuote(c):
+                inQuote = True
+                QUOTE = c
+
+                if not inWord:
+                    startPos = idx + 1
+                elif idx > 0 and line[idx-1] == EQUAL:
+                    equalPos = idx - 1
+
+            if inQuote:
+                continue
+
+            if inWord and (c == SPACE or idx == strlen - 1):
+                len_ = (idx == strlen - 1) and -1 or idx - startPos
+                str_ = line[startPos: len_]
+
+                inWord = False
+                if str_:
+                    r += str_
+            elif not inWord and c != SPACE:
+                inWord = True
+                startPos = idx
+
+        # Unmatched quote
+        if inQuote:
+            return []
+
+        return r
 
     def startExternalProcess(self, executable, args):
         '''
@@ -536,7 +617,18 @@ class AppTools(Singleton):
         @param: options QFileDialog.Options
         @return: QString
         '''
-        pass
+        settings = Settings()
+        settings.beginGroup('FileDialogPaths')
+
+        lastDir = settings.value(name, dir_)
+
+        path = QFileDialog.getExistingDirectory(parent, caption, lastDir, options)
+
+        if path:
+            settings.setValue(name, QFileInfo(path).absolutePath())
+
+        settings.endGroup()
+        return path
 
     def getFileName(self, path):
         if isfile(path):
@@ -675,11 +767,51 @@ class AppTools(Singleton):
         else:
             return shortcut
 
-    def operatingSystem(self):
+    def operatingSystem(self):  # noqa C901
         '''
         @return: QString
         '''
-        pass
+        if const.OS_MACOS:
+            str_ = 'Mac OS X'
+
+            # # SInt32
+            # majorVersion = 0
+            # # SInt32
+            # minorVersion = 0
+
+            #if (Gestalt(gestaltSystemVersionMajor, &majorVersion) == noErr &&
+            #       Gestalt(gestaltSystemVersionMinor, &minorVersion) == noErr) {
+            #    str_.append(QString(" %1.%2").arg(majorVersion).arg(minorVersion));
+            #}
+            return str_
+        if const.OS_LINUX:
+            return 'Linux'
+        if const.OS_UNIX:
+            return 'Unix'
+        if const.OS_WIN:
+            str_ = 'Windows'
+
+            ver = QSysInfo.windowsVersion()
+            if ver == QSysInfo.WV_NT:
+                str_ += ' NT'
+            elif ver == QSysInfo.WV_2000:
+                str_ += ' 2000'
+            elif ver == QSysInfo.WV_XP:
+                str_ += ' XP'
+            elif ver == QSysInfo.WV_2003:
+                str_ += ' XP Pro x64'
+            elif ver == QSysInfo.WV_VISTA:
+                str_ += ' Vista'
+            elif ver == QSysInfo.WV_WINDOWS7:
+                str_ += ' 7'
+            elif ver == QSysInfo.WV_WINDOWS8:
+                str_ += ' 8'
+            elif ver == QSysInfo.WV_WINDOWS8_1:
+                str_ += ' 8.1'
+            elif ver == QSysInfo.WV_WINDOWS10:
+                str_ += ' 10'
+
+            return str_
 
     def cpuArchitecture(self):
         '''
@@ -691,14 +823,28 @@ class AppTools(Singleton):
         '''
         @return: QString
         '''
-        pass
+        arch = self.cpuArchitecture()
+        if not arch:
+            return self.operatingSystem()
+        return self.operatingSystem() + ' ' + arch
 
     def setWmClass(self, name, widget):
         '''
         @param: name QString
         @param: widget QWidget
         '''
-        pass
+        if const.APP_WS_X11:
+            if QGuiApplication.platformName() != 'xcb':
+                return
+
+            # TODO: for x11
+            #nameData = name.encode()
+            #classData = gVar.app.wmClass() and 'App' or gVar.app.wmClass()
+
+            #class_hint = nameData + ' ' + classData
+
+            #xcb_change_property(QX11Info::connection(), XCB_PROP_MODE_REPLACE, widget->winId(),
+            #            XCB_ATOM_WM_CLASS, XCB_ATOM_STRING, 8, class_len, class_hint);
 
     def containsIndex(self, container, index):
         return index >= 0 and len(container) > index
