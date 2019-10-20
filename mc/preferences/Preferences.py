@@ -33,11 +33,13 @@ from mc.app.Settings import Settings
 from mc.common import const
 from mc.app.ProfileManager import ProfileManager
 from mc.notifications.DesktopNotificationsFactory import DesktopNotificationsFactory
+from mc.tools.html5permissions.HTML5PermissionsDialog import HTML5PermissionsDialog
+from mc.cookies.CookieManager import CookieManager
+from mc.other.ClearPrivateData import ClearPrivateData
 from .ThemeManager import ThemeManager
 from .PluginsManager import PluginsManager
 from .AutoFillManager import AutoFillManager
-from mc.tools.html5permissions.HTML5PermissionsDialog import HTML5PermissionsDialog
-from mc.cookies.CookieManager import CookieManager
+from .UserAgentDialog import UserAgentDialog
 
 def createLanguageItem(self, lang):
     '''
