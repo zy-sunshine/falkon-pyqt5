@@ -40,6 +40,7 @@ from .ThemeManager import ThemeManager
 from .PluginsManager import PluginsManager
 from .AutoFillManager import AutoFillManager
 from .UserAgentDialog import UserAgentDialog
+from .JsOptions import JsOptions
 
 def createLanguageItem(self, lang):
     '''
