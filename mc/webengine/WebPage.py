@@ -55,7 +55,7 @@ class WebPage(QWebEnginePage):
     _s_lastUploadLocation = QDir.homePath()
     _s_supportedSchemes = []  # QStringList
     def __init__(self, parent=None):
-        super(WebPage, self).__init__(parent)
+        super().__init__(gVar.app.webProfile(), parent)
         self._fileWatcher = None  # DelayedFileWatcher
         self._runningLoop = None  # QEventLoop
 
