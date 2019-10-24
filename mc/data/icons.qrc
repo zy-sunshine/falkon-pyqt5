@@ -1,8 +1,8 @@
 <RCC>
     <qresource prefix="/">
-        <file>icons/falkon.svg</file>
-        <file>icons/falkon-black.svg</file>
-        <file>icons/falkon-white.svg</file>
+        <file>icons/demo.svg</file>
+        <file>icons/demo-black.svg</file>
+        <file>icons/demo-white.svg</file>
         <file>icons/menu/history.svg</file>
         <file>icons/menu/history_entry.svg</file>
         <file>icons/menu/tab-new.svg</file>
