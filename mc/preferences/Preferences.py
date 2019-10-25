@@ -41,6 +41,7 @@ from .PluginsManager import PluginsManager
 from .AutoFillManager import AutoFillManager
 from .UserAgentDialog import UserAgentDialog
 from .JsOptions import JsOptions
+from .AcceptLanguage import AcceptLanguage
 
 def createLanguageItem(self, lang):
     '''
