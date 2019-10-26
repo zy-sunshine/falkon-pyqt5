@@ -43,6 +43,7 @@ from .UserAgentDialog import UserAgentDialog
 from .JsOptions import JsOptions
 from .AcceptLanguage import AcceptLanguage
 from mc.other.ProtocolHandlerDialog import ProtocolHandlerDialog
+from mc.notifications.DesktopNotification import DesktopNotification
 
 def createLanguageItem(self, lang):
     '''
@@ -667,7 +668,9 @@ class Preferences(QDialog):
         settings.setValue("Enabled", not self._ui.doNotUseNotifications.isChecked())
         settings.setValue("UseNativeDesktop", self._ui.useNativeSystemNotifications.isChecked())
         if self._notification:
-            pos = self._notification.pos()
+            pos = self._notifPosition = self._notification.savedPos()
+            self._notification.close()
+            self._notification = None
         else:
             pos = self._notifPosition
         settings.setValue("Position", pos)
@@ -765,8 +768,8 @@ class Preferences(QDialog):
         self._ui.stackedWidget.setCurrentIndex(index)
 
         if self._notification:
-            self._notifPosition = self._notification.pos()
-            # TODO: del self._notification to close?
+            self._notifPosition = self._notification.savedPos()
+            self._notification.close()
             self._notification = None
 
         # TODO: hardcode of index...
@@ -955,15 +958,17 @@ class Preferences(QDialog):
 
     def _showNotificationPreview(self):
         if self._ui.useOSDNotifications.isChecked():
-            if self._notification:
-                self._notifPosition = self._notification.pos()
-                # TODO: del self._notification to close?
-                self._notification = None
             self._notification = DesktopNotification(True)
             self._notification.setHeading(_('OSD Notification'))
             self._notification.setText(_('Drag it on the screen to place it where you want.'))
             self._notification.move(self._notifPosition)
             self._notification.show()
+
+            def destroyFunc():
+                if self._notification:
+                    self._notifPosition = self._notification.savedPos()
+                    self._notification = None
+            self._notification.destroyed.connect(destroyFunc)
         elif self._ui.useNativeSystemNotifications.isChecked():
             gVar.app.desktopNotifications().nativeNotificationPreview()
 
