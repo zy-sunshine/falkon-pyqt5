@@ -42,6 +42,7 @@ from .AutoFillManager import AutoFillManager
 from .UserAgentDialog import UserAgentDialog
 from .JsOptions import JsOptions
 from .AcceptLanguage import AcceptLanguage
+from mc.other.ProtocolHandlerDialog import ProtocolHandlerDialog
 
 def createLanguageItem(self, lang):
     '''
