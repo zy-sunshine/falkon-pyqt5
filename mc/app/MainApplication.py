@@ -15,7 +15,7 @@ from PyQt5.Qt import QSettings
 from PyQt5.Qt import QDesktopServices
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import QByteArray
-from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEngineDownloadItem
+from PyQt5.QtWebEngineWidgets import QWebEngineProfile
 from PyQt5.QtWebEngineWidgets import QWebEngineSettings
 from PyQt5.QtWebEngineWidgets import QWebEngineScript
 from PyQt5.Qt import pyqtSignal
@@ -58,6 +58,7 @@ from mc.other.BrowsingLibrary import BrowsingLibrary
 from .CommandLineOptions import CommandLineOptions
 from mc.webengine.WebPage import WebPage
 from mc.tools.Scripts import Scripts
+from mc.other.ClearPrivateData import ClearPrivateData
 
 class MainApplication(QtSingleApp):
     s_testMode = False

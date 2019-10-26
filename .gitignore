@@ -108,3 +108,4 @@ venv.bak/
 /data/cache
 /data/config
 tags
+/VideoDecodeStats

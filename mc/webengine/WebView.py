@@ -827,7 +827,13 @@ class WebView(QWebEngineView):
         '''
         @param: event QKeyEvent
         '''
-        pass
+        if gVar.app.plugins().processKeyRelease(const.ON_WebView, self, event):
+            event.accept()
+
+        if event.key() == Qt.Key_Escape:
+            if self.isFullScreen():
+                self.triggerPageAction(QWebEnginePage.ExitFullScreen)
+                event.accept()
 
     # virtual method
     def _contextMenuEvent(self, event):
