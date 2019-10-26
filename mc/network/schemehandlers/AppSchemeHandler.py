@@ -120,9 +120,12 @@ class AppSchemeReply(QIODevice):
                 <a href="#" onclick="javascript: document.webkitExitFullscreen()"/>
                     exit fullscreen</a><br/>
 
-<button id = "find-me">Show my location</button><br/>
-<p id = "status"></p>
-<a id = "map-link" target="_blank"></a>
+                <button id = "find-me">Show my location</button><br/>
+                <p id = "status"></p>
+                <a id = "map-link" target="_blank"></a>
+
+                <div id="div-fullscreen">div fullscreen</div>
+
 <script>
   function geoFindMe() {
 
@@ -153,8 +156,22 @@ class AppSchemeReply(QIODevice):
     }
 
   }
-
   document.querySelector('#find-me').addEventListener('click', geoFindMe);
+
+  function openFullscreen(element) {
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if (element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if (element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    } else if (element.webkitRequestFullscreen) {
+      element.webkitRequestFullScreen();
+    }
+  }
+  document.getElementById("div-fullscreen").addEventListener('click', function() {
+    openFullscreen(this);
+  }, false);
 </script>
             '''}
 
