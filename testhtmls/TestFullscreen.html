@@ -1,0 +1,68 @@
+<html>
+<head>
+<title>
+Test Fullscreen
+</title>
+<style>
+section {
+	float:left;
+	margin:10px;
+	width:260px;
+	height:200px;
+	font-size:24px;
+	text-align:center;
+	line-height:36px;
+	border:1px solid gray;
+	overflow:hidden;
+}
+section div,img,canvas,video,button {
+	display:block;
+	margin:auto;
+	width:100%;
+	cursor:pointer;
+}
+div {
+	min-height:156px;
+	line-height:156px;
+	color:white;
+	font-weight:bold;
+	background-color:#FF00E3;
+}
+canvas {
+	background-color:blue;
+}
+video {
+	background-color:#666;
+}
+button {
+	min-height:156px;
+	line-height:156px;
+	color:white;
+	font-size:24px;
+	font-weight:bold;
+	background-color:#0AAF00;
+}
+
+</style>
+</head>
+<body>
+<div id="div-fullscreen">div fullscreen</div>
+<script>
+function openFullscreen(element) {
+  if (element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if (element.mozRequestFullScreen) {
+    element.mozRequestFullScreen();
+  } else if (element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  } else if (element.webkitRequestFullscreen) {
+    element.webkitRequestFullScreen();
+  }
+}
+
+document.getElementById("div-fullscreen").addEventListener('click', function() {
+  openFullscreen(this);
+}, false);
+</script>
+</body>
+</html>
