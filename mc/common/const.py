@@ -115,3 +115,5 @@ MAIN_PATH = pathjoin(BASE_DIR, 'mc', 'main', 'main.py')
 APP_SCHEME = 'app'
 
 APP_WS_X11 = False
+
+DISABLE_DBUS = False

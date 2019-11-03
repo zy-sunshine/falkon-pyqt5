@@ -1,7 +1,11 @@
 from PyQt5.Qt import QObject
 from PyQt5.Qt import QPoint
+from PyQt5.Qt import QFile
 from mc.app.Settings import Settings
 from mc.common import const
+from mc.app.DataPaths import DataPaths
+from mc.common.globalvars import gVar
+from .DesktopNotification import DesktopNotification
 
 class DesktopNotificationsFactory(QObject):
     # enum Type
@@ -30,6 +34,8 @@ class DesktopNotificationsFactory(QObject):
                 self._notifType = self.DesktopNative
             else:
                 self._notifType = self.PopupWidget
+        else:
+            self._notifType = self.PopupWidget
         self._position = settings.value('Position', QPoint(10, 10), type=QPoint)
         settings.endGroup()
 
@@ -45,20 +51,63 @@ class DesktopNotificationsFactory(QObject):
         @param: heading QString
         @param: text QString
         '''
-        pass
+        if not self._enabled:
+            return
+
+        if self._notifType == self.PopupWidget:
+            if not self._desktopNotif:
+                self._desktopNotif = DesktopNotification()
+
+                def func():
+                    self._desktopNotif = None
+                self._desktopNotif.closedSignal.connect(func)
+            self._desktopNotif.setPixmap(icon)
+            self._desktopNotif.setHeading(heading)
+            self._desktopNotif.setText(text)
+            self._desktopNotif.setTimeout(self._timeout)
+            self._desktopNotif.move(self._position)
+            self._desktopNotif.show()
+        elif self._notifType == self.DesktopNative:
+            if const.OS_UNIX and not const.DISABLE_DBUS:
+                tmp = QFile(DataPaths.path(DataPaths.Temp) + '/app_notif.png')
+                tmp.open(QFile.WriteOnly)
+                icon.save(tmp.fileName())
+
+                from PyQt5.Qt import QDBusInterface, QDBusConnection
+                dbus = QDBusInterface('org.freedesktop.Notifications', '/org/freedesktop/Notifications',
+                        'org.freedesktop.Notifications', QDBusConnection.sessionBus())
+                args = []
+                args.append('app')
+                args.append(self._uint)
+                args.append(tmp.fileName())
+                args.append(heading)
+                args.append(text)
+                args.append([])
+                args.append({})
+                args.append(self._timeout)
+                dbus.callWithCallback('Notify', args, self._updateLastId, self._error)
 
     def nativeNotificationPreview(self):
-        pass
+        type_ = self._notifType
+        self._notifType = self.DesktopNative
+        icon = gVar.app.getWindow().windowIcon().pixmap(64)
+        self.showNotification(icon, _('Native System Notification'), _('Preview'))
+        self._notifType = type_
 
     # private Q_SLOTS:
     def _updateLastId(self, msg):
         '''
         @param: msg QDBusMessage
         '''
-        pass
+        if const.OS_UNIX and not const.DISABLE_DBUS:
+            list_ = msg.arguments()
+            if len(list_) > 0:
+                self._uint = list_[0]
+                assert(type(self._uint) == int)
 
     def _error(self, error):
         '''
         @param: error QDBusError
         '''
-        pass
+        if const.OS_UNIX and not const.DISABLE_DBUS:
+            print('Warning: QDBusError:', error.message())

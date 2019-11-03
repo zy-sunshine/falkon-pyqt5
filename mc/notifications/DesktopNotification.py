@@ -4,6 +4,7 @@ from PyQt5.Qt import QPixmap
 from PyQt5.Qt import QTimer
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QWidget
+from PyQt5.Qt import pyqtSignal
 
 class DesktopNotification(QWidget):
     def __init__(self, setPosition=False):
@@ -30,6 +31,8 @@ class DesktopNotification(QWidget):
             self.setCursor(Qt.OpenHandCursor)
 
         self._savedPos = None
+
+    closedSignal = pyqtSignal()
 
     def setPixmap(self, icon):
         '''
@@ -90,6 +93,7 @@ class DesktopNotification(QWidget):
             event.accept()
 
     def closeEvent(self, event):
+        self.closedSignal.emit()
         self._savedPos = self.pos()
         super().closeEvent(event)
 
