@@ -38,7 +38,7 @@ class DownloadItem(QWidget):
         self._fileName = fileName
         self._downTimer = QTime()
         self._remTime = QTime()
-        self._downUrl = QUrl()
+        self._downUrl = downloadItem.url()
         self._openFile = openFile
 
         self._downloading = False
@@ -61,6 +61,9 @@ class DownloadItem(QWidget):
         self.customContextMenuRequested.connect(self._customContextMenuRequested)
         self._ui.button.clicked.connect(self._stop)
         manager.resized.connect(self._parentResized)
+
+    def item(self):
+        return self._item
 
     def isDownloading(self):
         '''
@@ -164,7 +167,7 @@ class DownloadItem(QWidget):
         '''
         if size.width() < 200:
             return
-        self.maximumWidth(size.width())
+        self.setMaximumWidth(size.width())
 
     def _finished(self):
         if self.DEBUG:
@@ -277,7 +280,9 @@ class DownloadItem(QWidget):
         self.deleteItem.emit(self)
 
     def _copyDownloadLink(self):
-        QApplication.clipboard().setText(self._downUrl.toString())
+        url = self._downUrl.toString()
+        print(url)
+        QApplication.clipboard().setText(url)
 
     # private:
     def _updateDownloadInfo(self, currSpeed, received, total):

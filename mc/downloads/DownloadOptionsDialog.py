@@ -38,7 +38,7 @@ class DownloadOptionsDialog(QDialog):
 
         self._ui.buttonBox.setFocus()
 
-        self._ui.copyDownloadLink.clicked.connect(self.copyDownloadLink)
+        self._ui.copyDownloadLink.clicked.connect(self._copyDownloadLink)
         self._ui.finished.connect(self._emitDialogFinished)
 
     def showExternalManagerOption(self, show):

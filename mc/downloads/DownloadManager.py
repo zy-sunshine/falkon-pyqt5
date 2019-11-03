@@ -121,7 +121,7 @@ class DownloadManager(QWidget):
             self.startExternalManager(downloadItem.url())
         elif forceAsk or not self._downloadPath:
             (
-                Open, Save, ExternalManager, SavePage, Unknown
+                Unknown, Open, Save, ExternalManager, SavePage
             ) = range(5)
             result = Unknown
 
@@ -214,12 +214,10 @@ class DownloadManager(QWidget):
         self.downloadsCountChanged.emit()
 
     def downloadsCount(self):
-        # TODO:
-        return 0
+        return self._ui.list.count()
 
     def activeDownloadsCount(self):
-        # TODO:
-        return 0
+        return self._activeDownloadsCount
 
     def canClose(self):
         '''
@@ -250,7 +248,7 @@ class DownloadManager(QWidget):
         param: url QUrl
         '''
         arguments = self._externalArguments
-        arguments.replace('%d', url.toEncoded())
+        arguments.replace('%d', url.toEncoded().data().decode())
 
         gVar.appTools.startExternalProcess(self._externalExecutable, arguments)
         self._lastDownloadOption = self.ExternalManager
@@ -272,13 +270,19 @@ class DownloadManager(QWidget):
     # private Q_SLOTS:
     def _clearList(self):
         items = []  # QList<DownloadItem>
+        listItems = []
         for idx in range(self._ui.list.count()):
-            downItem = self._ui.list.itemWidget(self._ui.list.item(idx))
+            listItem = self._ui.list.item(idx)
+            downItem = self._ui.list.itemWidget(listItem)
             if not downItem:
                 continue
             if downItem.isDownloading():
                 continue
             items.append(downItem)
+            listItems.append(listItem)
+        for listItem in listItems:
+            row = self._ui.list.row(listItem)
+            self._ui.list.takeItem(row)
         qtUtil.qDeleteAll(items)
         self.downloadsCountChanged.emit()
 
@@ -287,6 +291,8 @@ class DownloadManager(QWidget):
         @parma: item DownloadItem
         '''
         if item and not item.isDownloading():
+            row = self._ui.list.row(item.item())
+            self._ui.list.takeItem(row)
             item.deleteLater()
 
     def _downloadFinished(self, success):

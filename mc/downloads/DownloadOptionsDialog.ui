@@ -282,7 +282,7 @@
   <customwidget>
    <class>ClickableLabel</class>
    <extends>QLabel</extends>
-   <header>clickablelabel.h</header>
+   <header>mc.tools.ClickableLabel</header>
   </customwidget>
  </customwidgets>
  <resources/>
